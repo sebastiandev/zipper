@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 	zipper::Zipper zipper("ziptest.zip");
 
 	zipper.add(input_test_file, "Test1.txt");
-	zipper.add(input_test_file2, "Test2.txt");
+	zipper.add(input_test_file2, "Folder\\Test2.txt");
 
 	zipper.close();
 
