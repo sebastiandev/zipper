@@ -105,19 +105,20 @@ namespace zipper {
 			else
 				mode = APPEND_STATUS_CREATE;
 
-			m_zf = zipOpen(filename.c_str(), mode);
+			m_zf = zipOpen64(filename.c_str(), mode);
 
 			return m_zf != NULL;
 		}
 
 		bool initMemory()
 		{
-			zlib_filefunc_def filefunc = { 0 };
+			zlib_filefunc64_def filefunc = { 0 };
 			m_zipmem.grow = 1;
 
-			fill_memory_filefunc (&filefunc, &m_zipmem);
+			//fill_memory_filefunc (&filefunc, &m_zipmem);
+			fill_win32_filefunc64(&filefunc);
 
-			m_zf = zipOpen3("__notused__", APPEND_STATUS_CREATE, 0, 0, &filefunc);
+			m_zf = zipOpen3_64("__notused__", APPEND_STATUS_CREATE, 0, 0, &filefunc);
 
 			return m_zf != NULL;
 		}
