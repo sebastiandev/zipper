@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <istream>
+#include <sstream>
 #include <string>
 #include <memory>
 
@@ -17,7 +18,11 @@ namespace zipper {
 
 		~Unzipper(void);
 
-		void close();
+		std::vector<std::string> files();
+
+		bool extract();
+		bool extractFile(const std::string& filename);
+
 
 	private:
 		std::string m_password;

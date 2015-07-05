@@ -13,7 +13,6 @@ extern "C"
 #if (defined(_WIN32)) || (defined(_WIN64))
 # include <direct.h>
 # include <io.h>
-#include <filesystem>
 #else
 # include <unistd.h>
 # include <utime.h>
@@ -31,6 +30,10 @@ extern "C"
 #include "iowin32.h"
 #endif
 }
+
+#if (defined(_WIN32)) || (defined(_WIN64))
+	#include <filesystem>
+#endif
 
 #if (defined(_WIN64)) && (!defined(__APPLE__))
 #ifndef __USE_FILE_OFFSET64

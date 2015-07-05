@@ -1,9 +1,4 @@
-#pragma once
-
-#include "defs.h"
-
-#include <vector>
-#include <istream>
+#include "tools.h"
 
 /* calculate the CRC32 of a file,
 because to encrypt a file, we need known the CRC32 of the file before */
@@ -80,7 +75,8 @@ void change_file_date(const char *filename, uLong dosdate, tm_unz tmu_date)
 bool check_file_exists(const char* filename)
 {
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
-	return std::tr2::sys::exists(filename);
+	auto file = std::tr2::sys::path(filename);
+	return std::tr2::sys::exists(file);
 #else
 	struct stat buffer;
 	return (stat(filename, &buffer) == 0);
@@ -90,7 +86,11 @@ bool check_file_exists(const char* filename)
 bool makedir(const char *newdir)
 {
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
-	return std::tr2::sys::create_directories(newdir);
+	auto dir = std::tr2::sys::path(newdir);
+	if (!dir.has_parent_path())
+		return true;
+	
+	return std::tr2::sys::create_directories(dir.parent_path());
 #else
 	char *buffer = NULL;
 	char *p = NULL;

@@ -1,4 +1,5 @@
 #include "zipper\zipper.h"
+#include "zipper\unzipper.h"
 
 #include <vector>
 #include <fstream>
@@ -27,6 +28,13 @@ int main(int argc, char** argv)
 
 	zipper.close();
 
+	zipper::Unzipper unzipper("ziptest.zip");
+
+	auto files = unzipper.files();
+	unzipper.extractFile("Test1.txt");
+	unzipper.extract();
+
+	/*
 	input_test_file.seekg(0);
 	input_test_file2.seekg(0);
 
@@ -51,7 +59,7 @@ int main(int argc, char** argv)
 		std::cout << "zipping test2.txt failed! :(" << std::endl;
 		return 0;
 	}
-
+	*/
 	std::cout << "All good! keep coding..." << std::endl;
 
 	return 0;

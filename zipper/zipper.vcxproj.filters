@@ -39,6 +39,9 @@
     <ClCompile Include="..\minizip\zip.c">
       <Filter>minizip</Filter>
     </ClCompile>
+    <ClCompile Include="unzipper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="zipper.h">
@@ -64,6 +67,18 @@
     </ClInclude>
     <ClInclude Include="..\minizip\zip.h">
       <Filter>minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="unzipper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tools.cpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
