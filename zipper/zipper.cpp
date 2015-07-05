@@ -1,84 +1,6 @@
 #include "zipper.h"
-
-extern "C"
-{
-	#include <stdio.h>
-	#include <stdlib.h>
-	#include <string.h>
-	#include <time.h>
-	#include <errno.h>
-	#include <fcntl.h>
-
-    #if (defined(_WIN32)) || (defined(_WIN64))
-	# include <direct.h>
-	# include <io.h>
-	#else
-	# include <unistd.h>
-	# include <utime.h>
-	#endif
-
-	#include "zip.h"
-	#include "unzip.h"
-	#include "ioapi_mem.h"
-	#define CASESENSITIVITY (0)
-	#define WRITEBUFFERSIZE (8192)
-	#define MAXFILENAME (256)
-
-	#if (defined(_WIN32)) || (defined(_WIN64))
-	#define USEWIN32IOAPI
-	#include "iowin32.h"
-	#endif
-}
-
-#if (defined(_WIN64)) && (!defined(__APPLE__))
-        #ifndef __USE_FILE_OFFSET64
-                #define __USE_FILE_OFFSET64
-        #endif
-        #ifndef __USE_LARGEFILE64
-                #define __USE_LARGEFILE64
-        #endif
-        #ifndef _LARGEFILE64_SOURCE
-                #define _LARGEFILE64_SOURCE
-        #endif
-        #ifndef _FILE_OFFSET_BIT
-                #define _FILE_OFFSET_BIT 64
-        #endif
-#endif
-
-
-/* calculate the CRC32 of a file,
-   because to encrypt a file, we need known the CRC32 of the file before */
-
-void getFileCrc(std::istream& input_stream, std::vector<char>& buff, unsigned long& result_crc)
-{
-    unsigned long calculate_crc=0;
-    unsigned long size_read = 0;
-    unsigned long total_read = 0;
-
-    do {   
-        input_stream.read(buff.data(), buff.size());
-	    size_read = input_stream.gcount();
-
-        if (size_read>0)
-            calculate_crc = crc32(calculate_crc, (const unsigned char*)buff.data(), size_read);
-		
-        total_read += size_read;
-
-    } while (size_read>0);
-
-    input_stream.seekg(0);
-    result_crc=calculate_crc;
-}
-
-bool isLargeFile(std::istream& input_stream)
-{
-    ZPOS64_T pos = 0;
-    input_stream.seekg(0, std::ios::end);
-    pos = input_stream.tellg();
-	input_stream.seekg(0);
-	
-    return pos >= 0xffffffff;
-}
+#include "defs.h"
+#include "tools.hpp"
 
 namespace zipper {
 
@@ -145,7 +67,6 @@ namespace zipper {
 			if (flags & Zipper::Faster) compressLevel = 1;
 			if (flags & Zipper::Better) compressLevel = 9;
 
-			//err = getFileCrc(input_stream, buff, crcFile);
 			zip64 = (int)isLargeFile(input_stream);
 			if (password.empty())
 				err = zipOpenNewFileInZip64(m_zf,
@@ -160,6 +81,8 @@ namespace zipper {
 					compressLevel,
 					zip64);
 			else
+			{
+				getFileCrc(input_stream, buff, crcFile);
 				err = zipOpenNewFileInZip3_64(m_zf,
 					nameInZip.c_str(),
 					&zi,
@@ -176,6 +99,7 @@ namespace zipper {
 					password.c_str(),
 					crcFile,
 					zip64);
+			}
 
 			if (err != ZIP_OK)
 				//printf("error in opening %s in zipfile\n", contentPath.c_str() );
