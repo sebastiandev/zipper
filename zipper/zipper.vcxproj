@@ -126,6 +126,8 @@
     <ClCompile Include="..\minizip\iowin32.c" />
     <ClCompile Include="..\minizip\unzip.c" />
     <ClCompile Include="..\minizip\zip.c" />
+    <ClCompile Include="tools.cpp" />
+    <ClCompile Include="unzipper.cpp" />
     <ClCompile Include="zipper.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -136,6 +138,9 @@
     <ClInclude Include="..\minizip\iowin32.h" />
     <ClInclude Include="..\minizip\unzip.h" />
     <ClInclude Include="..\minizip\zip.h" />
+    <ClInclude Include="defs.h" />
+    <ClInclude Include="tools.h" />
+    <ClInclude Include="unzipper.h" />
     <ClInclude Include="zipper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
