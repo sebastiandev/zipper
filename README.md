@@ -22,14 +22,14 @@ Ex: c:\Projects\zlib-1.2.8\
                       |_ include\
                       |_ lib\
 ```
-Compilation produces zlib.lib
+Compilation produces zipper.lib
 
 So far its been tested and focused on Windows using Visual Studio 2013
 
 
 #### Usage:
 
-There are two classes available Zipper and Unzipper. They behave in the same manner regarding constructors and storage parameters.
+There are two classes available Zipper and Unzipper. They behave in the same manner regarding constructors and storage parameters. (for a complete example take a look at the [tests](https://github.com/sebastiandev/zipper/blob/develop/test/file_zip_test.cpp ) using then awesome BDD's from catch library )
 
 ##### Zipping
 
