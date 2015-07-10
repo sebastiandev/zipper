@@ -23,6 +23,7 @@ namespace zipper {
 		bool extract();
 		bool extractFile(const std::string& filename);
 
+		void close();
 
 	private:
 		std::string m_password;
@@ -31,6 +32,7 @@ namespace zipper {
 		std::vector<unsigned char>& m_vecbuffer;
 		bool m_usingMemoryVector;
 		bool m_usingStream;
+		bool m_open;
 
 		struct Impl;
 		std::shared_ptr<Impl> m_impl;

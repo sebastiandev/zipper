@@ -8,11 +8,11 @@ namespace zipper {
 
 struct Unzipper::Impl
 {
-	private:
+	Unzipper& m_outer;
+	zipFile m_zf;
+	ourmemory_t m_zipmem = ourmemory_t();
 
-		Unzipper& m_outer;
-		zipFile m_zf;
-		ourmemory_t m_zipmem = ourmemory_t();
+    private:
 
 		// recibe un lambda como parametro https://en.wikipedia.org/wiki/C%2B%2B11#Polymorphic_wrappers_for_function_objects
 		void iterFiles(std::function<void()> callback)
@@ -70,7 +70,7 @@ struct Unzipper::Impl
 			//}
 
 			/* Create the file on disk so we can unzip to it */
-			std::fstream output_file(filename_inzip);
+			std::ofstream output_file(filename_inzip);
 
 			if (output_file.good())
 			{
@@ -116,6 +116,18 @@ struct Unzipper::Impl
 		Impl(Unzipper& outer) : m_outer(outer)
 		{
 			m_zf = NULL;
+		}
+
+		~Impl()
+		{
+		}
+
+		void close()
+		{
+			free(m_zipmem.base);
+
+			if (m_zf)
+				unzClose(m_zf);
 		}
 
 		bool initFile(const std::string& filename)
@@ -165,29 +177,40 @@ struct Unzipper::Impl
 Unzipper::Unzipper(std::ostream& buffer)
 	: m_obuffer(buffer)
 	, m_vecbuffer(std::vector<unsigned char>())
+	, m_usingMemoryVector(false)
+	, m_usingStream(true)
 	, m_impl(new Impl(*this))
 {
 	if (!m_impl->initMemory())
 		throw std::exception("Error loading zip in memory!");
+	m_open = true;
 }
 
 Unzipper::Unzipper(std::vector<unsigned char>& buffer)
 	: m_obuffer(std::ostringstream())
 	, m_vecbuffer(buffer)
+	, m_usingMemoryVector(true)
+	, m_usingStream(false)
 	, m_impl(new Impl(*this))
 {
 	if (!m_impl->initMemory())
 		throw std::exception("Error loading zip in memory!");
+
+	m_open = true;
 }
 
 Unzipper::Unzipper(const std::string& zipname)
 	: m_obuffer(std::ostringstream())
 	, m_vecbuffer(std::vector<unsigned char>())
 	, m_zipname(zipname)
+	, m_usingMemoryVector(false)
+	, m_usingStream(false)
 	, m_impl(new Impl(*this))
 {
 	if (!m_impl->initFile(zipname))
 		throw std::exception("Error loading zip file!");
+
+	m_open = true;
 }
 
 Unzipper::Unzipper(const std::string& zipname, const std::string& password)
@@ -195,14 +218,19 @@ Unzipper::Unzipper(const std::string& zipname, const std::string& password)
 	, m_vecbuffer(std::vector<unsigned char>())
 	, m_zipname(zipname)
 	, m_password(password)
+	, m_usingMemoryVector(false)
+	, m_usingStream(false)
 	, m_impl(new Impl(*this))
 {
 	if (!m_impl->initFile(zipname))
 		throw std::exception("Error loading zip file!");
+
+	m_open = true;
 }
 
 Unzipper::~Unzipper(void)
 {
+	close();
 }
 
 std::vector<std::string> Unzipper::files()
@@ -218,6 +246,15 @@ bool Unzipper::extractFile(const std::string& filename)
 bool Unzipper::extract()
 {
 	return m_impl->extractAll();
+}
+
+void Unzipper::close()
+{
+	if (m_open)
+	{
+		m_impl->close();
+		m_open = false;
+	}
 }
 
 }

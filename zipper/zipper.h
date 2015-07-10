@@ -23,6 +23,8 @@ namespace zipper {
 		~Zipper(void);
 
 		bool add(std::istream& source, const std::string& nameInZip = std::string(), zipFlags flags = Better);
+		
+		void open();
 		void close();
 
 	private:
@@ -32,6 +34,7 @@ namespace zipper {
 		std::vector<unsigned char>& m_vecbuffer;
 		bool m_usingMemoryVector;
 		bool m_usingStream;
+		bool m_open;
 
 		struct Impl;
 		std::shared_ptr<Impl> m_impl;
