@@ -22,7 +22,7 @@ Ex: c:\Projects\zlib-1.2.8\
                       |_ include\
                       |_ lib\
 ```
-Compilation produces zlib.lib
+Compilation produces zipper.lib
 
 So far its been tested and focused on Windows using Visual Studio 2013
 
