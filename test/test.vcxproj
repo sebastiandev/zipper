@@ -81,7 +81,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;../minizip/;$(ZLIBROOT)\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -118,7 +118,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="test_zip.cpp" />
+    <ClCompile Include="file_zip_test.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="catch.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

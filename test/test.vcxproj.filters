@@ -15,7 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="test_zip.cpp">
+    <ClInclude Include="catch.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="file_zip_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -17,12 +17,11 @@ namespace zipper {
 
 		bool initFile(const std::string& filename)
 		{
-			int fileExists = 0;// chequear si existe el archivo!
 			int mode = 0;
-			int flags = Zipper::Overwrite;
+			int flags = Zipper::Append;
 
 			/* open the zip file for output */
-			if (fileExists)
+			if (check_file_exists(filename.c_str()))
 				mode = (flags & Zipper::Overwrite) ? APPEND_STATUS_CREATE : APPEND_STATUS_ADDINZIP;
 			else
 				mode = APPEND_STATUS_CREATE;
@@ -150,6 +149,8 @@ namespace zipper {
 	{
 		if (!m_impl->initFile(zipname))
 			throw std::exception("Error creating zip in file!");
+
+		m_open = true;
 	}
 
 	Zipper::Zipper(const std::string& zipname, const std::string& password)
@@ -163,6 +164,8 @@ namespace zipper {
 	{
 		if (!m_impl->initFile(zipname))
 			throw std::exception("Error creating zip in file!");
+
+		m_open = true;
 	}
 
 	Zipper::Zipper(std::ostream& buffer)
@@ -174,6 +177,8 @@ namespace zipper {
 	{
 		if (!m_impl->initMemory())
 			throw std::exception("Error creating zip in memory!");
+
+		m_open = true;
 	}
 
 	Zipper::Zipper(std::vector<unsigned char>& buffer)
@@ -185,16 +190,37 @@ namespace zipper {
 	{
 		if (!m_impl->initMemory())
 			throw std::exception("Error creating zip in memory!");
+
+		m_open = true;
 	}
 
 	Zipper::~Zipper(void)
 	{
-		//m_impl->close();
+		close();
 	}
 
 	bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags flags)
 	{
 		return m_impl->add(source, nameInZip, "", flags);
+	}
+
+	void Zipper::open()
+	{
+		if (!m_open)
+		{
+			if (m_usingMemoryVector || m_usingMemoryVector)
+			{
+				if (!m_impl->initMemory())
+					throw std::exception("Error Creating zip in memory!");
+			}
+			else
+			{
+				if (!m_impl->initFile(m_zipname))
+					throw std::exception("Error creating zip in file!");
+			}
+
+			m_open = true;
+		}
 	}
 
 	void Zipper::close()
@@ -204,7 +230,11 @@ namespace zipper {
 		else if (m_usingStream)
 			m_obuffer.write(m_impl->m_zipmem.base, m_impl->m_zipmem.size);
 
-		m_impl->close();
+		if (m_open)
+		{
+			m_impl->close();
+			m_open = false;
+		}
 	}
 
 }
