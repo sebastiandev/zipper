@@ -11,6 +11,7 @@ struct Unzipper::Impl
 	Unzipper& m_outer;
 	zipFile m_zf;
 	ourmemory_t m_zipmem = ourmemory_t();
+	zlib_filefunc_def m_filefunc;
 
     private:
 
@@ -116,6 +117,7 @@ struct Unzipper::Impl
 		Impl(Unzipper& outer) : m_outer(outer)
 		{
 			m_zf = NULL;
+			m_filefunc = { 0 };
 		}
 
 		~Impl()
@@ -124,8 +126,6 @@ struct Unzipper::Impl
 
 		void close()
 		{
-			free(m_zipmem.base);
-
 			if (m_zf)
 				unzClose(m_zf);
 		}
@@ -136,17 +136,42 @@ struct Unzipper::Impl
 			return m_zf != NULL;
 		}
 
-		bool initMemory()
+		bool initWithStream(std::istream& stream)
 		{
-			m_zipmem.grow = 1;
+			stream.seekg(0, std::ios::end);
+			auto size = stream.tellg();
+			stream.seekg(0);
 
-			zlib_filefunc64_def ffunc;
-			fill_win32_filefunc64A(&ffunc);
+			if (size > 0)
+			{
+				m_zipmem.base = new char[size];
+				stream.read(m_zipmem.base, size);
+			}
 
-			m_zf = unzOpen2_64("__notused__", &ffunc);
+			fill_memory_filefunc(&m_filefunc, &m_zipmem);
 
+			return initMemory(m_filefunc);
+		}
+
+		bool initWithVector(std::vector<unsigned char>& buffer)
+		{
+			if (!buffer.empty())
+			{
+				m_zipmem.base = (char*)buffer.data();
+				m_zipmem.size = buffer.size();
+			}
+
+			fill_memory_filefunc(&m_filefunc, &m_zipmem);
+
+			return initMemory(m_filefunc);
+		}
+
+		bool initMemory(zlib_filefunc_def& filefunc)
+		{
+			m_zf = unzOpen2("__notused__", &filefunc);
 			return m_zf != NULL;
 		}
+
 
 		std::vector<std::string> files()
 		{
@@ -174,33 +199,33 @@ struct Unzipper::Impl
 		}
 };
 
-Unzipper::Unzipper(std::ostream& buffer)
-	: m_obuffer(buffer)
+Unzipper::Unzipper(std::istream& buffer)
+	: m_ibuffer(buffer)
 	, m_vecbuffer(std::vector<unsigned char>())
 	, m_usingMemoryVector(false)
 	, m_usingStream(true)
 	, m_impl(new Impl(*this))
 {
-	if (!m_impl->initMemory())
+	if (!m_impl->initWithStream(m_ibuffer))
 		throw std::exception("Error loading zip in memory!");
 	m_open = true;
 }
 
 Unzipper::Unzipper(std::vector<unsigned char>& buffer)
-	: m_obuffer(std::ostringstream())
+	: m_ibuffer(std::stringstream())
 	, m_vecbuffer(buffer)
 	, m_usingMemoryVector(true)
 	, m_usingStream(false)
 	, m_impl(new Impl(*this))
 {
-	if (!m_impl->initMemory())
+	if (!m_impl->initWithVector(m_vecbuffer))
 		throw std::exception("Error loading zip in memory!");
 
 	m_open = true;
 }
 
 Unzipper::Unzipper(const std::string& zipname)
-	: m_obuffer(std::ostringstream())
+	: m_ibuffer(std::stringstream())
 	, m_vecbuffer(std::vector<unsigned char>())
 	, m_zipname(zipname)
 	, m_usingMemoryVector(false)
@@ -214,7 +239,7 @@ Unzipper::Unzipper(const std::string& zipname)
 }
 
 Unzipper::Unzipper(const std::string& zipname, const std::string& password)
-	: m_obuffer(std::ostringstream())
+	: m_ibuffer(std::stringstream())
 	, m_vecbuffer(std::vector<unsigned char>())
 	, m_zipname(zipname)
 	, m_password(password)

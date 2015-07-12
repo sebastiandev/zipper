@@ -11,7 +11,7 @@ namespace zipper {
 	class Unzipper
 	{
 	public:
-		Unzipper(std::ostream& buffer);
+		Unzipper(std::istream& buffer);
 		Unzipper(std::vector<unsigned char>& buffer);
 		Unzipper(const std::string& zipname);
 		Unzipper(const std::string& zipname, const std::string& password);
@@ -28,7 +28,7 @@ namespace zipper {
 	private:
 		std::string m_password;
 		std::string m_zipname;
-		std::ostream& m_obuffer;
+		std::istream& m_ibuffer;
 		std::vector<unsigned char>& m_vecbuffer;
 		bool m_usingMemoryVector;
 		bool m_usingStream;

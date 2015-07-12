@@ -9,11 +9,12 @@
 #include <ostream>
 #include <string>
 
-SCENARIO("zipfile feed with different inputs", "[zip]") 
+SCENARIO("zip vector feed with different inputs", "[zip]")
 {
-	GIVEN("A Zip outputed to a file") 
+	GIVEN("A Zip outputed to a vector")
 	{
-		zipper::Zipper zipper("ziptest.zip");
+		std::vector<unsigned char> zipvec;
+		zipper::Zipper zipper(zipvec);
 
 		WHEN("a file containing 'test file compression' is added and named 'test1'")
 		{
@@ -30,10 +31,10 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 			zipper.close();
 
 			std::remove("test1.txt");
+			
+			zipper::Unzipper unzipper(zipvec);
 
-			zipper::Unzipper unzipper("ziptest.zip");
-
-			THEN("the zip file has one entry named 'test1.txt'")
+			THEN("the zip vector has one entry named 'test1.txt'")
 			{
 				REQUIRE(unzipper.files().size() == 1);
 				REQUIRE(unzipper.files().front() == "test1.txt");
@@ -43,7 +44,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 					unzipper.extractFile("test1.txt");
 					// due to sections forking or creating different stacks we need to make sure the local instance is closed to
 					// prevent mixing the closing when both instances are freed at the end of the scope
-					unzipper.close(); 
+					unzipper.close();
 
 					REQUIRE(check_file_exists("test1.txt"));
 
@@ -70,9 +71,9 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 						test2stream.close();
 						std::remove("test2.dat");
 
-						zipper::Unzipper unzipper("ziptest.zip");
+						zipper::Unzipper unzipper(zipvec);
 
-						THEN("the zip file has two entrys named 'test1.txt' and 'TestFolder\\test2.dat'")
+						THEN("the zip vector has two entries named 'test1.txt' and 'TestFolder\\test2.dat'")
 						{
 							REQUIRE(unzipper.files().size() == 2);
 							REQUIRE(unzipper.files().front() == "test1.txt");
@@ -101,10 +102,10 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 				}
 			}
 
-			std::remove("ziptest.zip");			
+			zipvec.clear();
 		}
 
-		WHEN("a stringstream containing 'test string data compression' is added and named 'strdata'") 
+		WHEN("a stringstream containing 'test string data compression' is added and named 'strdata'")
 		{
 			std::stringstream strdata;
 			strdata << "test string data compression";
@@ -112,9 +113,9 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 			zipper.add(strdata, "strdata");
 			zipper.close();
 
-			zipper::Unzipper unzipper("ziptest.zip");
+			zipper::Unzipper unzipper(zipvec);
 
-			THEN("the zip file has one entry named 'strdata'")
+			THEN("the zip vector has one entry named 'strdata'")
 			{
 				REQUIRE(unzipper.files().size() == 1);
 				REQUIRE(unzipper.files().front() == "strdata");
@@ -136,7 +137,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 			}
 
 			std::remove("strdata");
-			std::remove("ziptest.zip");
+			zipvec.clear();
 		}
 	}
 }

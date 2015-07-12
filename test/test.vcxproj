@@ -119,6 +119,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="file_zip_test.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="memory_zip_test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="catch.hpp" />
