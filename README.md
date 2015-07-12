@@ -4,7 +4,7 @@ C++ wrapper around minizip compression library using the latest C++11.
 **WARNING: This is a work in progress and shouldn't be used yet until stability is reached**
 
 Zipper's goal is to bring the power and simplicity of minizip to a more object oriented/c++ user friendly library.
-It was born out of the necesity of a compression library that would be reliable, simple and flexible. By flexibility I mean supporting all kinds of inputs and outputs but specifically been able to compress into memory instead of been restricted to file compression only, and using data from memory instead of just files as well.
+It was born out of the necessity of a compression library that would be reliable, simple and flexible. By flexibility I mean supporting all kinds of inputs and outputs but specifically been able to compress into memory instead of been restricted to file compression only, and using data from memory instead of just files as well.
 
 #### Features:
 - [x] Create zip in memory
@@ -29,7 +29,7 @@ So far its been tested and focused on Windows using Visual Studio 2013
 
 #### Usage:
 
-There are two classes available Zipper and Unzipper. They behave in the same manner regarding constructors and storage parameters. (for a complete example take a look at the [tests](https://github.com/sebastiandev/zipper/blob/develop/test/file_zip_test.cpp ) using then awesome BDD's from catch library )
+There are two classes available Zipper and Unzipper. They behave in the same manner regarding constructors and storage parameters. (for a complete example take a look at the [tests](https://github.com/sebastiandev/zipper/blob/develop/test/file_zip_test.cpp ) using the awesome BDD's from Catch library )
 
 ##### Zipping
 
@@ -85,4 +85,31 @@ zipper.close();
 ```
 
 ##### Unzipping
-- TODO
+- Getting all entries in zip
+```c++
+Unzipper unzipper("zipfile.zip");
+std::vector<ZipEntry> entries = unzipper.entries();
+unzipper.close();
+```
+
+- Extracting all entries from zip
+```c++
+Unzipper unzipper("zipfile.zip");
+unzipper.extract();
+unzipper.close();
+```
+
+- Extracting a single entry from zip
+```c++
+Unzipper unzipper("zipfile.zip");
+unzipper.extractEntry("entry name");
+unzipper.close();
+```
+
+- Extracting a single entry from zip to memory
+```c++
+std::vector<unsigned char> unzipped_entry;
+Unzipper unzipper("zipfile.zip");
+unzipper.extractEntryToMemory("entry name", unzipped_entry);
+unzipper.close();
+```
