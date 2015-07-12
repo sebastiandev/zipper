@@ -85,4 +85,31 @@ zipper.close();
 ```
 
 ##### Unzipping
-- TODO
+- Getting all entries in zip
+```c++
+Unzipper unzipper("zipfile.zip");
+std::vector<ZipEntry> entries = unzipper.entries();
+unzipper.close();
+```
+
+- Extracting all entries from zip
+```c++
+Unzipper unzipper("zipfile.zip");
+unzipper.extract();
+unzipper.close();
+```
+
+- Extracting a single entry from zip
+```c++
+Unzipper unzipper("zipfile.zip");
+unzipper.extractEntry("entry name");
+unzipper.close();
+```
+
+- Extracting a single entry from zip to memory
+```c++
+std::vector<unsigned char> unzipped_entry;
+Unzipper unzipper("zipfile.zip");
+unzipper.extractEntryToMemory("entry name", unzipped_entry);
+unzipper.close();
+```
