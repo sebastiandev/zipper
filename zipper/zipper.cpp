@@ -69,7 +69,7 @@ namespace zipper {
 			{
 				m_zipmem.base = new char[buffer.size()];
 				memcpy(m_zipmem.base, (char*)buffer.data(), buffer.size());
-				m_zipmem.size = buffer.size();
+				m_zipmem.size = (uLong)buffer.size();
 			}
 
 			fill_memory_filefunc(&m_filefunc, &m_zipmem);
@@ -94,7 +94,7 @@ namespace zipper {
 			unsigned long crcFile = 0;
 
 			zip_fileinfo zi;
-			int size_read;
+			size_t size_read;
 
 			std::vector<char> buff;
 			buff.resize(size_buf);
@@ -153,7 +153,7 @@ namespace zipper {
 
 					if (size_read > 0)
 					{
-						err = zipWriteInFileInZip(this->m_zf, buff.data(), size_read);
+						err = zipWriteInFileInZip(this->m_zf, buff.data(), (unsigned int)size_read);
 						if (err < 0)
 							printf("error in writing %s in the zipfile\n", nameInZip.c_str());
 					}
@@ -191,8 +191,8 @@ namespace zipper {
 	///////////////////////////////////////////////////////////////////////////////
 
 	Zipper::Zipper(const std::string& zipname)
-		: m_vecbuffer(std::vector<unsigned char>())
-		, m_obuffer(std::stringstream())
+		: m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
+		, m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
 		, m_usingMemoryVector(false)
 		, m_usingStream(false)
 		, m_zipname(zipname)
@@ -205,8 +205,8 @@ namespace zipper {
 	}
 
 	Zipper::Zipper(const std::string& zipname, const std::string& password)
-		: m_vecbuffer(std::vector<unsigned char>())
-		, m_obuffer(std::stringstream())
+		: m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
+		, m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
 		, m_usingMemoryVector(false)
 		, m_usingStream(false)
 		, m_zipname(zipname)
@@ -220,7 +220,7 @@ namespace zipper {
 	}
 
 	Zipper::Zipper(std::iostream& buffer)
-		: m_vecbuffer(std::vector<unsigned char>())
+		: m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
 		, m_obuffer(buffer)
 		, m_usingMemoryVector(false)
 		, m_usingStream(true)
@@ -234,7 +234,7 @@ namespace zipper {
 
 	Zipper::Zipper(std::vector<unsigned char>& buffer)
 		: m_vecbuffer(buffer)
-		, m_obuffer(std::stringstream())
+		, m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
 		, m_usingMemoryVector(true)
 		, m_usingStream(false)
 		, m_impl(new Impl(*this))

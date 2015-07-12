@@ -15,16 +15,55 @@ struct Unzipper::Impl
 
     private:
 
-		// recibe un lambda como parametro https://en.wikipedia.org/wiki/C%2B%2B11#Polymorphic_wrappers_for_function_objects
-		void iterFiles(std::function<void()> callback)
+		bool initMemory(zlib_filefunc_def& filefunc)
+		{
+			m_zf = unzOpen2("__notused__", &filefunc);
+			return m_zf != NULL;
+		}
+
+		bool locateEntry(const std::string& name)
+		{
+			if (unzLocateFile(m_zf, name.c_str(), NULL) != UNZ_OK)
+			{
+				printf("entry %s not found in the zip\n", name);
+				return false;
+			}
+
+			return true;
+		}
+
+		ZipEntry currentEntryInfo()
+		{
+			unz_file_info64 file_info = { 0 };
+			uInt size_buf = WRITEBUFFERSIZE;
+			int err = UNZ_OK;
+			char filename_inzip[256] = { 0 };
+
+			unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
+
+			return ZipEntry(std::string(filename_inzip), file_info.compressed_size, file_info.uncompressed_size,
+							file_info.tmu_date.tm_year, file_info.tmu_date.tm_mon, file_info.tmu_date.tm_mday,
+							file_info.tmu_date.tm_hour, file_info.tmu_date.tm_min, file_info.tmu_date.tm_sec, file_info.dosDate);
+		}
+
+		// lambda as a parameter https://en.wikipedia.org/wiki/C%2B%2B11#Polymorphic_wrappers_for_function_objects
+		void iterEntries(std::function<void(ZipEntry&)> callback)
 		{
 			int err = unzGoToFirstFile(m_zf);
 			if (err == UNZ_OK)
 			{
 				do
 				{
-					callback();
-					err = unzGoToNextFile(m_zf);
+					ZipEntry entryinfo = currentEntryInfo();
+
+					if (entryinfo.valid())
+					{
+						callback(entryinfo);
+						err = unzGoToNextFile(m_zf);
+					}
+					else
+						err = UNZ_ERRNO;
+					
 				} while (err == UNZ_OK);
 
 				if (err != UNZ_END_OF_LIST_OF_FILE && err != UNZ_OK)
@@ -32,34 +71,13 @@ struct Unzipper::Impl
 			}
 		}
 
-		std::string getCurrentFilename()
+	public:
+		bool extractCurrentEntry(ZipEntry& entryinfo, std::function <int(ZipEntry&)> extractStrategy)
 		{
-			char filename_inzip[256] = { 0 };
-			unz_file_info64 file_info = { 0 };
-
-			int err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
-			if (err == UNZ_OK)
-				return std::string(filename_inzip);
-			else
-				return std::string();
-		}
-
-		bool extractCurrentFile()
-		{
-			unz_file_info64 file_info = { 0 };
-			uInt size_buf = WRITEBUFFERSIZE;
 			int err = UNZ_OK;
-			char filename_inzip[256] = { 0 };
 
-			err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
-			if (err != UNZ_OK)
+			if (!entryinfo.valid())
 				return false;
-
-			/* If zip entry is a directory then create it on disk */
-			makedir((const char*)filename_inzip);
-
-			std::vector<char> buff;
-			buff.resize(size_buf);
 
 			//err = unzOpenCurrentFilePassword(m_zf, password);
 			//if (err != UNZ_OK)
@@ -69,47 +87,115 @@ struct Unzipper::Impl
 			//if ((err == UNZ_OK) && (check_file_exists(filename_inzip)))
 			//{
 			//}
+			err = extractStrategy(entryinfo);
 
-			/* Create the file on disk so we can unzip to it */
-			std::ofstream output_file(filename_inzip);
-
-			if (output_file.good())
+			if (err == UNZ_OK)
 			{
-				err = unzOpenCurrentFilePassword(m_zf, m_outer.m_password.c_str());
-				if (err != UNZ_OK)
-					printf("error %d with zipfile in unzOpenCurrentFilePassword\n", err);
-
-				do
-				{
-					err = unzReadCurrentFile(m_zf, buff.data(), buff.size());
-					if (err < 0)
-					{
-						printf("error %d with zipfile in unzReadCurrentFile\n", err);
-						break;
-					}
-
-					if (err == 0)
-						break;
-
-					output_file.write(buff.data(), err);
-					if (!output_file.good())
-					{
-						printf("error %d in writing extracted file\n", errno);
-						err = UNZ_ERRNO;
-						break;
-					}
-				} while (err > 0);
-
-				output_file.flush();
-				output_file.close();
-
 				err = unzCloseCurrentFile(m_zf);
 				if (err != UNZ_OK)
 					printf("error %d with zipfile in unzCloseCurrentFile\n", err);
+			}
+
+			return err == UNZ_OK;
+		}
+
+		int extractToFile(const std::string& filename, ZipEntry& info)
+		{
+			int err = UNZ_ERRNO;
+
+			/* If zip entry is a directory then create it on disk */
+			makedir(info.name.c_str());
+
+			/* Create the file on disk so we can unzip to it */
+			std::ofstream output_file(filename);
+
+			if (output_file.good())
+			{
+				if (extractToStream(output_file, info))
+					err = UNZ_OK;
+
+				output_file.close();
 
 				/* Set the time of the file that has been unzipped */
-				change_file_date((const char*)filename_inzip, file_info.dosDate, file_info.tmu_date);
+				tm_unz timeaux;
+				memcpy(&timeaux, &info.unixdate, sizeof(timeaux));
+
+				change_file_date((const char*)filename.c_str(), info.dosdate, timeaux);
 			}
+			else
+				output_file.close();
+
+			return err;
+		}
+
+		int extractToStream(std::ostream& stream, ZipEntry& info)
+		{
+			size_t err = UNZ_ERRNO;
+
+			err = unzOpenCurrentFilePassword(m_zf, m_outer.m_password.c_str());
+			if (err != UNZ_OK)
+				printf("error %d with zipfile in unzOpenCurrentFilePassword\n", err);
+
+			std::vector<char> buffer;
+			buffer.resize(WRITEBUFFERSIZE);
+
+			do
+			{
+				err = unzReadCurrentFile(m_zf, buffer.data(), (unsigned int)buffer.size());
+				if (err < 0)
+				{
+					printf("error %d with zipfile in unzReadCurrentFile\n", err);
+					break;
+				}
+
+				if (err == 0)
+					break;
+
+				stream.write(buffer.data(), err);
+				if (!stream.good())
+				{
+					printf("error %d in writing extracted file\n", errno);
+					err = UNZ_ERRNO;
+					break;
+				}
+
+			} while (err > 0);
+
+			stream.flush();
+
+			return (int)err;
+		}
+
+		int extractToMemory(std::vector<unsigned char>& outvec, ZipEntry& info)
+		{
+			size_t err = UNZ_ERRNO;
+
+			err = unzOpenCurrentFilePassword(m_zf, m_outer.m_password.c_str());
+			if (err != UNZ_OK)
+				printf("error %d with zipfile in unzOpenCurrentFilePassword\n", err);
+
+			std::vector<unsigned char> buffer;
+			buffer.resize(WRITEBUFFERSIZE);
+
+			outvec.reserve(info.uncompressedSize);
+
+			do
+			{
+				err = unzReadCurrentFile(m_zf, buffer.data(), (unsigned int)buffer.size());
+				if (err < 0)
+				{
+					printf("error %d with zipfile in unzReadCurrentFile\n", err);
+					break;
+				}
+
+				if (err == 0)
+					break;
+
+				outvec.insert(outvec.end(), buffer.data(), buffer.data() + err);
+
+			} while (err > 0);
+
+			return (int)err;
 		}
 
 	public:
@@ -158,7 +244,7 @@ struct Unzipper::Impl
 			if (!buffer.empty())
 			{
 				m_zipmem.base = (char*)buffer.data();
-				m_zipmem.size = buffer.size();
+				m_zipmem.size = (uLong)buffer.size();
 			}
 
 			fill_memory_filefunc(&m_filefunc, &m_zipmem);
@@ -166,42 +252,54 @@ struct Unzipper::Impl
 			return initMemory(m_filefunc);
 		}
 
-		bool initMemory(zlib_filefunc_def& filefunc)
+		std::vector<ZipEntry> entries()
 		{
-			m_zf = unzOpen2("__notused__", &filefunc);
-			return m_zf != NULL;
-		}
+			std::vector<ZipEntry> entrylist;
+			iterEntries([this, &entrylist](ZipEntry& entryinfo){ entrylist.push_back(entryinfo); });
 
-
-		std::vector<std::string> files()
-		{
-			std::vector<std::string> filelist;
-			iterFiles([this, &filelist](){ filelist.push_back(this->getCurrentFilename());});
-
-			return filelist;
+			return entrylist;
 		}
 
 		bool extractAll()
 		{
-			iterFiles([this](){ this->extractCurrentFile(); });
+			iterEntries(
+				[this](ZipEntry& entryinfo)
+				{ 
+					// check mappings for existing files
+
+					std::function<int(ZipEntry&)> func = std::bind(&zipper::Unzipper::Impl::extractToFile, this, entryinfo.name, std::placeholders::_1);
+					this->extractCurrentEntry(entryinfo, func);
+				}
+			);
+
 			return true;
 		}
 
-		bool extractFile(const std::string& filename)
+		bool extractEntry(const std::string& name)
 		{
-			if (unzLocateFile(m_zf, filename.c_str(), NULL) != UNZ_OK)
-			{
-				printf("file %s not found in the zipfile\n", filename);
-				return false;
-			}
+			std::function<int(ZipEntry&)> func = std::bind(&zipper::Unzipper::Impl::extractToFile, this, name, std::placeholders::_1);
 
-			return extractCurrentFile();
+			return locateEntry(name) ? extractCurrentEntry(currentEntryInfo(), func) : false;
+		}
+
+		bool extractEntryToStream(const std::string& name, std::ostream& stream)
+		{
+			std::function<int(ZipEntry&)> func = std::bind(&zipper::Unzipper::Impl::extractToStream, this, std::ref(stream), std::placeholders::_1);
+
+			return locateEntry(name) ? extractCurrentEntry(currentEntryInfo(), func) : false;
+		}
+
+		bool extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec)
+		{
+			std::function<int(ZipEntry&)> func = std::bind(&zipper::Unzipper::Impl::extractToMemory, this, std::ref(vec), std::placeholders::_1);
+
+			return locateEntry(name) ? extractCurrentEntry(currentEntryInfo(), func) : false;
 		}
 };
 
-Unzipper::Unzipper(std::istream& buffer)
-	: m_ibuffer(buffer)
-	, m_vecbuffer(std::vector<unsigned char>())
+Unzipper::Unzipper(std::istream& zippedBuffer)
+	: m_ibuffer(zippedBuffer)
+	, m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
 	, m_usingMemoryVector(false)
 	, m_usingStream(true)
 	, m_impl(new Impl(*this))
@@ -211,9 +309,9 @@ Unzipper::Unzipper(std::istream& buffer)
 	m_open = true;
 }
 
-Unzipper::Unzipper(std::vector<unsigned char>& buffer)
-	: m_ibuffer(std::stringstream())
-	, m_vecbuffer(buffer)
+Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer)
+	: m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
+	, m_vecbuffer(zippedBuffer)
 	, m_usingMemoryVector(true)
 	, m_usingStream(false)
 	, m_impl(new Impl(*this))
@@ -225,8 +323,8 @@ Unzipper::Unzipper(std::vector<unsigned char>& buffer)
 }
 
 Unzipper::Unzipper(const std::string& zipname)
-	: m_ibuffer(std::stringstream())
-	, m_vecbuffer(std::vector<unsigned char>())
+	: m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
+	, m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
 	, m_zipname(zipname)
 	, m_usingMemoryVector(false)
 	, m_usingStream(false)
@@ -239,8 +337,8 @@ Unzipper::Unzipper(const std::string& zipname)
 }
 
 Unzipper::Unzipper(const std::string& zipname, const std::string& password)
-	: m_ibuffer(std::stringstream())
-	, m_vecbuffer(std::vector<unsigned char>())
+	: m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
+	, m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
 	, m_zipname(zipname)
 	, m_password(password)
 	, m_usingMemoryVector(false)
@@ -258,15 +356,26 @@ Unzipper::~Unzipper(void)
 	close();
 }
 
-std::vector<std::string> Unzipper::files()
+std::vector<ZipEntry> Unzipper::entries()
 {
-	return m_impl->files();
+	return m_impl->entries();
 }
 
-bool Unzipper::extractFile(const std::string& filename)
+bool Unzipper::extractEntry(const std::string& name)
 {
-	return m_impl->extractFile(filename);
+	return m_impl->extractEntry(name);
 }
+
+bool Unzipper::extractEntryToStream(const std::string& name, std::ostream& stream)
+{
+	return m_impl->extractEntryToStream(name, stream);
+}
+
+bool Unzipper::extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec)
+{
+	return m_impl->extractEntryToMemory(name, vec);
+}
+
 
 bool Unzipper::extract()
 {
@@ -283,3 +392,4 @@ void Unzipper::close()
 }
 
 }
+

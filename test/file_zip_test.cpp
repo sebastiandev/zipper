@@ -35,12 +35,12 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
 			THEN("the zip file has one entry named 'test1.txt'")
 			{
-				REQUIRE(unzipper.files().size() == 1);
-				REQUIRE(unzipper.files().front() == "test1.txt");
+				REQUIRE(unzipper.entries().size() == 1);
+				REQUIRE(unzipper.entries().front().name == "test1.txt");
 
 				AND_THEN("extracting the test1.txt entry creates a file named 'test1.txt' with the text 'test file compression'")
 				{
-					unzipper.extractFile("test1.txt");
+					unzipper.extractEntry("test1.txt");
 					// due to sections forking or creating different stacks we need to make sure the local instance is closed to
 					// prevent mixing the closing when both instances are freed at the end of the scope
 					unzipper.close(); 
@@ -74,9 +74,9 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
 						THEN("the zip file has two entrys named 'test1.txt' and 'TestFolder\\test2.dat'")
 						{
-							REQUIRE(unzipper.files().size() == 2);
-							REQUIRE(unzipper.files().front() == "test1.txt");
-							REQUIRE(unzipper.files()[1] == "TestFolder\\test2.dat");
+							REQUIRE(unzipper.entries().size() == 2);
+							REQUIRE(unzipper.entries().front().name == "test1.txt");
+							REQUIRE(unzipper.entries()[1].name == "TestFolder\\test2.dat");
 
 							AND_THEN("extracting the test2.dat entry creates a folder 'TestFolder' with a file named 'test2.dat' with the text 'other data to compression test'")
 							{
@@ -116,8 +116,8 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
 			THEN("the zip file has one entry named 'strdata'")
 			{
-				REQUIRE(unzipper.files().size() == 1);
-				REQUIRE(unzipper.files().front() == "strdata");
+				REQUIRE(unzipper.entries().size() == 1);
+				REQUIRE(unzipper.entries().front().name == "strdata");
 
 				AND_THEN("extracting the strdata entry creates a file named 'strdata' with the txt 'test string data compression'")
 				{
