@@ -9,8 +9,8 @@ It was born out of the necessity of a compression library that would be reliable
 #### Features:
 - [x] Create zip in memory
 - [x] Allow files, vector and generic streams as input to zip
+- [x] File mappings for replacing strategies (overwrite if exists or use alternative name from mapping)
 - [ ] Password protected zip
-- [ ] File mappings for replacing strategies (if file exists overwrite or use alternative name provided in mapping)
 
 
 #### Configuration
@@ -96,6 +96,14 @@ unzipper.close();
 ```c++
 Unzipper unzipper("zipfile.zip");
 unzipper.extract();
+unzipper.close();
+```
+
+- Extracting all entries from zip using alternative names for existing files on disk
+```c++
+std::map<std::string, std::string> alternativeNames = { {"Test1", "alternative_name_test1"} };
+Unzipper unzipper("zipfile.zip");
+unzipper.extract(alternativeNames);
 unzipper.close();
 ```
 
