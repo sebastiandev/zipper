@@ -39,7 +39,7 @@ namespace zipper {
 				m_zf = zipOpen64(filename.c_str(), mode);
 			#endif
 
-			return m_zf != NULL;
+			return NULL != m_zf;
 		}
 
 		bool initWithStream(std::iostream& stream)
@@ -139,10 +139,7 @@ namespace zipper {
 					zip64);
 			}
 
-			if (err != ZIP_OK)
-				//printf("error in opening %s in zipfile\n", contentPath.c_str() );
-				std::cerr << "Error!" << std::endl;
-			else
+			if (ZIP_OK == err)
 			{
 				do {
 					err = ZIP_OK;
@@ -159,11 +156,13 @@ namespace zipper {
 					}
 				} while ((err == ZIP_OK) && (size_read>0));
 			}
+			else
+				throw std::exception(("Error adding '" + nameInZip + "' to zip").c_str());
 
-			if (err == ZIP_OK)
+			if (ZIP_OK == err)
 				err = zipCloseFileInZip(this->m_zf);
 
-			return err == ZIP_OK;
+			return ZIP_OK == err;
 		}
 
 		void close()

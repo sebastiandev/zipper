@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <memory>
+#include <map>
 
 namespace zipper {
 	
@@ -23,7 +24,7 @@ namespace zipper {
 
 		std::vector<ZipEntry> entries();
 
-		bool extract();
+		bool extract(const std::map<std::string, std::string>& alternativeNames = {});
 		bool extractEntry(const std::string& name);
 		bool extractEntryToStream(const std::string& name, std::ostream& stream);
 		bool extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec);

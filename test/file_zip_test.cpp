@@ -8,6 +8,7 @@
 #include <fstream>
 #include <ostream>
 #include <string>
+#include <map>
 
 SCENARIO("zipfile feed with different inputs", "[zip]") 
 {
@@ -122,7 +123,6 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 				AND_THEN("extracting the strdata entry creates a file named 'strdata' with the txt 'test string data compression'")
 				{
 					unzipper.extract();
-					unzipper.close();
 
 					REQUIRE(check_file_exists("strdata"));
 
@@ -132,10 +132,34 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 					std::string test((std::istreambuf_iterator<char>(testfile)), std::istreambuf_iterator<char>());
 					testfile.close();
 					REQUIRE(test == "test string data compression");
+
+					AND_THEN("extracting with an alternative name 'alternative_strdata.dat' crates a file with that name instead of the one inside de zip")
+					{
+						std::map<std::string, std::string> alt_names = { { "strdata", "alternative_strdata.dat" } };
+
+						unzipper.extract(alt_names);
+
+						REQUIRE(check_file_exists("alternative_strdata.dat"));
+
+						std::ifstream testfile2("alternative_strdata.dat");
+						REQUIRE(testfile2.good());
+
+						std::string test2((std::istreambuf_iterator<char>(testfile2)), std::istreambuf_iterator<char>());
+						testfile2.close();
+						REQUIRE(test2 == "test string data compression");
+
+						AND_THEN("trying to extract a file 'fake.dat' that doesn't exists, returns false")
+						{
+							REQUIRE(false == unzipper.extractEntry("fake.dat"));
+						}
+					}
+
+					unzipper.close();
 				}
 			}
 
 			std::remove("strdata");
+			std::remove("alternative_strdata.dat");
 			std::remove("ziptest.zip");
 		}
 	}
