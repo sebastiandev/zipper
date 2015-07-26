@@ -1,5 +1,11 @@
 #include "tools.h"
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+namespace fs = std::tr2::sys;
+#else
+namespace fs = std::experimental::filesystem;
+#endif
+
 /* calculate the CRC32 of a file,
 because to encrypt a file, we need known the CRC32 of the file before */
 
@@ -11,7 +17,7 @@ void getFileCrc(std::istream& input_stream, std::vector<char>& buff, unsigned lo
 
 	do {
 		input_stream.read(buff.data(), buff.size());
-		size_read = input_stream.gcount();
+		size_read = (unsigned long)input_stream.gcount();
 
 		if (size_read>0)
 			calculate_crc = crc32(calculate_crc, (const unsigned char*)buff.data(), size_read);
@@ -34,13 +40,13 @@ bool isLargeFile(std::istream& input_stream)
 	return pos >= 0xffffffff;
 }
 
-void change_file_date(const char *filename, uLong dosdate, tm_unz tmu_date)
+void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tmu_date)
 {
 #ifdef _WIN32
 	HANDLE hFile;
 	FILETIME ftm, ftLocal, ftCreate, ftLastAcc, ftLastWrite;
 
-	hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	hFile = CreateFileA(filename.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
 		GetFileTime(hFile, &ftCreate, &ftLastAcc, &ftLastWrite);
@@ -66,80 +72,69 @@ void change_file_date(const char *filename, uLong dosdate, tm_unz tmu_date)
 	newdate.tm_isdst = -1;
 
 	ut.actime = ut.modtime = mktime(&newdate);
-	utime(filename, &ut);
+	utime(filename.c_str(), &ut);
 #endif
 #endif
 }
 
 
-bool check_file_exists(const char* filename)
+bool checkFileExists(const std::string& filename)
 {
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
-	auto file = std::tr2::sys::path(filename);
-	return std::tr2::sys::exists(file);
+	auto file = fs::path(filename);
+	return fs::exists(file);
 #else
 	struct stat buffer;
-	return (stat(filename, &buffer) == 0);
+	return (stat(filename.c_str(), &buffer) == 0);
 #endif
 }
 
-bool makedir(const char *newdir)
+bool makedir(const std::string& newdir)
 {
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-	auto dir = std::tr2::sys::path(newdir);
-	if (!dir.has_parent_path())
-		return true;
+	auto path = fs::path(newdir);
+	return fs::create_directories(path);
+}
+
+void removeFolder(const std::string& foldername)
+{
+	auto folder = fs::path(foldername);
+	fs::remove_all(folder);
+}
+
+bool isDirectory(const std::string& path)
+{
+	auto file = fs::path(path);
+	return fs::is_directory(file);
+}
+
+std::string parentDirectory(const std::string& filepath)
+{
+	return fs::path(filepath).parent_path();
+}
+
+std::string currentPath()
+{
+	return fs::current_path<fs::path>().string();
+}
+
+std::vector<std::string> filesFromDirectory(const std::string& path)
+{
+	std::vector<std::string> files;
+
+	auto folder = fs::path(path);
+	auto it = fs::recursive_directory_iterator(folder);
+	for (it; it != fs::recursive_directory_iterator(); ++it)
+	{
+		// file object contains absolute path in the case of recursive iterators
+		const auto& file = it->path();
+		if (!fs::is_directory(file))
+			files.push_back(file);
+	}	
 	
-	return std::tr2::sys::create_directories(dir.parent_path());
-#else
-	char *buffer = NULL;
-	char *p = NULL;
-	int len = (int)strlen(newdir);
+	return files;
+}
 
-	if (len <= 0)
-		return true;
-
-	buffer = (char*)malloc(len + 1);
-	if (buffer == NULL)
-	{
-		printf("Error allocating memory\n");
-		return false;
-	}
-
-	strcpy(buffer, newdir);
-
-	if (buffer[len - 1] == '/')
-		buffer[len - 1] = 0;
-
-	if (MKDIR(buffer) == 0)
-	{
-		free(buffer);
-		return false;
-	}
-
-	p = buffer + 1;
-	while (1)
-	{
-		char hold;
-		while (*p && *p != '\\' && *p != '/')
-			p++;
-		hold = *p;
-		*p = 0;
-
-		if ((MKDIR(buffer) == -1) && (errno == ENOENT))
-		{
-			printf("couldn't create directory %s (%d)\n", buffer, errno);
-			free(buffer);
-			return true;
-		}
-
-		if (hold == 0)
-			break;
-
-		*p++ = hold;
-	}
-
-	free(buffer);
-	return false;
-#endif
+std::string fileNameFromPath(const std::string& path)
+{
+	return fs::path(path).filename();
 }

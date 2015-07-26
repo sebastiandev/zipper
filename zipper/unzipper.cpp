@@ -90,7 +90,7 @@ struct Unzipper::Impl
 			int err = UNZ_ERRNO;
 
 			/* If zip entry is a directory then create it on disk */
-			makedir(info.name.c_str());
+			makedir(parentDirectory(info.name));
 
 			/* Create the file on disk so we can unzip to it */
 			std::ofstream output_file(filename);
@@ -106,7 +106,7 @@ struct Unzipper::Impl
 				tm_unz timeaux;
 				memcpy(&timeaux, &info.unixdate, sizeof(timeaux));
 
-				change_file_date((const char*)filename.c_str(), info.dosdate, timeaux);
+				changeFileDate(filename, info.dosdate, timeaux);
 			}
 			else
 				output_file.close();

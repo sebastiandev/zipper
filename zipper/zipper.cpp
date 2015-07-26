@@ -27,7 +27,7 @@ namespace zipper {
 			int flags = Zipper::Append;
 
 			/* open the zip file for output */
-			if (check_file_exists(filename.c_str()))
+			if (checkFileExists(filename))
 				mode = (flags & Zipper::Overwrite) ? APPEND_STATUS_CREATE : APPEND_STATUS_ADDINZIP;
 			else
 				mode = APPEND_STATUS_CREATE;
@@ -149,11 +149,8 @@ namespace zipper {
 						err = ZIP_ERRNO;
 
 					if (size_read > 0)
-					{
 						err = zipWriteInFileInZip(this->m_zf, buff.data(), (unsigned int)size_read);
-						if (err < 0)
-							printf("error in writing %s in the zipfile\n", nameInZip.c_str());
-					}
+
 				} while ((err == ZIP_OK) && (size_read>0));
 			}
 			else
@@ -253,6 +250,31 @@ namespace zipper {
 	{
 		return m_impl->add(source, nameInZip, "", flags);
 	}
+
+	bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
+	{
+		if (isDirectory(fileOrFolderPath))
+		{
+			auto folderName = fileNameFromPath(fileOrFolderPath);
+			std::vector<std::string> files = filesFromDirectory(fileOrFolderPath);
+			for (auto& f : files)
+			{
+				std::ifstream input(f);
+				auto nameInZip = f.substr(f.find(folderName), f.size());
+				add(input, nameInZip, flags);
+				input.close();
+			}
+		}
+		else
+		{
+			std::ifstream input(fileOrFolderPath);
+			add(input, fileNameFromPath(fileOrFolderPath), flags);
+			input.close();
+		}
+
+		return true;
+	}
+
 
 	void Zipper::open()
 	{

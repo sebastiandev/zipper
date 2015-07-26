@@ -46,7 +46,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 					// prevent mixing the closing when both instances are freed at the end of the scope
 					unzipper.close(); 
 
-					REQUIRE(check_file_exists("test1.txt"));
+					REQUIRE(checkFileExists("test1.txt"));
 
 					std::ifstream testfile("test1.txt");
 					REQUIRE(testfile.good());
@@ -73,7 +73,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
 						zipper::Unzipper unzipper("ziptest.zip");
 
-						THEN("the zip file has two entrys named 'test1.txt' and 'TestFolder\\test2.dat'")
+						AND_THEN("the zip file has two entrys named 'test1.txt' and 'TestFolder\\test2.dat'")
 						{
 							REQUIRE(unzipper.entries().size() == 2);
 							REQUIRE(unzipper.entries().front().name == "test1.txt");
@@ -84,7 +84,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 								unzipper.extract();
 								unzipper.close();
 
-								REQUIRE(check_file_exists("TestFolder\\test2.dat"));
+								REQUIRE(checkFileExists("TestFolder\\test2.dat"));
 
 								std::ifstream testfile("TestFolder\\test2.dat");
 								REQUIRE(testfile.good());
@@ -92,10 +92,41 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 								std::string test((std::istreambuf_iterator<char>(testfile)), std::istreambuf_iterator<char>());
 								testfile.close();
 								REQUIRE(test == "other data to compression test");
+
+								AND_WHEN("adding a folder to the zip, creates one entry for each file inside the folder with the name in zip as 'Folder\\...'")
+								{
+									makedir(currentPath() + "\\TestFiles\\subfolder");
+									std::ofstream test("TestFiles\\test1.txt");
+									test << "test file compression";
+									test.flush();
+									test.close();
+
+									std::ofstream test1("TestFiles\\test2.pdf");
+									test1 << "test file compression";
+									test1.flush();
+									test1.close();
+
+									std::ofstream test2("TestFiles\\subfolder\\test-sub.txt");
+									test2 << "test file compression";
+									test2.flush();
+									test2.close();
+
+									zipper.open();
+									zipper.add("TestFiles");
+									zipper.close();
+									
+									zipper::Unzipper unzipper("ziptest.zip");
+									REQUIRE(unzipper.entries().size() == 5);
+
+									unzipper.close();
+								}
 							}
 						}
 
 						std::remove("test1.txt");
+						std::remove("TestFiles\\test1.txt");
+						std::remove("TestFiles\\test2.pdf");
+						std::remove("TestFiles\\subfolder\\test-sub.txt");
 						std::remove("TestFolder\\test2.dat");
 						std::remove("TestFolder");
 					}
@@ -124,7 +155,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 				{
 					unzipper.extract();
 
-					REQUIRE(check_file_exists("strdata"));
+					REQUIRE(checkFileExists("strdata"));
 
 					std::ifstream testfile("strdata");
 					REQUIRE(testfile.good());
@@ -139,7 +170,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
 						unzipper.extract(alt_names);
 
-						REQUIRE(check_file_exists("alternative_strdata.dat"));
+						REQUIRE(checkFileExists("alternative_strdata.dat"));
 
 						std::ifstream testfile2("alternative_strdata.dat");
 						REQUIRE(testfile2.good());

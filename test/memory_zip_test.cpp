@@ -46,7 +46,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
 					// prevent mixing the closing when both instances are freed at the end of the scope
 					unzipper.close();
 
-					REQUIRE(check_file_exists("test1.txt"));
+					REQUIRE(checkFileExists("test1.txt"));
 
 					std::ifstream testfile("test1.txt");
 					REQUIRE(testfile.good());
@@ -83,7 +83,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
 							{
 								unzipper.extract();
 
-								REQUIRE(check_file_exists("TestFolder\\test2.dat"));
+								REQUIRE(checkFileExists("TestFolder\\test2.dat"));
 
 								std::ifstream testfile("TestFolder\\test2.dat");
 								REQUIRE(testfile.good());
@@ -136,7 +136,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
 				{
 					unzipper.extract();
 
-					REQUIRE(check_file_exists("strdata"));
+					REQUIRE(checkFileExists("strdata"));
 
 					std::ifstream testfile("strdata");
 					REQUIRE(testfile.good());

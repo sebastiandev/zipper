@@ -23,6 +23,7 @@ namespace zipper {
 		~Zipper(void);
 
 		bool add(std::istream& source, const std::string& nameInZip = std::string(), zipFlags flags = Better);
+		bool add(const std::string& fileOrFolderPath, zipFlags flags = Better);
 		
 		void open();
 		void close();
