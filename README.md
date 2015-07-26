@@ -108,7 +108,7 @@ unzipper.close();
 - Extracting all entries from zip using alternative names for existing files on disk
 ```c++
 std::map<std::string, std::string> alternativeNames = { {"Test1", "alternative_name_test1"} };
-Unzipper unzipper("zipfile.zip");
+Unzipper unzipper(".", "zipfile.zip");
 unzipper.extract(alternativeNames);
 unzipper.close();
 ```
