@@ -109,7 +109,7 @@ bool isDirectory(const std::string& path)
 
 std::string parentDirectory(const std::string& filepath)
 {
-	return fs::path(filepath).parent_path();
+	return fs::path(filepath).branch_path();
 }
 
 std::string currentPath()

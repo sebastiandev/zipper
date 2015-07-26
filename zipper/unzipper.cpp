@@ -90,7 +90,7 @@ struct Unzipper::Impl
 			int err = UNZ_ERRNO;
 
 			/* If zip entry is a directory then create it on disk */
-			makedir(parentDirectory(info.name));
+			makedir(parentDirectory(filename));
 
 			/* Create the file on disk so we can unzip to it */
 			std::ofstream output_file(filename);
@@ -241,14 +241,17 @@ struct Unzipper::Impl
 			return entrylist;
 		}
 
-		bool extractAll(const std::map<std::string, std::string>& alternativeNames)
+		bool extractAll(const std::string& destination, const std::map<std::string, std::string>& alternativeNames)
 		{
 			iterEntries(
-				[this, &alternativeNames](ZipEntry& entryinfo)
+				[this, &destination, &alternativeNames](ZipEntry& entryinfo)
 				{ 
-					std::string alternativeName = entryinfo.name;
+					std::string alternativeName = destination.empty() ? "" : destination + "\\";
+
 					if (alternativeNames.find(entryinfo.name) != alternativeNames.end())
-						alternativeName = alternativeNames.at(entryinfo.name);
+						alternativeName += alternativeNames.at(entryinfo.name);
+					else
+						alternativeName += entryinfo.name;
 
 					std::function<int(ZipEntry&)> func = std::bind(&zipper::Unzipper::Impl::extractToFile, this, alternativeName, std::placeholders::_1);
 					this->extractCurrentEntry(entryinfo, func);
@@ -258,9 +261,10 @@ struct Unzipper::Impl
 			return true;
 		}
 
-		bool extractEntry(const std::string& name)
+		bool extractEntry(const std::string& name, const std::string& destination)
 		{
-			std::function<int(ZipEntry&)> func = std::bind(&zipper::Unzipper::Impl::extractToFile, this, name, std::placeholders::_1);
+			auto outputfile = destination.empty() ? name : destination + "\\" + name;
+			std::function<int(ZipEntry&)> func = std::bind(&zipper::Unzipper::Impl::extractToFile, this, outputfile, std::placeholders::_1);
 
 			return locateEntry(name) ? extractCurrentEntry(currentEntryInfo(), func) : false;
 		}
@@ -344,9 +348,9 @@ std::vector<ZipEntry> Unzipper::entries()
 	return m_impl->entries();
 }
 
-bool Unzipper::extractEntry(const std::string& name)
+bool Unzipper::extractEntry(const std::string& name, const std::string& destination)
 {
-	return m_impl->extractEntry(name);
+	return m_impl->extractEntry(name, destination);
 }
 
 bool Unzipper::extractEntryToStream(const std::string& name, std::ostream& stream)
@@ -360,9 +364,9 @@ bool Unzipper::extractEntryToMemory(const std::string& name, std::vector<unsigne
 }
 
 
-bool Unzipper::extract(const std::map<std::string, std::string>& alternativeNames)
+bool Unzipper::extract(const std::string& destination, const std::map<std::string, std::string>& alternativeNames)
 {
-	return m_impl->extractAll(alternativeNames);
+	return m_impl->extractAll(destination, alternativeNames);
 }
 
 void Unzipper::close()

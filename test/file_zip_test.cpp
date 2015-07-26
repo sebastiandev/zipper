@@ -118,17 +118,25 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 									zipper::Unzipper unzipper("ziptest.zip");
 									REQUIRE(unzipper.entries().size() == 5);
 
+									AND_THEN("extracting to a new folder 'NewDestination' craetes the file structure from zip in the new destination folder")
+									{
+										makedir(currentPath() + "\\NewDestination");
+
+										unzipper.extract(currentPath() + "\\NewDestination");
+										REQUIRE(checkFileExists("NewDestination\\TestFiles\\test1.txt"));
+										REQUIRE(checkFileExists("NewDestination\\TestFiles\\test2.pdf"));
+										REQUIRE(checkFileExists("NewDestination\\TestFiles\\subfolder\\test-sub.txt"));
+									}
+
 									unzipper.close();
 								}
 							}
 						}
 
+						removeFolder("TestFolder");
+						removeFolder("TestFiles");
+						removeFolder("NewDestination");
 						std::remove("test1.txt");
-						std::remove("TestFiles\\test1.txt");
-						std::remove("TestFiles\\test2.pdf");
-						std::remove("TestFiles\\subfolder\\test-sub.txt");
-						std::remove("TestFolder\\test2.dat");
-						std::remove("TestFolder");
 					}
 				}
 			}
@@ -168,7 +176,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 					{
 						std::map<std::string, std::string> alt_names = { { "strdata", "alternative_strdata.dat" } };
 
-						unzipper.extract(alt_names);
+						unzipper.extract("", alt_names);
 
 						REQUIRE(checkFileExists("alternative_strdata.dat"));
 
