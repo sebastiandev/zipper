@@ -1,8 +1,6 @@
 # Zipper
 C++ wrapper around minizip compression library using the latest C++11.
 
-**WARNING: This is a work in progress and shouldn't be used yet until stability is reached**
-
 Zipper's goal is to bring the power and simplicity of minizip to a more object oriented/c++ user friendly library.
 It was born out of the necessity of a compression library that would be reliable, simple and flexible. By flexibility I mean supporting all kinds of inputs and outputs but specifically been able to compress into memory instead of been restricted to file compression only, and using data from memory instead of just files as well.
 
@@ -47,6 +45,14 @@ zipper.add(input2, "Test1");
 zipper.close();
 ```
 
+- Adding a file by name and an entire folder to a zip:
+```c++
+
+Zipper zipper("ziptest.zip");
+zipper.add("somefile.txt");
+zipper.add("myFolder");
+zipper.close();
+```
 - Creating a zip file using the awesome streams from boost that lets us use a vector as a stream:
 
 ```c++
