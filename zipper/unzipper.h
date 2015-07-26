@@ -24,8 +24,8 @@ namespace zipper {
 
 		std::vector<ZipEntry> entries();
 
-		bool extract(const std::map<std::string, std::string>& alternativeNames = {});
-		bool extractEntry(const std::string& name);
+		bool extract(const std::string& destination=std::string(), const std::map<std::string, std::string>& alternativeNames = {});
+		bool extractEntry(const std::string& name, const std::string& destination = std::string());
 		bool extractEntryToStream(const std::string& name, std::ostream& stream);
 		bool extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec);
 

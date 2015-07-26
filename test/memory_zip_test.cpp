@@ -108,8 +108,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
 						}
 
 						std::remove("test1.txt");
-						std::remove("TestFolder\\test2.dat");
-						std::remove("TestFolder");
+						removeFolder("TestFolder");
 					}
 				}
 			}
