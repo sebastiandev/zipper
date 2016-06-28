@@ -1,8 +1,8 @@
 #include "catch.hpp"
 
-#include "zipper\zipper.h"
-#include "zipper\unzipper.h"
-#include "zipper\tools.h"
+#include <zipper/zipper.h>
+#include <zipper/unzipper.h>
+#include <zipper/tools.h>
 
 #include <vector>
 #include <fstream>
@@ -65,7 +65,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
 						std::ifstream test2stream("test2.dat");
 
 						zipper.open();
-						zipper.add(test2stream, "TestFolder\\test2.dat");
+						zipper.add(test2stream, "TestFolder/test2.dat");
 						zipper.close();
 
 						test2stream.close();
@@ -73,19 +73,19 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
 
 						zipper::Unzipper unzipper(zipvec);
 
-						THEN("the zip vector has two entries named 'test1.txt' and 'TestFolder\\test2.dat'")
+						THEN("the zip vector has two entries named 'test1.txt' and 'TestFolder/test2.dat'")
 						{
 							REQUIRE(unzipper.entries().size() == 2);
 							REQUIRE(unzipper.entries().front().name == "test1.txt");
-							REQUIRE(unzipper.entries()[1].name == "TestFolder\\test2.dat");
+							REQUIRE(unzipper.entries()[1].name == "TestFolder/test2.dat");
 
 							AND_THEN("extracting the test2.dat entry creates a folder 'TestFolder' with a file named 'test2.dat' with the text 'other data to compression test'")
 							{
 								unzipper.extract();
 
-								REQUIRE(checkFileExists("TestFolder\\test2.dat"));
+								REQUIRE(checkFileExists("TestFolder/test2.dat"));
 
-								std::ifstream testfile("TestFolder\\test2.dat");
+								std::ifstream testfile("TestFolder/test2.dat");
 								REQUIRE(testfile.good());
 
 								std::string test((std::istreambuf_iterator<char>(testfile)), std::istreambuf_iterator<char>());
@@ -95,7 +95,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
 								AND_THEN("extracting the test2.dat entry to memory fills a vector with 'other data to compression test'")
 								{
 									std::vector<unsigned char> resvec;
-									unzipper.extractEntryToMemory("TestFolder\\test2.dat", resvec);
+									unzipper.extractEntryToMemory("TestFolder/test2.dat", resvec);
 									unzipper.close();
 
 									std::string test(resvec.begin(), resvec.end());

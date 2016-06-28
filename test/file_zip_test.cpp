@@ -1,8 +1,8 @@
 #include "catch.hpp"
 
-#include "zipper\zipper.h"
-#include "zipper\unzipper.h"
-#include "zipper\tools.h"
+#include <zipper/zipper.h>
+#include <zipper/unzipper.h>
+#include <zipper/tools.h>
 
 #include <vector>
 #include <fstream>
@@ -65,7 +65,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 						std::ifstream test2stream("test2.dat");
 
 						zipper.open();
-						zipper.add(test2stream, "TestFolder\\test2.dat");
+						zipper.add(test2stream, "TestFolder/test2.dat");
 						zipper.close();
 
 						test2stream.close();
@@ -73,40 +73,40 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
 						zipper::Unzipper unzipper("ziptest.zip");
 
-						AND_THEN("the zip file has two entrys named 'test1.txt' and 'TestFolder\\test2.dat'")
+						AND_THEN("the zip file has two entrys named 'test1.txt' and 'TestFolder/test2.dat'")
 						{
 							REQUIRE(unzipper.entries().size() == 2);
 							REQUIRE(unzipper.entries().front().name == "test1.txt");
-							REQUIRE(unzipper.entries()[1].name == "TestFolder\\test2.dat");
+							REQUIRE(unzipper.entries()[1].name == "TestFolder/test2.dat");
 
 							AND_THEN("extracting the test2.dat entry creates a folder 'TestFolder' with a file named 'test2.dat' with the text 'other data to compression test'")
 							{
 								unzipper.extract();
 								unzipper.close();
 
-								REQUIRE(checkFileExists("TestFolder\\test2.dat"));
+								REQUIRE(checkFileExists("TestFolder/test2.dat"));
 
-								std::ifstream testfile("TestFolder\\test2.dat");
+								std::ifstream testfile("TestFolder/test2.dat");
 								REQUIRE(testfile.good());
 
 								std::string test((std::istreambuf_iterator<char>(testfile)), std::istreambuf_iterator<char>());
 								testfile.close();
 								REQUIRE(test == "other data to compression test");
 
-								AND_WHEN("adding a folder to the zip, creates one entry for each file inside the folder with the name in zip as 'Folder\\...'")
+								AND_WHEN("adding a folder to the zip, creates one entry for each file inside the folder with the name in zip as 'Folder/...'")
 								{
-									makedir(currentPath() + "\\TestFiles\\subfolder");
-									std::ofstream test("TestFiles\\test1.txt");
+									makedir(currentPath() + "/TestFiles/subfolder");
+									std::ofstream test("TestFiles/test1.txt");
 									test << "test file compression";
 									test.flush();
 									test.close();
 
-									std::ofstream test1("TestFiles\\test2.pdf");
+									std::ofstream test1("TestFiles/test2.pdf");
 									test1 << "test file compression";
 									test1.flush();
 									test1.close();
 
-									std::ofstream test2("TestFiles\\subfolder\\test-sub.txt");
+									std::ofstream test2("TestFiles/subfolder/test-sub.txt");
 									test2 << "test file compression";
 									test2.flush();
 									test2.close();
@@ -120,12 +120,12 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
 									AND_THEN("extracting to a new folder 'NewDestination' craetes the file structure from zip in the new destination folder")
 									{
-										makedir(currentPath() + "\\NewDestination");
+										makedir(currentPath() + "/NewDestination");
 
-										unzipper.extract(currentPath() + "\\NewDestination");
-										REQUIRE(checkFileExists("NewDestination\\TestFiles\\test1.txt"));
-										REQUIRE(checkFileExists("NewDestination\\TestFiles\\test2.pdf"));
-										REQUIRE(checkFileExists("NewDestination\\TestFiles\\subfolder\\test-sub.txt"));
+										unzipper.extract(currentPath() + "/NewDestination");
+										REQUIRE(checkFileExists("NewDestination/TestFiles/test1.txt"));
+										REQUIRE(checkFileExists("NewDestination/TestFiles/test2.pdf"));
+										REQUIRE(checkFileExists("NewDestination/TestFiles/subfolder/test-sub.txt"));
 									}
 
 									unzipper.close();
