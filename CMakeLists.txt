@@ -6,6 +6,7 @@
 #
 ###############################################################################
 
+set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 cmake_minimum_required(VERSION 2.6)
 project(zipper)
 
@@ -24,7 +25,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt")
 
     file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" VersionString NEWLINE_CONSUME)
     string(STRIP "${VersionString}" VersionString)
-    set(LIBSBML_DOTTED_VERSION ${VersionString})
+    set(ZIPPER_DOTTED_VERSION ${VersionString})
     string(REPLACE "." ";" VersionString "${VersionString}" )
     string(REPLACE "-" ";" VersionString "${VersionString}" )
     list(LENGTH VersionString versionLength)
@@ -61,14 +62,16 @@ set(CPACK_RPM_PACKAGE_LICENSE "MIT")
 set(CPACK_RPM_PACKAGE_GROUP "Libraries/Development")
 set(CPACK_DEBIAN_PACKAGE_SECTION "Libraries")
 
-set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR};/.svn/;/.libs/;/.deps/;/.bzr/;.*.o$;.*.lo$;.*.la$;/.git/;${CPACK_SOURCE_IGNORE_FILES};/.DS_Store;/.svnignore;blib;libsbml-dist")
+set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR};/.svn/;/.libs/;/.deps/;/.bzr/;.*.o$;.*.lo$;.*.la$;/.git/;${CPACK_SOURCE_IGNORE_FILES};/.DS_Store;/.svnignore;blib;libsbml-dist;*.txt.user")
 
+set(ADDITIONAL_LIB_DIRS)
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")
     set(CPACK_RPM_PACKAGE_ARCHITECTURE "i386")
 else()
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
     set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
+    set(ADDITIONAL_LIB_DIRS "/usr/lib64" "/usr/lib/x86_64-linux-gnu/")
 endif()
 
 include(CPack)
@@ -105,7 +108,9 @@ find_library(LIBZ_LIBRARY
     NAMES zdll.lib z zlib.lib
     PATHS /usr/lib /usr/local/lib
           ${CMAKE_OSX_SYSROOT}/usr/lib
-          ${LIBSBML_DEPENDENCY_DIR}/lib
+          ${ZIPPER_DEPENDENCY_DIR}/lib
+          ${ADDITIONAL_LIB_DIRS}
+          $ENV{ZLIBROOT}/lib
     DOC "The file name of the zip compression library."
 )
 
@@ -115,7 +120,8 @@ if (NOT LIBZ_INCLUDE_DIR)
       NAMES zlib.h zlib/zlib.h
       PATHS ${CMAKE_OSX_SYSROOT}/usr/include
             /usr/include /usr/local/include
-            ${LIBSBML_DEPENDENCY_DIR}/include
+            ${ZIPPER_DEPENDENCY_DIR}/include
+            $ENV{ZLIBROOT}/include
             NO_DEFAULT_PATH
       DOC "The directory containing the zlib include files."
             )
@@ -126,13 +132,21 @@ if (NOT LIBZ_INCLUDE_DIR)
     NAMES zlib.h zlib/zlib.h
     PATHS ${CMAKE_OSX_SYSROOT}/usr/include
           /usr/include /usr/local/include
-          ${LIBSBML_DEPENDENCY_DIR}/include
+          ${ZIPPER_DEPENDENCY_DIR}/include
+          $ENV{ZLIBROOT}/include
     DOC "The directory containing the zlib include files."
           )
 endif()
+
+# allow the user to define additional compilation symbols
+if (EXTRA_DEFS)
+  foreach(var ${EXTRA_DEFS})
+    add_definitions(-D${var})
+  endforeach()
+endif()
+
 set(USE_ZLIB ON)
 add_definitions( -DUSE_ZLIB )
-list(APPEND SWIG_EXTRA_ARGS -DUSE_ZLIB)  
 
 # make sure that we have a valid zip library
 check_library_exists("${LIBZ_LIBRARY}" "gzopen" "" LIBZ_FOUND_SYMBOL)
@@ -145,30 +159,16 @@ if(NOT LIBZ_FOUND_SYMBOL)
 "The chosen zlib library does not appear to be valid because it is
 missing certain required symbols. Please check that ${LIBZ_LIBRARY} is
 the correct zlib library. For details about the error, please see
-${LIBSBML_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log")
+${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log")
     endif()
 endif()
 
 if(NOT EXISTS "${LIBZ_INCLUDE_DIR}/zlib.h")
     message(FATAL_ERROR
 "The include directory specified for zlib does not appear to be
-valid. It should contain the file zlib.h, but it does not.")
+valid. It should contain the file zlib.h, but it does not. Please
+verify the LIBZ_INCLUDE_DIR variable.")
 endif()
-
-enable_testing()
-
-if (UNIX)
-      # setup valgrind
-      set(CMAKE_MEMORYCHECK_COMMAND valgrind)
-      set(CMAKE_MEMORYCHECK_COMMAND_OPTIONS
-         "--error-exitcode=1 --trace-children=yes --leak-check=full --show-reachable=yes --leak-resolution=high --track-origins=yes --error-limit=no ")
-
-      set(MEMCHECK_COMMAND
-         "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS}")
-      separate_arguments(MEMCHECK_COMMAND)
-endif()
-
-include(CTest)
 
 set(USING_INTEL)
 if (WIN32 AND CMAKE_C_COMPILER AND ${CMAKE_C_COMPILER} MATCHES ".*icl.*$")
@@ -176,6 +176,54 @@ if (WIN32 AND CMAKE_C_COMPILER AND ${CMAKE_C_COMPILER} MATCHES ".*icl.*$")
   set(USING_INTEL TRUE)
 endif ()
 
+option(WITH_QT_FILESYSTEM "Use Qt filesystem api instead of the c++17 one." OFF)
+if (WITH_QT_FILESYSTEM)
+  add_definitions(-DUSE_QT)
+  find_library(QT_CORE_LIBRARY
+    NAMES libQtCore QtCore
+    PATHS /usr/lib /usr/local/lib
+          ${CMAKE_OSX_SYSROOT}/usr/lib
+          ${ZIPPER_DEPENDENCY_DIR}/lib
+          ${ADDITIONAL_LIB_DIRS}
+    DOC "The qt core library."
+  )
+find_path(QT_INCLUDE_DIR
+    NAMES QtCore/QDir
+    PATHS ${CMAKE_OSX_SYSROOT}/usr/include
+          /usr/include/qt4 /usr/local/include/qt4
+          ${ZIPPER_DEPENDENCY_DIR}/include
+    DOC "The directory containing the boost header files."
+          )
+endif (WITH_QT_FILESYSTEM)
+
+
+option(WITH_BOOST_FILESYSTEM "Use Boost filesystem api instead of the c++17 one." OFF)
+if (WITH_BOOST_FILESYSTEM)
+add_definitions(-DUSE_BOOST)
+find_library(BOOST_SYSTEM_LIBRARY
+    NAMES boost_system libboost_system libboost_system-vc140-mt-gd-1_61.lib
+    PATHS /usr/lib /usr/local/lib
+          ${CMAKE_OSX_SYSROOT}/usr/lib
+          ${ZIPPER_DEPENDENCY_DIR}/lib
+          ${ADDITIONAL_LIB_DIRS}
+    DOC "The boost system library."
+)
+find_library(BOOST_FILESYSTEM_LIBRARY
+    NAMES boost_filesystem libboost_filesystem libboost_filesystem-vc140-mt-gd-1_61.lib
+    PATHS /usr/lib /usr/local/lib
+          ${CMAKE_OSX_SYSROOT}/usr/lib
+          ${ZIPPER_DEPENDENCY_DIR}/lib
+          ${ADDITIONAL_LIB_DIRS}
+    DOC "The boost filesystem library."
+)
+find_path(BOOST_INCLUDE_DIR
+    NAMES filesystem.hpp filesystem/path.h
+    PATHS ${CMAKE_OSX_SYSROOT}/usr/include
+          /usr/include /usr/local/include
+          ${ZIPPER_DEPENDENCY_DIR}/include
+    DOC "The directory containing the boost header files."
+          )
+endif()
     
 if(MSVC OR USING_INTEL)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
@@ -212,13 +260,37 @@ if(MSVC OR USING_INTEL)
   
           endforeach(flag_var)      
   endif()
+
+else()
+ # enable c++11
+ set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++11)
 endif()
+
+# need an extra definition of __APPLE__ to prevent ioapi.c to 
+# change the name for the fopen/ftell/fseek commands
+# unfortunately that won't work for qt 
+if (CYGWIN AND NOT WITH_QT_FILESYSTEM)
+add_definitions(-D__APPLE__)
+endif()
+
 
 include_directories(BEFORE ${LIBZ_INCLUDE_DIR})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/zipper)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/minizip)
 
+if (WITH_BOOST_FILESYSTEM AND BOOST_INCLUDE_DIR)
+include_directories(${BOOST_INCLUDE_DIR})
+endif()
+
+if (WITH_QT_FILESYSTEM AND QT_INCLUDE_DIR)
+include_directories(${QT_INCLUDE_DIR})
+endif()
+
+# allow definition of extra include dirs
+if (EXTRA_INCLUDE_DIRS)
+include_directories(${EXTRA_INCLUDE_DIRS})
+endif()
 
 file(GLOB MINIZIP_SOURCES 
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/*.c
@@ -226,55 +298,154 @@ file(GLOB MINIZIP_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/aes/*.c
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/aes/*.h
 )
+
 list(REMOVE_ITEM MINIZIP_SOURCES
 ${CMAKE_CURRENT_SOURCE_DIR}/minizip/minizip.c
 ${CMAKE_CURRENT_SOURCE_DIR}/minizip/miniunz.c
 )
 
+if(UNIX AND NOT CYGWIN)
+  list(REMOVE_ITEM MINIZIP_SOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/minizip/iowin32.c
+  )
+endif()
+source_group(minizip FILES ${MINIZIP_SOURCES})
+
+
 file(GLOB ZIPPER_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/zipper/*.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/zipper/*.h
 )
+source_group(zipper FILES ${ZIPPER_SOURCES})
 
 file(GLOB TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test/*.hpp
 )
 
-add_library (${ZIPPER_LIBRARY} SHARED ${ZIPPER_SOURCES} ${MINIZIP_SOURCES} )
+option(BUILD_SHARED_VERSION "Build the shared version of the library." OFF)
+if (BUILD_SHARED_VERSION)
+  add_library (${ZIPPER_LIBRARY} SHARED ${ZIPPER_SOURCES} ${MINIZIP_SOURCES} )
+  
+  if (UNIX)
+    SET_TARGET_PROPERTIES(${ZIPPER_LIBRARY} PROPERTIES
+                          SOVERSION ${ZIPPER_VERSION_MAJOR}
+                          VERSION ${ZIPPER_VERSION_MAJOR}.${ZIPPER_VERSION_MINOR}.${ZIPPER_VERSION_PATCH})
+  endif()
+  
+  target_link_libraries(${ZIPPER_LIBRARY} ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+  
+  if (WITH_BOOST_FILESYSTEM)
+    target_link_libraries(${ZIPPER_LIBRARY} ${BOOST_SYSTEM_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
+  endif()
+  
+  if (WITH_QT_FILESYSTEM)
+    target_link_libraries(${ZIPPER_LIBRARY} ${QT_CORE_LIBRARY})
+  endif()
 
-if (ZIPPER_SHARED_VERSION)
-  SET_TARGET_PROPERTIES(${ZIPPER_LIBRARY} PROPERTIES
-                        SOVERSION ${ZIPPER_VERSION_MAJOR}
-                        VERSION ${ZIPPER_VERSION_MAJOR}.${ZIPPER_VERSION_MINOR}.${ZIPPER_VERSION_PATCH})
+  INSTALL(TARGETS ${ZIPPER_LIBRARY}
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib
+  )
 endif()
 
-target_link_libraries(${ZIPPER_LIBRARY} ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+option(BUILD_STATIC_VERSION "Build the static version of the library." ON)
+if (BUILD_STATIC_VERSION)
+  add_library (${ZIPPER_LIBRARY}-static STATIC ${ZIPPER_SOURCES} ${MINIZIP_SOURCES})
+  
+  target_link_libraries(${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+  
+  INSTALL(TARGETS ${ZIPPER_LIBRARY}-static
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib
+  )
+endif()
 
-INSTALL(TARGETS ${ZIPPER_LIBRARY}
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-)
 
-add_library (${ZIPPER_LIBRARY}-static STATIC ${ZIPPER_SOURCES} ${MINIZIP_SOURCES})
 
-target_link_libraries(${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+option(BUILD_TEST "Build the test program." ON)
+if (BUILD_TEST)
+  enable_testing()
 
-INSTALL(TARGETS ${ZIPPER_LIBRARY}-static
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-)
+  if (UNIX)
+        # setup valgrind
 
-add_executable(${ZIPPER_LIBRARY}-test ${TEST_SOURCES})
-target_link_libraries(${ZIPPER_LIBRARY}-test  ${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+        set(CMAKE_MEMORYCHECK_COMMAND valgrind)
+        set(CMAKE_MEMORYCHECK_COMMAND_OPTIONS
+           "--error-exitcode=1 --trace-children=yes --leak-check=full --show-reachable=yes --leak-resolution=high --track-origins=yes --error-limit=no ")
 
-add_test(
-  NAME test_zipper_run
-  COMMAND $<TARGET_FILE:${ZIPPER_LIBRARY}-test>
-)
+        set(MEMCHECK_COMMAND
+           "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS}")
+        separate_arguments(MEMCHECK_COMMAND)
+  endif()
 
-set_tests_properties(test_zipper_run 
-  PROPERTIES PASS_REGULAR_EXPRESSION "All tests passed"
-)
+  include(CTest)
+
+  add_executable(${ZIPPER_LIBRARY}-test ${TEST_SOURCES})
+  target_link_libraries(${ZIPPER_LIBRARY}-test  ${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+  if (WITH_BOOST_FILESYSTEM)
+    target_link_libraries(${ZIPPER_LIBRARY}-test ${BOOST_SYSTEM_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
+  endif()
+  if (WITH_QT_FILESYSTEM)
+    target_link_libraries(${ZIPPER_LIBRARY}-test ${QT_CORE_LIBRARY})
+  endif()
+
+  add_test(
+    NAME test_zipper_run
+    COMMAND $<TARGET_FILE:${ZIPPER_LIBRARY}-test>
+  )
+  
+  set_tests_properties(test_zipper_run 
+    PROPERTIES PASS_REGULAR_EXPRESSION "All tests passed"
+  )
+endif()
+
+message(STATUS "
+----------------------------------------------------------------------
+Zipper version ${PACKAGE_VERSION}
+----------------------------------------------------------------------
+
+   Configured on host '${HOSTNAME}'
+     host type                       = ${CMAKE_SYSTEM_NAME}
+     host operating system           = ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_VERSION}
+     host CPU architecture           = ${CMAKE_SYSTEM_PROCESSOR}
+
+   General build flags:
+     CC                              = ${CMAKE_C_COMPILER}
+     CXX                             = ${CMAKE_CXX_COMPILER}
+     CPPFLAGS                        = ${BUILD_DEFINITIONS}
+     CFLAGS                          = ${CMAKE_C_FLAGS}
+     CXXFLAGS                        = ${CMAKE_CXX_FLAGS}
+     LDFLAGS                         = ${CMAKE_EXE_LINKER_FLAGS}
+
+   Zlib library configuration:
+     Zlib library                    = ${LIBZ_LIBRARY}
+     Zlib include dir                = ${LIBZ_INCLUDE_DIR}
+
+   Other configuration settings:
+     Installation $prefix            = ${CMAKE_INSTALL_PREFIX}
+     ")
+
+if(WITH_QT_FILESYSTEM)
+    message(STATUS " Using Qt Filesystem API
+     QtCore library                  = ${QT_CORE_LIBRARY}
+     Qt include dir                  = ${QT_INCLUDE_DIR}
+        
+    ")
+elseif(WITH_BOOST_FILESYSTEM)
+    message(STATUS " Using Boost Filesystem API
+     Filesystem library              = ${BOOST_FILESYSTEM_LIBRARY}
+     System library                  = ${BOOST_SYSTEM_LIBRARY}
+     Boost include dir               = ${BOOST_INCLUDE_DIR}
+        
+    ")
+else ()
+    message(STATUS " Using C++17 Filesystem API (please ensure that your compiler supports it)
+ 
+ Should you get compilation errors please use either the Qt or Boost APIs using the 
+ flags: WITH_BOOST_FILESYSTEM or WITH_QT_FILESYSTEM. 
+    ")
+endif()
+

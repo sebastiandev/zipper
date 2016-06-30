@@ -8,7 +8,7 @@ extern "C"
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys\stat.h>
+#include <sys/stat.h>
 
 #if (defined(_WIN32)) || (defined(_WIN64))
 # include <direct.h>
@@ -18,9 +18,9 @@ extern "C"
 # include <utime.h>
 #endif
 
-#include "zip.h"
-#include "unzip.h"
-#include "ioapi_mem.h"
+#include <zip.h>
+#include <unzip.h>
+#include <ioapi_mem.h>
 #define CASESENSITIVITY (0)
 #define WRITEBUFFERSIZE (8192)
 #define MAXFILENAME (256)
@@ -32,8 +32,15 @@ extern "C"
 }
 
 #if (defined(_WIN32)) || (defined(_WIN64))
-	#include <filesystem>
+  #include <filesystem>
 #endif
+
+#if (defined(_WIN32)) || (defined(_WIN64))
+    #define EXCEPTION_CLASS std::exception
+#else
+    #define EXCEPTION_CLASS std::runtime_error
+#endif
+
 
 #if (defined(_WIN64)) && (!defined(__APPLE__))
 #ifndef __USE_FILE_OFFSET64
