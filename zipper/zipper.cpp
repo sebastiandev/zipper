@@ -2,6 +2,8 @@
 #include "defs.h"
 #include "tools.h"
 
+#include <fstream>
+
 namespace zipper {
 
 	struct Zipper::Impl
@@ -52,7 +54,7 @@ namespace zipper {
 
 			if (size > 0)
 			{
-				m_zipmem.base = new char[size];
+				m_zipmem.base = new char[(size_t)size];
 				stream.read(m_zipmem.base, size);
 			}
 
@@ -144,7 +146,7 @@ namespace zipper {
 				do {
 					err = ZIP_OK;
 					input_stream.read(buff.data(), buff.size());
-					size_read = input_stream.gcount();
+					size_read = (size_t)input_stream.gcount();
 					if (size_read < buff.size() && !input_stream.eof() && !input_stream.good())
 						err = ZIP_ERRNO;
 
@@ -154,7 +156,7 @@ namespace zipper {
 				} while ((err == ZIP_OK) && (size_read>0));
 			}
 			else
-				throw std::exception(("Error adding '" + nameInZip + "' to zip").c_str());
+                throw EXCEPTION_CLASS(("Error adding '" + nameInZip + "' to zip").c_str());
 
 			if (ZIP_OK == err)
 				err = zipCloseFileInZip(this->m_zf);
@@ -195,7 +197,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initFile(zipname))
-			throw std::exception("Error creating zip in file!");
+            throw EXCEPTION_CLASS("Error creating zip in file!");
 
 		m_open = true;
 	}
@@ -210,7 +212,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initFile(zipname))
-			throw std::exception("Error creating zip in file!");
+            throw EXCEPTION_CLASS("Error creating zip in file!");
 
 		m_open = true;
 	}
@@ -223,7 +225,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initWithStream(m_obuffer))
-			throw std::exception("Error creating zip in memory!");
+            throw EXCEPTION_CLASS("Error creating zip in memory!");
 
 		m_open = true;
 	}
@@ -236,7 +238,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initWithVector(m_vecbuffer))
-			throw std::exception("Error creating zip in memory!");
+            throw EXCEPTION_CLASS("Error creating zip in memory!");
 
 		m_open = true;
 	}
@@ -283,17 +285,17 @@ namespace zipper {
 			if (m_usingMemoryVector)
 			{
 				if (!m_impl->initWithVector(m_vecbuffer))
-					throw std::exception("Error opening zip memory!");
+                    throw EXCEPTION_CLASS("Error opening zip memory!");
 			}
 			else if (m_usingStream)
 			{
 				if (!m_impl->initWithStream(m_obuffer))
-					throw std::exception("Error opening zip memory!");
+                    throw EXCEPTION_CLASS("Error opening zip memory!");
 			}
 			else
 			{
 				if (!m_impl->initFile(m_zipname))
-					throw std::exception("Error opening zip file!");
+                    throw EXCEPTION_CLASS("Error opening zip file!");
 			}
 
 			m_open = true;
