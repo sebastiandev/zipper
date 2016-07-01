@@ -156,7 +156,7 @@ namespace zipper {
 				} while ((err == ZIP_OK) && (size_read>0));
 			}
 			else
-                throw EXCEPTION_CLASS(("Error adding '" + nameInZip + "' to zip").c_str());
+				throw EXCEPTION_CLASS(("Error adding '" + nameInZip + "' to zip").c_str());
 
 			if (ZIP_OK == err)
 				err = zipCloseFileInZip(this->m_zf);
@@ -197,7 +197,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initFile(zipname))
-            throw EXCEPTION_CLASS("Error creating zip in file!");
+			throw EXCEPTION_CLASS("Error creating zip in file!");
 
 		m_open = true;
 	}
@@ -212,7 +212,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initFile(zipname))
-            throw EXCEPTION_CLASS("Error creating zip in file!");
+			throw EXCEPTION_CLASS("Error creating zip in file!");
 
 		m_open = true;
 	}
@@ -225,7 +225,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initWithStream(m_obuffer))
-            throw EXCEPTION_CLASS("Error creating zip in memory!");
+			throw EXCEPTION_CLASS("Error creating zip in memory!");
 
 		m_open = true;
 	}
@@ -238,7 +238,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initWithVector(m_vecbuffer))
-            throw EXCEPTION_CLASS("Error creating zip in memory!");
+			throw EXCEPTION_CLASS("Error creating zip in memory!");
 
 		m_open = true;
 	}
@@ -261,7 +261,7 @@ namespace zipper {
 			std::vector<std::string> files = filesFromDirectory(fileOrFolderPath);
 			for (auto& f : files)
 			{
-				std::ifstream input(f);
+				std::ifstream input(f, std::ifstream::binary);
 				auto nameInZip = f.substr(f.find(folderName), f.size());
 				add(input, nameInZip, flags);
 				input.close();
@@ -269,7 +269,7 @@ namespace zipper {
 		}
 		else
 		{
-			std::ifstream input(fileOrFolderPath);
+			std::ifstream input(fileOrFolderPath, std::ifstream::binary);
 			add(input, fileNameFromPath(fileOrFolderPath), flags);
 			input.close();
 		}
@@ -285,17 +285,17 @@ namespace zipper {
 			if (m_usingMemoryVector)
 			{
 				if (!m_impl->initWithVector(m_vecbuffer))
-                    throw EXCEPTION_CLASS("Error opening zip memory!");
+					throw EXCEPTION_CLASS("Error opening zip memory!");
 			}
 			else if (m_usingStream)
 			{
 				if (!m_impl->initWithStream(m_obuffer))
-                    throw EXCEPTION_CLASS("Error opening zip memory!");
+					throw EXCEPTION_CLASS("Error opening zip memory!");
 			}
 			else
 			{
 				if (!m_impl->initFile(m_zipname))
-                    throw EXCEPTION_CLASS("Error opening zip file!");
+					throw EXCEPTION_CLASS("Error opening zip file!");
 			}
 
 			m_open = true;
