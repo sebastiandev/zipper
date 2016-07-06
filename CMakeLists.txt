@@ -402,6 +402,12 @@ if (BUILD_TEST)
   )
 endif()
 
+file(GLOB ZIPPER_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/zipper/*.h ${CMAKE_CURRENT_SOURCE_DIR}/minizip/*.h  )
+install(FILES 
+        ${ZIPPER_HEADERS}
+        DESTINATION include/zipper
+)
+
 message(STATUS "
 ----------------------------------------------------------------------
 Zipper version ${PACKAGE_VERSION}

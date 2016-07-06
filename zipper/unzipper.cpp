@@ -95,7 +95,7 @@ namespace zipper {
       makedir(parentDirectory(filename));
 
       /* Create the file on disk so we can unzip to it */
-      std::ofstream output_file(filename.c_str());
+      std::ofstream output_file(filename.c_str(), std::ofstream::binary);
 
       if (output_file.good())
       {
