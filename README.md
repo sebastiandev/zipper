@@ -22,7 +22,9 @@ Ex: c:\Projects\zlib-1.2.8\
 ```
 Compilation produces zipper.lib
 
-So far its been tested and focused on Windows using Visual Studio 2013
+So far its been tested and focused on Windows using Visual Studio 2013 and 2015
+
+**Note:** Project can also be compiled with the CMakeLists.txt latest addition. It supports Qt and Boost filesystem libraries as well as native ones for Linux/MacOS since they still lack the *std::experimental::filesystem*
 
 
 #### Usage:
