@@ -262,8 +262,66 @@ if(MSVC OR USING_INTEL)
   endif()
 
 else()
- # enable c++11
- set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++11)
+   # enable c++11
+   set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++11)
+   
+   if(APPLE)
+       # on osx starting with xcode 4.3 the system root is in
+       # the app bundle, however cmake (up to 2.8.8) does not seem
+       # to update the path, so lets try it here
+       if (CMAKE_OSX_SYSROOT AND NOT EXISTS ${CMAKE_OSX_SYSROOT})
+         if (EXISTS "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/${CMAKE_OSX_SYSROOT}")
+           set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/${CMAKE_OSX_SYSROOT}" CACHE STRING "The SDK root to be used" FORCE)
+         endif()
+       endif()
+       add_definitions(-DMACOSX)
+       set(BUILD_DEFINITIONS "${BUILD_DEFINITIONS} -DMACOSX")
+   
+       # Since we are encountering errors with the use of libc++ on OSX
+       # this option allows to override which stdlib to use
+       if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+         option(CLANG_USE_STDLIB "Use libstdc++ rather than libc++" OFF)
+         if (CLANG_USE_STDLIB)
+           SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++" )
+         endif()
+       endif()
+       
+       # On OSX it is common to build universal binaries to support multiple
+       # processor architectures. The default behavior is not to build
+       # multiple architectures, as most users might not need that.
+       option(ENABLE_UNIVERSAL "Create universal binaries on Mac OS X." OFF)
+   
+       set(CMAKE_OSX_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}" CACHE STRING
+          "A semicolon-separated list of build architectures to be used.")
+       if(ENABLE_UNIVERSAL)
+           # if universal binaries are requested and none defined so far
+           # overwrite them with all three common architectures. If the user
+           # specified their own list of architectures do not touch!
+           if(CMAKE_OSX_ARCHITECTURES STREQUAL "")
+               STRING(REGEX REPLACE "^.*MacOSX([0-9]*\\.[0-9]*)\\.sdk$" "\\1"
+                      OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
+               if(OSX_SDK_VERSION  VERSION_EQUAL "10.7" OR OSX_SDK_VERSION  VERSION_EQUAL "10.8")
+                  # OSX Lion no longer supports ppc architecture
+                  set(CMAKE_OSX_ARCHITECTURES "i386;x86_64" CACHE STRING
+                     "A semicolon-separated list of build architectures to be used." FORCE)
+               else()
+                  set(CMAKE_OSX_ARCHITECTURES "i386;ppc;x86_64" CACHE STRING
+                      "A semicolon-separated list of build architectures to be used." FORCE)
+               endif()
+           endif()
+       endif(ENABLE_UNIVERSAL)
+   else(APPLE)
+       add_definitions(-DLINUX)
+   
+       if(NOT CYGWIN)
+           # on cygwin all code is position independent so -fPIC is not needed
+           set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing -fPIC")
+           set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing -fPIC")
+       endif()
+   
+       set(BUILD_DEFINITIONS "${BUILD_DEFINITIONS} -DLINUX")
+   endif(APPLE)
+
 endif()
 
 # need an extra definition of __APPLE__ to prevent ioapi.c to 
@@ -275,6 +333,7 @@ endif()
 
 
 include_directories(BEFORE ${LIBZ_INCLUDE_DIR})
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/zipper)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/minizip)
@@ -297,6 +356,13 @@ file(GLOB MINIZIP_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/*.h
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/aes/*.c
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/aes/*.h
+)
+
+FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/minizip/zip.h
+          ${CMAKE_CURRENT_SOURCE_DIR}/minizip/unzip.h
+          ${CMAKE_CURRENT_SOURCE_DIR}/minizip/ioapi_mem.h
+     DESTINATION
+          ${CMAKE_CURRENT_BINARY_DIR}/zipper
 )
 
 list(REMOVE_ITEM MINIZIP_SOURCES
