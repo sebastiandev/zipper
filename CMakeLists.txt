@@ -180,11 +180,12 @@ option(WITH_QT_FILESYSTEM "Use Qt filesystem api instead of the c++17 one." OFF)
 if (WITH_QT_FILESYSTEM)
   add_definitions(-DUSE_QT)
   find_library(QT_CORE_LIBRARY
-    NAMES libQtCore QtCore
+    NAMES libQtCore QtCore QtCore4
     PATHS /usr/lib /usr/local/lib
           ${CMAKE_OSX_SYSROOT}/usr/lib
           ${ZIPPER_DEPENDENCY_DIR}/lib
           ${ADDITIONAL_LIB_DIRS}
+          $ENV{QTDIR}/lib
     DOC "The qt core library."
   )
 find_path(QT_INCLUDE_DIR
@@ -192,6 +193,7 @@ find_path(QT_INCLUDE_DIR
     PATHS ${CMAKE_OSX_SYSROOT}/usr/include
           /usr/include/qt4 /usr/local/include/qt4
           ${ZIPPER_DEPENDENCY_DIR}/include
+          $ENV{QTDIR}/include
     DOC "The directory containing the boost header files."
           )
 endif (WITH_QT_FILESYSTEM)
