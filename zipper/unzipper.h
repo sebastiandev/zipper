@@ -24,7 +24,8 @@ namespace zipper {
 
 		std::vector<ZipEntry> entries();
 
-		bool extract(const std::string& destination=std::string(), const std::map<std::string, std::string>& alternativeNames = {});
+		bool extract(const std::string& destination, const std::map<std::string, std::string>& alternativeNames);
+    bool extract(const std::string& destination=std::string());
 		bool extractEntry(const std::string& name, const std::string& destination = std::string());
 		bool extractEntryToStream(const std::string& name, std::ostream& stream);
 		bool extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec);
@@ -41,7 +42,7 @@ namespace zipper {
 		bool m_open;
 
 		struct Impl;
-		std::shared_ptr<Impl> m_impl;
+		Impl* m_impl;
 	};
 
 
@@ -64,8 +65,10 @@ namespace zipper {
 			: name(name), compressedSize(compressed_size), uncompressedSize(uncompressed_size), dosdate(dosdate)
 		{
 			// timestamp YYYY-MM-DD HH:MM:SS
-			timestamp = std::to_string(year) + "-" + std::to_string(month) + "-" + std::to_string(day) +
-				" " + std::to_string(hour) + ":" + std::to_string(minute) + ":" + std::to_string(second);
+      std::stringstream str;
+      str << year << "-" << month << "-" << day <<
+				" " << hour << ":" << minute << ":" << second;
+      timestamp = str.str();
 
 			unixdate.tm_year = year;
 			unixdate.tm_mon = month;

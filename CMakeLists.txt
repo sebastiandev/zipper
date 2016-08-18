@@ -265,7 +265,7 @@ if(MSVC OR USING_INTEL)
 
 else()
    # enable c++11
-   set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++11)
+   #set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++11)
    
    if(APPLE)
        # on osx starting with xcode 4.3 the system root is in

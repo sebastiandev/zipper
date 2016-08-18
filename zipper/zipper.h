@@ -38,6 +38,6 @@ namespace zipper {
 		bool m_open;
 
 		struct Impl;
-		std::shared_ptr<Impl> m_impl;
+		Impl* m_impl;
 	};
 }

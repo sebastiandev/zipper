@@ -3,6 +3,7 @@
 #include "tools.h"
 
 #include <fstream>
+#include <stdexcept>
 
 namespace zipper {
 
@@ -10,13 +11,13 @@ namespace zipper {
 	{
 		Zipper& m_outer;
 		zipFile m_zf;
-		ourmemory_t m_zipmem = ourmemory_t();
+		ourmemory_t m_zipmem;
 		zlib_filefunc_def m_filefunc;
 
-		Impl(Zipper& outer) : m_outer(outer)
+		Impl(Zipper& outer) : m_outer(outer), m_zipmem(), m_filefunc()
 		{
 			m_zf = NULL;
-			m_filefunc = { 0 };
+			//m_filefunc = { 0 };
 		}
 
 		bool initFile(const std::string& filename)
@@ -49,7 +50,7 @@ namespace zipper {
 			m_zipmem.grow = 1;
 
 			stream.seekg(0, std::ios::end);
-			auto size = stream.tellg();
+			size_t size = (size_t)stream.tellg();
 			stream.seekg(0);
 
 			if (size > 0)
@@ -257,19 +258,20 @@ namespace zipper {
 	{
 		if (isDirectory(fileOrFolderPath))
 		{
-			auto folderName = fileNameFromPath(fileOrFolderPath);
+			std::string folderName = fileNameFromPath(fileOrFolderPath);
 			std::vector<std::string> files = filesFromDirectory(fileOrFolderPath);
-			for (auto& f : files)
+			std::vector<std::string>::iterator it = files.begin();
+			for (; it != files.end(); ++it)
 			{
-				std::ifstream input(f, std::ifstream::binary);
-				auto nameInZip = f.substr(f.find(folderName), f.size());
+				std::ifstream input(it->c_str(), std::ios::binary);
+				std::string nameInZip = it->substr(it->find(folderName), it->size());
 				add(input, nameInZip, flags);
 				input.close();
 			}
 		}
 		else
 		{
-			std::ifstream input(fileOrFolderPath, std::ifstream::binary);
+			std::ifstream input(fileOrFolderPath.c_str(), std::ios::binary);
 			add(input, fileNameFromPath(fileOrFolderPath), flags);
 			input.close();
 		}

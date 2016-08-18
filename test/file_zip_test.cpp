@@ -42,7 +42,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
       THEN("the zip file has one entry named 'test1.txt'")
       {
-        auto entries = unzipper.entries();
+        std::vector<zipper::ZipEntry> entries = unzipper.entries();
         REQUIRE(entries.size() == 1);
         REQUIRE(entries.front().name == "test1.txt");
 
@@ -181,7 +181,8 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
           AND_THEN("extracting with an alternative name 'alternative_strdata.dat' crates a file with that name instead of the one inside de zip")
           {
-            std::map<std::string, std::string> alt_names = { { "strdata", "alternative_strdata.dat" } };
+            std::map<std::string, std::string> alt_names;
+            alt_names["strdata"] = "alternative_strdata.dat";
 
             unzipper.extract("", alt_names);
 
