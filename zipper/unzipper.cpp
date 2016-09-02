@@ -362,6 +362,9 @@ namespace zipper {
       std::vector<ZipEntry>::iterator it = entries.begin();
       for (; it != entries.end(); ++it)
       {
+        if (!locateEntry(it->name))
+          continue;
+
         std::string alternativeName = destination.empty() ? "" : destination + "/";
 
         if (alternativeNames.find(it->name) != alternativeNames.end())
