@@ -179,23 +179,7 @@ endif ()
 option(WITH_QT_FILESYSTEM "Use Qt filesystem api instead of the c++17 one." OFF)
 if (WITH_QT_FILESYSTEM)
   add_definitions(-DUSE_QT)
-  find_library(QT_CORE_LIBRARY
-    NAMES libQtCore QtCore QtCore4
-    PATHS /usr/lib /usr/local/lib
-          ${CMAKE_OSX_SYSROOT}/usr/lib
-          ${ZIPPER_DEPENDENCY_DIR}/lib
-          ${ADDITIONAL_LIB_DIRS}
-          $ENV{QTDIR}/lib
-    DOC "The qt core library."
-  )
-find_path(QT_INCLUDE_DIR
-    NAMES QtCore/QDir
-    PATHS ${CMAKE_OSX_SYSROOT}/usr/include
-          /usr/include/qt4 /usr/local/include/qt4
-          ${ZIPPER_DEPENDENCY_DIR}/include
-          $ENV{QTDIR}/include
-    DOC "The directory containing the boost header files."
-          )
+  find_package(Qt4 4.7.0 REQUIRED QtCore)
 endif (WITH_QT_FILESYSTEM)
 
 
@@ -408,7 +392,7 @@ if (BUILD_SHARED_VERSION)
   endif()
   
   if (WITH_QT_FILESYSTEM)
-    target_link_libraries(${ZIPPER_LIBRARY} ${QT_CORE_LIBRARY})
+    target_link_libraries(${ZIPPER_LIBRARY} ${QT_QTCORE_LIBRARY})
   endif()
 
   INSTALL(TARGETS ${ZIPPER_LIBRARY}
@@ -457,7 +441,7 @@ if (BUILD_TEST)
     target_link_libraries(${ZIPPER_LIBRARY}-test ${BOOST_SYSTEM_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
   endif()
   if (WITH_QT_FILESYSTEM)
-    target_link_libraries(${ZIPPER_LIBRARY}-test ${QT_CORE_LIBRARY})
+    target_link_libraries(${ZIPPER_LIBRARY}-test ${QT_QTCORE_LIBRARY})
   endif()
 
   add_test(
@@ -504,7 +488,7 @@ Zipper version ${PACKAGE_VERSION}
 
 if(WITH_QT_FILESYSTEM)
     message(STATUS " Using Qt Filesystem API
-     QtCore library                  = ${QT_CORE_LIBRARY}
+     QtCore library                  = ${QT_QTCORE_LIBRARY}
      Qt include dir                  = ${QT_INCLUDE_DIR}
         
     ")
