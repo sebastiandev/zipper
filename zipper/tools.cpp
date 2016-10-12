@@ -44,6 +44,7 @@ void getFileCrc(std::istream& input_stream, std::vector<char>& buff, unsigned lo
 
   } while (size_read>0);
 
+  input_stream.clear();
   input_stream.seekg(0);
   result_crc = calculate_crc;
 }

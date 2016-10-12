@@ -95,7 +95,7 @@ namespace zipper {
 			int err = ZIP_OK;
 			unsigned long crcFile = 0;
 
-			zip_fileinfo zi;
+			zip_fileinfo zi = { 0 };
 			size_t size_read;
 
 			std::vector<char> buff;
