@@ -189,7 +189,15 @@ bool CDirEntry::createDir(const std::string & dir,
   if (isDir(Dir) && isWritable(Dir)) return true;
 
   // Check whether the parent directory exists and is writable.
-  if (!isDir(parent) || !isWritable(parent)) return false;
+  if (!parent.empty() && (!isDir(parent) || !isWritable(parent))) return false;
+
+  Dir = normalize(Dir);
+
+  // ensure we have parent
+  std::string actualParent = dirName(Dir);
+
+  if (!actualParent.empty() && (!exist(actualParent)))
+    createDir(actualParent);
 
 #ifdef WIN32
   return (mkdir(CLocaleString::fromUtf8(Dir).c_str()) == 0);

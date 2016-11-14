@@ -66,7 +66,19 @@ namespace zipper {
 
   void removeFolder(const std::string& foldername)
   {
-    CDirEntry::remove(foldername);
+    if (!CDirEntry::remove(foldername))
+    {
+      std::vector<std::string> files = filesFromDirectory(foldername);
+      std::vector<std::string>::iterator it = files.begin();
+      for (; it != files.end(); ++it)
+      {
+        if (isDirectory(*it) && *it != foldername)
+          removeFolder(*it);
+        else
+          std::remove(it->c_str());
+      }
+      CDirEntry::remove(foldername);
+    }
   }
 
   bool isDirectory(const std::string& path)
