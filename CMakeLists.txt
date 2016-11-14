@@ -176,41 +176,6 @@ if (WIN32 AND CMAKE_C_COMPILER AND ${CMAKE_C_COMPILER} MATCHES ".*icl.*$")
   set(USING_INTEL TRUE)
 endif ()
 
-option(WITH_QT_FILESYSTEM "Use Qt filesystem api instead of the c++17 one." OFF)
-if (WITH_QT_FILESYSTEM)
-  add_definitions(-DUSE_QT)
-  find_package(Qt4 4.7.0 REQUIRED QtCore)
-endif (WITH_QT_FILESYSTEM)
-
-
-option(WITH_BOOST_FILESYSTEM "Use Boost filesystem api instead of the c++17 one." OFF)
-if (WITH_BOOST_FILESYSTEM)
-add_definitions(-DUSE_BOOST)
-find_library(BOOST_SYSTEM_LIBRARY
-    NAMES boost_system libboost_system libboost_system-vc140-mt-gd-1_61.lib
-    PATHS /usr/lib /usr/local/lib
-          ${CMAKE_OSX_SYSROOT}/usr/lib
-          ${ZIPPER_DEPENDENCY_DIR}/lib
-          ${ADDITIONAL_LIB_DIRS}
-    DOC "The boost system library."
-)
-find_library(BOOST_FILESYSTEM_LIBRARY
-    NAMES boost_filesystem libboost_filesystem libboost_filesystem-vc140-mt-gd-1_61.lib
-    PATHS /usr/lib /usr/local/lib
-          ${CMAKE_OSX_SYSROOT}/usr/lib
-          ${ZIPPER_DEPENDENCY_DIR}/lib
-          ${ADDITIONAL_LIB_DIRS}
-    DOC "The boost filesystem library."
-)
-find_path(BOOST_INCLUDE_DIR
-    NAMES filesystem.hpp filesystem/path.h
-    PATHS ${CMAKE_OSX_SYSROOT}/usr/include
-          /usr/include /usr/local/include
-          ${ZIPPER_DEPENDENCY_DIR}/include
-    DOC "The directory containing the boost header files."
-          )
-endif()
-    
 if(MSVC OR USING_INTEL)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
     set(BUILD_DEFINITIONS "${BUILD_DEFINITIONS} -D_CRT_SECURE_NO_WARNINGS")
@@ -248,8 +213,6 @@ if(MSVC OR USING_INTEL)
   endif()
 
 else()
-   # enable c++11
-   #set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++11)
    
    if(APPLE)
        # on osx starting with xcode 4.3 the system root is in
@@ -324,14 +287,6 @@ include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/zipper)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/minizip)
 
-if (WITH_BOOST_FILESYSTEM AND BOOST_INCLUDE_DIR)
-include_directories(${BOOST_INCLUDE_DIR})
-endif()
-
-if (WITH_QT_FILESYSTEM AND QT_INCLUDE_DIR)
-include_directories(${QT_INCLUDE_DIR})
-endif()
-
 # allow definition of extra include dirs
 if (EXTRA_INCLUDE_DIRS)
 include_directories(${EXTRA_INCLUDE_DIRS})
@@ -387,14 +342,6 @@ if (BUILD_SHARED_VERSION)
   
   target_link_libraries(${ZIPPER_LIBRARY} ${LIBZ_LIBRARY} ${EXTRA_LIBS})
   
-  if (WITH_BOOST_FILESYSTEM)
-    target_link_libraries(${ZIPPER_LIBRARY} ${BOOST_SYSTEM_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
-  endif()
-  
-  if (WITH_QT_FILESYSTEM)
-    target_link_libraries(${ZIPPER_LIBRARY} ${QT_QTCORE_LIBRARY})
-  endif()
-
   INSTALL(TARGETS ${ZIPPER_LIBRARY}
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
@@ -437,12 +384,6 @@ if (BUILD_TEST)
 
   add_executable(${ZIPPER_LIBRARY}-test ${TEST_SOURCES})
   target_link_libraries(${ZIPPER_LIBRARY}-test  ${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
-  if (WITH_BOOST_FILESYSTEM)
-    target_link_libraries(${ZIPPER_LIBRARY}-test ${BOOST_SYSTEM_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
-  endif()
-  if (WITH_QT_FILESYSTEM)
-    target_link_libraries(${ZIPPER_LIBRARY}-test ${QT_QTCORE_LIBRARY})
-  endif()
 
   add_test(
     NAME test_zipper_run
@@ -485,25 +426,4 @@ Zipper version ${PACKAGE_VERSION}
    Other configuration settings:
      Installation $prefix            = ${CMAKE_INSTALL_PREFIX}
      ")
-
-if(WITH_QT_FILESYSTEM)
-    message(STATUS " Using Qt Filesystem API
-     QtCore library                  = ${QT_QTCORE_LIBRARY}
-     Qt include dir                  = ${QT_INCLUDE_DIR}
-        
-    ")
-elseif(WITH_BOOST_FILESYSTEM)
-    message(STATUS " Using Boost Filesystem API
-     Filesystem library              = ${BOOST_FILESYSTEM_LIBRARY}
-     System library                  = ${BOOST_SYSTEM_LIBRARY}
-     Boost include dir               = ${BOOST_INCLUDE_DIR}
-        
-    ")
-else ()
-    message(STATUS " Using C++17 Filesystem API (please ensure that your compiler supports it)
- 
- Should you get compilation errors please use either the Qt or Boost APIs using the 
- flags: WITH_BOOST_FILESYSTEM or WITH_QT_FILESYSTEM. 
-    ")
-endif()
 

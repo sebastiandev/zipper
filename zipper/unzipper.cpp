@@ -189,6 +189,44 @@ namespace zipper {
       return UNZ_OK == err;
     }
 
+    void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tmu_date)
+    {
+#ifdef _WIN32
+      HANDLE hFile;
+      FILETIME ftm, ftLocal, ftCreate, ftLastAcc, ftLastWrite;
+
+      hFile = CreateFileA(filename.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+      if (hFile != INVALID_HANDLE_VALUE)
+      {
+        GetFileTime(hFile, &ftCreate, &ftLastAcc, &ftLastWrite);
+        DosDateTimeToFileTime((WORD)(dosdate >> 16), (WORD)dosdate, &ftLocal);
+        LocalFileTimeToFileTime(&ftLocal, &ftm);
+        SetFileTime(hFile, &ftm, &ftLastAcc, &ftm);
+        CloseHandle(hFile);
+      }
+#else
+#if defined unix || defined __APPLE__
+      struct utimbuf ut;
+      struct tm newdate;
+
+      newdate.tm_sec = tmu_date.tm_sec;
+      newdate.tm_min = tmu_date.tm_min;
+      newdate.tm_hour = tmu_date.tm_hour;
+      newdate.tm_mday = tmu_date.tm_mday;
+      newdate.tm_mon = tmu_date.tm_mon;
+      if (tmu_date.tm_year > 1900)
+        newdate.tm_year = tmu_date.tm_year - 1900;
+      else
+        newdate.tm_year = tmu_date.tm_year;
+      newdate.tm_isdst = -1;
+
+      ut.actime = ut.modtime = mktime(&newdate);
+      utime(filename.c_str(), &ut);
+#endif
+#endif
+    }
+
+
     int extractToFile(const std::string& filename, ZipEntry& info)
     {
       int err = UNZ_ERRNO;

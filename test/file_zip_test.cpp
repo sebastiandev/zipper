@@ -10,6 +10,8 @@
 #include <string>
 #include <map>
 
+using namespace zipper;
+
 SCENARIO("zipfile feed with different inputs", "[zip]")
 {
   GIVEN("A Zip outputed to a file")
@@ -125,11 +127,14 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
                   zipper::Unzipper unzipper("ziptest.zip");
                   REQUIRE(unzipper.entries().size() == 5);
 
-                  AND_THEN("extracting to a new folder 'NewDestination' craetes the file structure from zip in the new destination folder")
+                  AND_THEN("extracting to a new folder 'NewDestination' creates the file structure from zip in the new destination folder")
                   {
                     makedir(currentPath() + "/NewDestination");
 
                     unzipper.extract(currentPath() + "/NewDestination");
+
+                    std::vector<std::string> files =  zipper::filesFromDirectory(currentPath() + "/NewDestination");
+
                     REQUIRE(checkFileExists("NewDestination/TestFiles/test1.txt"));
                     REQUIRE(checkFileExists("NewDestination/TestFiles/test2.pdf"));
                     REQUIRE(checkFileExists("NewDestination/TestFiles/subfolder/test-sub.txt"));
