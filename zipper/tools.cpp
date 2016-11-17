@@ -5,6 +5,7 @@
 
 #include <CDirEntry.h>
 
+#include <cstdio>
 
 #if defined(WIN32) && !defined(CYGWIN)
 #  include "tps/dirent.h"
