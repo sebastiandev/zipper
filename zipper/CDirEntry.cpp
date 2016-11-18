@@ -20,13 +20,12 @@
 # include <io.h>
 # include <direct.h>
 typedef struct _stat STAT;
-# define stat _wstat
+# define stat _stat
 # define S_IFREG _S_IFREG
 # define S_IFDIR _S_IFDIR
-# define access _waccess
-# define rename _wrename
-# define mkdir _wmkdir
-# define rmdir _wrmdir
+# define access _access
+# define mkdir _mkdir
+# define rmdir _rmdir
 #else
 typedef struct stat STAT;
 # include <dirent.h>
@@ -34,7 +33,6 @@ typedef struct stat STAT;
 #endif // WIN32
 
 #include "CDirEntry.h"
-#include "CLocaleString.h"
 
 #include <stdlib.h>
 
@@ -52,7 +50,7 @@ bool CDirEntry::isFile(const std::string & path)
 {
   STAT st;
 
-  if (stat(CLocaleString::fromUtf8(path).c_str(), & st) == -1) return false;
+  if (stat(path.c_str(), & st) == -1) return false;
 
 #ifdef WIN32
   return ((st.st_mode & S_IFREG) == S_IFREG);
@@ -65,7 +63,7 @@ bool CDirEntry::isDir(const std::string & path)
 {
   STAT st;
 
-  if (stat(CLocaleString::fromUtf8(path).c_str(), & st) == -1) return false;
+  if (stat(path.c_str(), & st) == -1) return false;
 
 #ifdef WIN32
   return ((st.st_mode & S_IFDIR) == S_IFDIR);
@@ -78,7 +76,7 @@ bool CDirEntry::exist(const std::string & path)
 {
   STAT st;
 
-  if (stat(CLocaleString::fromUtf8(path).c_str(), & st) == -1) return false;
+  if (stat(path.c_str(), & st) == -1) return false;
 
 #ifdef WIN32
   return ((st.st_mode & S_IFREG) == S_IFREG ||
@@ -89,10 +87,10 @@ bool CDirEntry::exist(const std::string & path)
 }
 
 bool CDirEntry::isReadable(const std::string & path)
-{return (access(CLocaleString::fromUtf8(path).c_str(), 0x4) == 0);}
+{return (access(path.c_str(), 0x4) == 0);}
 
 bool CDirEntry::isWritable(const std::string & path)
-{return (access(CLocaleString::fromUtf8(path).c_str(), 0x2) == 0);}
+{return (access(path.c_str(), 0x2) == 0);}
 
 std::string CDirEntry::baseName(const std::string & path)
 {
@@ -200,9 +198,9 @@ bool CDirEntry::createDir(const std::string & dir,
     createDir(actualParent);
 
 #ifdef WIN32
-  return (mkdir(CLocaleString::fromUtf8(Dir).c_str()) == 0);
+  return (mkdir(Dir.c_str()) == 0);
 #else
-  return (mkdir(CLocaleString::fromUtf8(Dir).c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0);
+  return (mkdir(Dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0);
 #endif
 }
 
@@ -256,13 +254,13 @@ bool CDirEntry::move(const std::string & from,
 #endif // WIN32
 
   bool success =
-    (rename(CLocaleString::fromUtf8(from).c_str(), CLocaleString::fromUtf8(To).c_str()) == 0);
+    (::rename(from.c_str(), To.c_str()) == 0);
 
   if (!success)
     {
       {
-        std::ifstream in(CLocaleString::fromUtf8(from).c_str());
-        std::ofstream out(CLocaleString::fromUtf8(To).c_str());
+        std::ifstream in(from.c_str());
+        std::ofstream out(To.c_str());
 
         out << in.rdbuf();
 
@@ -278,13 +276,13 @@ bool CDirEntry::move(const std::string & from,
 bool CDirEntry::remove(const std::string & path)
 {
   if (isDir(path))
-    return (rmdir(CLocaleString::fromUtf8(path).c_str()) == 0);
+    return (rmdir(path.c_str()) == 0);
   else if (isFile(path))
 #ifdef WIN32
-    return (_wremove(CLocaleString::fromUtf8(path).c_str()) == 0);
+    return (::remove(path.c_str()) == 0);
 
 #else
-    return (::remove(CLocaleString::fromUtf8(path).c_str()) == 0);
+    return (::remove(path.c_str()) == 0);
 #endif
 
   return false;
@@ -305,14 +303,14 @@ bool CDirEntry::removeFiles(const std::string & pattern,
   std::string FilePattern = path + "\\*";
 
   // Open directory stream and try read info about first entry
-  struct _wfinddata_t Entry;
-  intptr_t hList = _wfindfirst(CLocaleString::fromUtf8(FilePattern).c_str(), &Entry);
+  struct _finddata_t Entry;
+  intptr_t hList = _findfirst(FilePattern.c_str(), &Entry);
 
   if (hList == -1) return success;
 
   do
     {
-      std::string Utf8 = CLocaleString(Entry.name).toUtf8();
+      std::string Utf8 = Entry.name;
 
       if (match(Utf8, PatternList))
         {
@@ -320,27 +318,27 @@ bool CDirEntry::removeFiles(const std::string & pattern,
             {
 #ifdef WIN32
 
-              if (_wremove(CLocaleString::fromUtf8(path + Separator + Utf8).c_str()) != 0) success = false;
+              if (::remove((path + Separator + Utf8).c_str()) != 0) success = false;
 
 #else
 
-              if (::remove(CLocaleString::fromUtf8(path + Separator + Utf8).c_str()) != 0) success = false;
+              if (::remove((path + Separator + Utf8).c_str()) != 0) success = false;
 
 #endif
             }
           else
             {
-              if (rmdir(CLocaleString::fromUtf8(path + Separator + Utf8).c_str()) != 0) success = false;
+              if (rmdir((path + Separator + Utf8).c_str()) != 0) success = false;
             }
         }
     }
-  while (_wfindnext(hList, &Entry) == 0);
+  while (_findnext(hList, &Entry) == 0);
 
   _findclose(hList);
 
 #else
 
-  DIR * pDir = opendir(CLocaleString::fromUtf8(path).c_str());
+  DIR * pDir = opendir(path.c_str());
 
   if (!pDir) return false;
 
@@ -348,18 +346,18 @@ bool CDirEntry::removeFiles(const std::string & pattern,
 
   while ((pEntry = readdir(pDir)) != NULL)
     {
-      std::string Utf8 = CLocaleString(pEntry->d_name).toUtf8();
+      std::string Utf8 = pEntry->d_name;
 
       if (match(Utf8, PatternList))
         {
           if (isDir(Utf8))
             {
-              if (rmdir(CLocaleString::fromUtf8(path + Separator + Utf8).c_str()) != 0)
+              if (::rmdir((path + Separator + Utf8).c_str()) != 0)
                 success = false;
             }
           else
             {
-              if (::remove(CLocaleString::fromUtf8(path + Separator + Utf8).c_str()) != 0)
+              if (::remove((path + Separator + Utf8).c_str()) != 0)
                 success = false;
             }
         }
