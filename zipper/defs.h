@@ -18,9 +18,9 @@ extern "C"
 # include <utime.h>
 #endif
 
-#include <zipper/zip.h>
-#include <zipper/unzip.h>
-#include <zipper/ioapi_mem.h>
+#include <zip.h>
+#include <unzip.h>
+#include <ioapi_mem.h>
 #define CASESENSITIVITY (0)
 #define WRITEBUFFERSIZE (8192)
 #define MAXFILENAME (256)
