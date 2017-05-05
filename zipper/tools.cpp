@@ -54,7 +54,6 @@ namespace zipper {
     return pos >= 0xffffffff;
   }
 
-
   bool checkFileExists(const std::string& filename)
   {
     return CDirEntry::exist(filename);
