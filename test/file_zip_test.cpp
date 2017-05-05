@@ -10,6 +10,8 @@
 #include <string>
 #include <map>
 
+using namespace zipper;
+
 SCENARIO("zipfile feed with different inputs", "[zip]")
 {
   GIVEN("A Zip outputed to a file")
@@ -42,7 +44,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
       THEN("the zip file has one entry named 'test1.txt'")
       {
-        auto entries = unzipper.entries();
+        std::vector<zipper::ZipEntry> entries = unzipper.entries();
         REQUIRE(entries.size() == 1);
         REQUIRE(entries.front().name == "test1.txt");
 
@@ -125,11 +127,14 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
                   zipper::Unzipper unzipper("ziptest.zip");
                   REQUIRE(unzipper.entries().size() == 5);
 
-                  AND_THEN("extracting to a new folder 'NewDestination' craetes the file structure from zip in the new destination folder")
+                  AND_THEN("extracting to a new folder 'NewDestination' creates the file structure from zip in the new destination folder")
                   {
                     makedir(currentPath() + "/NewDestination");
 
                     unzipper.extract(currentPath() + "/NewDestination");
+
+                    std::vector<std::string> files =  zipper::filesFromDirectory(currentPath() + "/NewDestination");
+
                     REQUIRE(checkFileExists("NewDestination/TestFiles/test1.txt"));
                     REQUIRE(checkFileExists("NewDestination/TestFiles/test2.pdf"));
                     REQUIRE(checkFileExists("NewDestination/TestFiles/subfolder/test-sub.txt"));
@@ -181,7 +186,8 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
           AND_THEN("extracting with an alternative name 'alternative_strdata.dat' crates a file with that name instead of the one inside de zip")
           {
-            std::map<std::string, std::string> alt_names = { { "strdata", "alternative_strdata.dat" } };
+            std::map<std::string, std::string> alt_names;
+            alt_names["strdata"] = "alternative_strdata.dat";
 
             unzipper.extract("", alt_names);
 

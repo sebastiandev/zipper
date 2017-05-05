@@ -9,6 +9,8 @@
 #include <ostream>
 #include <string>
 
+using namespace zipper;
+
 SCENARIO("zip vector feed with different inputs", "[zip]")
 {
 	GIVEN("A Zip outputed to a vector")

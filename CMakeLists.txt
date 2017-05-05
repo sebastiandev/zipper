@@ -176,55 +176,6 @@ if (WIN32 AND CMAKE_C_COMPILER AND ${CMAKE_C_COMPILER} MATCHES ".*icl.*$")
   set(USING_INTEL TRUE)
 endif ()
 
-option(WITH_QT_FILESYSTEM "Use Qt filesystem api instead of the c++17 one." OFF)
-if (WITH_QT_FILESYSTEM)
-  add_definitions(-DUSE_QT)
-  find_library(QT_CORE_LIBRARY
-    NAMES libQtCore QtCore
-    PATHS /usr/lib /usr/local/lib
-          ${CMAKE_OSX_SYSROOT}/usr/lib
-          ${ZIPPER_DEPENDENCY_DIR}/lib
-          ${ADDITIONAL_LIB_DIRS}
-    DOC "The qt core library."
-  )
-find_path(QT_INCLUDE_DIR
-    NAMES QtCore/QDir
-    PATHS ${CMAKE_OSX_SYSROOT}/usr/include
-          /usr/include/qt4 /usr/local/include/qt4
-          ${ZIPPER_DEPENDENCY_DIR}/include
-    DOC "The directory containing the boost header files."
-          )
-endif (WITH_QT_FILESYSTEM)
-
-
-option(WITH_BOOST_FILESYSTEM "Use Boost filesystem api instead of the c++17 one." OFF)
-if (WITH_BOOST_FILESYSTEM)
-add_definitions(-DUSE_BOOST)
-find_library(BOOST_SYSTEM_LIBRARY
-    NAMES boost_system libboost_system libboost_system-vc140-mt-gd-1_61.lib
-    PATHS /usr/lib /usr/local/lib
-          ${CMAKE_OSX_SYSROOT}/usr/lib
-          ${ZIPPER_DEPENDENCY_DIR}/lib
-          ${ADDITIONAL_LIB_DIRS}
-    DOC "The boost system library."
-)
-find_library(BOOST_FILESYSTEM_LIBRARY
-    NAMES boost_filesystem libboost_filesystem libboost_filesystem-vc140-mt-gd-1_61.lib
-    PATHS /usr/lib /usr/local/lib
-          ${CMAKE_OSX_SYSROOT}/usr/lib
-          ${ZIPPER_DEPENDENCY_DIR}/lib
-          ${ADDITIONAL_LIB_DIRS}
-    DOC "The boost filesystem library."
-)
-find_path(BOOST_INCLUDE_DIR
-    NAMES filesystem.hpp filesystem/path.h
-    PATHS ${CMAKE_OSX_SYSROOT}/usr/include
-          /usr/include /usr/local/include
-          ${ZIPPER_DEPENDENCY_DIR}/include
-    DOC "The directory containing the boost header files."
-          )
-endif()
-    
 if(MSVC OR USING_INTEL)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
     set(BUILD_DEFINITIONS "${BUILD_DEFINITIONS} -D_CRT_SECURE_NO_WARNINGS")
@@ -262,8 +213,64 @@ if(MSVC OR USING_INTEL)
   endif()
 
 else()
- # enable c++11
- set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++11)
+   
+   if(APPLE)
+       # on osx starting with xcode 4.3 the system root is in
+       # the app bundle, however cmake (up to 2.8.8) does not seem
+       # to update the path, so lets try it here
+       if (CMAKE_OSX_SYSROOT AND NOT EXISTS ${CMAKE_OSX_SYSROOT})
+         if (EXISTS "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/${CMAKE_OSX_SYSROOT}")
+           set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/${CMAKE_OSX_SYSROOT}" CACHE STRING "The SDK root to be used" FORCE)
+         endif()
+       endif()
+       add_definitions(-DMACOSX)
+       set(BUILD_DEFINITIONS "${BUILD_DEFINITIONS} -DMACOSX")
+   
+       # Since we are encountering errors with the use of libc++ on OSX
+       # this option allows to override which stdlib to use
+       if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+         option(CLANG_USE_STDLIB "Use libstdc++ rather than libc++" OFF)
+         if (CLANG_USE_STDLIB)
+           SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++" )
+         endif()
+       endif()
+       
+       # On OSX it is common to build universal binaries to support multiple
+       # processor architectures. The default behavior is not to build
+       # multiple architectures, as most users might not need that.
+       option(ENABLE_UNIVERSAL "Create universal binaries on Mac OS X." OFF)
+   
+       set(CMAKE_OSX_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}" CACHE STRING
+          "A semicolon-separated list of build architectures to be used.")
+       if(ENABLE_UNIVERSAL)
+           # if universal binaries are requested and none defined so far
+           # overwrite them with all three common architectures. If the user
+           # specified their own list of architectures do not touch!
+           if(CMAKE_OSX_ARCHITECTURES STREQUAL "")
+               STRING(REGEX REPLACE "^.*MacOSX([0-9]*\\.[0-9]*)\\.sdk$" "\\1"
+                      OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
+               if(OSX_SDK_VERSION  VERSION_EQUAL "10.7" OR OSX_SDK_VERSION  VERSION_EQUAL "10.8")
+                  # OSX Lion no longer supports ppc architecture
+                  set(CMAKE_OSX_ARCHITECTURES "i386;x86_64" CACHE STRING
+                     "A semicolon-separated list of build architectures to be used." FORCE)
+               else()
+                  set(CMAKE_OSX_ARCHITECTURES "i386;ppc;x86_64" CACHE STRING
+                      "A semicolon-separated list of build architectures to be used." FORCE)
+               endif()
+           endif()
+       endif(ENABLE_UNIVERSAL)
+   else(APPLE)
+       add_definitions(-DLINUX)
+   
+       if(NOT CYGWIN)
+           # on cygwin all code is position independent so -fPIC is not needed
+           set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing -fPIC")
+           set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing -fPIC")
+       endif()
+   
+       set(BUILD_DEFINITIONS "${BUILD_DEFINITIONS} -DLINUX")
+   endif(APPLE)
+
 endif()
 
 # need an extra definition of __APPLE__ to prevent ioapi.c to 
@@ -275,17 +282,10 @@ endif()
 
 
 include_directories(BEFORE ${LIBZ_INCLUDE_DIR})
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/zipper)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/minizip)
-
-if (WITH_BOOST_FILESYSTEM AND BOOST_INCLUDE_DIR)
-include_directories(${BOOST_INCLUDE_DIR})
-endif()
-
-if (WITH_QT_FILESYSTEM AND QT_INCLUDE_DIR)
-include_directories(${QT_INCLUDE_DIR})
-endif()
 
 # allow definition of extra include dirs
 if (EXTRA_INCLUDE_DIRS)
@@ -297,6 +297,13 @@ file(GLOB MINIZIP_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/*.h
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/aes/*.c
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/aes/*.h
+)
+
+FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/minizip/zip.h
+          ${CMAKE_CURRENT_SOURCE_DIR}/minizip/unzip.h
+          ${CMAKE_CURRENT_SOURCE_DIR}/minizip/ioapi_mem.h
+     DESTINATION
+          ${CMAKE_CURRENT_BINARY_DIR}/zipper
 )
 
 list(REMOVE_ITEM MINIZIP_SOURCES
@@ -335,14 +342,6 @@ if (BUILD_SHARED_VERSION)
   
   target_link_libraries(${ZIPPER_LIBRARY} ${LIBZ_LIBRARY} ${EXTRA_LIBS})
   
-  if (WITH_BOOST_FILESYSTEM)
-    target_link_libraries(${ZIPPER_LIBRARY} ${BOOST_SYSTEM_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
-  endif()
-  
-  if (WITH_QT_FILESYSTEM)
-    target_link_libraries(${ZIPPER_LIBRARY} ${QT_CORE_LIBRARY})
-  endif()
-
   INSTALL(TARGETS ${ZIPPER_LIBRARY}
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
@@ -385,12 +384,6 @@ if (BUILD_TEST)
 
   add_executable(${ZIPPER_LIBRARY}-test ${TEST_SOURCES})
   target_link_libraries(${ZIPPER_LIBRARY}-test  ${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
-  if (WITH_BOOST_FILESYSTEM)
-    target_link_libraries(${ZIPPER_LIBRARY}-test ${BOOST_SYSTEM_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
-  endif()
-  if (WITH_QT_FILESYSTEM)
-    target_link_libraries(${ZIPPER_LIBRARY}-test ${QT_CORE_LIBRARY})
-  endif()
 
   add_test(
     NAME test_zipper_run
@@ -433,25 +426,4 @@ Zipper version ${PACKAGE_VERSION}
    Other configuration settings:
      Installation $prefix            = ${CMAKE_INSTALL_PREFIX}
      ")
-
-if(WITH_QT_FILESYSTEM)
-    message(STATUS " Using Qt Filesystem API
-     QtCore library                  = ${QT_CORE_LIBRARY}
-     Qt include dir                  = ${QT_INCLUDE_DIR}
-        
-    ")
-elseif(WITH_BOOST_FILESYSTEM)
-    message(STATUS " Using Boost Filesystem API
-     Filesystem library              = ${BOOST_FILESYSTEM_LIBRARY}
-     System library                  = ${BOOST_SYSTEM_LIBRARY}
-     Boost include dir               = ${BOOST_INCLUDE_DIR}
-        
-    ")
-else ()
-    message(STATUS " Using C++17 Filesystem API (please ensure that your compiler supports it)
- 
- Should you get compilation errors please use either the Qt or Boost APIs using the 
- flags: WITH_BOOST_FILESYSTEM or WITH_QT_FILESYSTEM. 
-    ")
-endif()
 
