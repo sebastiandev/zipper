@@ -160,3 +160,5 @@ test/*.txt
 test/*.zip
 
 *.txt.user
+
+build/
