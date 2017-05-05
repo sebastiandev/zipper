@@ -3,7 +3,8 @@
 C++ wrapper around minizip compression library
 
 **Zipper**'s goal is to bring the power and simplicity of minizip to a more object oriented/c++ user friendly library.
-It was born out of the necessity of a compression library that would be reliable, simple and flexible. By flexibility I mean supporting all kinds of inputs and outputs but specifically been able to compress into memory instead of been restricted to file compression only, and using data from memory instead of just files as well.
+It was born out of the necessity of a compression library that would be reliable, simple and flexible. 
+By flexibility I mean supporting all kinds of inputs and outputs, but specifically been able to compress into memory instead of been restricted to file compression only, and using data from memory instead of just files as well.
 
 ### Features:
 - [x] Create zip in memory
@@ -15,12 +16,11 @@ It was born out of the necessity of a compression library that would be reliable
 
 ### Getting Started
 
-In order to use and compile zipper you need to have [zlib](http://www.zlib.net) source files
-Zipper depends on minizip as well but since it is used as a submodule, you get it when cloning
-the repo and it it getscompiled with the solution.
+In order to use and compile zipper you need to have [zlib](http://www.zlib.net) source files.
+**Zipper** depends on minizip as well but since it is used as a submodule, you get it when cloning
+the repo and it gets compiled with the project.
 
-
-Note: For windows users, zlib is expected to be found at ZLIBROOT.
+*Note*: For windows users, zlib is expected to be found at ZLIBROOT.
 
 #### Download dependencies
 
@@ -38,6 +38,7 @@ The preferred way is to create a folder for the compilation output to avoid poll
 git clone --recursive https://github.com/sebastiandev/zipper.git  # to get zipper and minizip submodule
 cd zipper
 mkdir build
+cd build
 cmake ../
 make
 ```
