@@ -120,15 +120,15 @@ namespace zipper {
 
       if (filename == "." || filename == "..") continue;
 
-      if (CDirEntry::isDir(path + "/" + filename))
+      if (CDirEntry::isDir(path + CDirEntry::Separator + filename))
       {
-        std::vector<std::string> moreFiles = filesFromDirectory(path + "/" + filename);
+        std::vector<std::string> moreFiles = filesFromDirectory(path + CDirEntry::Separator + filename);
         std::copy(moreFiles.begin(), moreFiles.end(), std::back_inserter(files));
         continue;
       }
 
 
-      files.push_back(path + "/" + filename);
+      files.push_back(path + CDirEntry::Separator + filename);
     }
 
     closedir(dir);
