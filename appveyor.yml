@@ -1,0 +1,18 @@
+platform:
+  - x64
+
+environment:
+  MSYSTEM: MSYS
+
+before_build:
+  - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh --refresh --sysupgrade --sysupgrade
+  - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh --refresh pacman
+  - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh --refresh git
+  - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/.integration/appveyor-install-window.sh"
+
+build_script:
+  - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/.integration/appveyor-launch_tests.sh"
+
+branches:
+  only:
+    - master
