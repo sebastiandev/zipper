@@ -18,7 +18,13 @@ namespace zipper {
 		Impl(Zipper& outer) : m_outer(outer), m_zipmem(), m_filefunc()
 		{
 			m_zf = NULL;
+			m_zipmem.base = NULL;
 			//m_filefunc = { 0 };
+		}
+
+		~Impl()
+		{
+			close();
 		}
 
 		bool initFile(const std::string& filename)
@@ -56,7 +62,8 @@ namespace zipper {
 
 			if (size > 0)
 			{
-				m_zipmem.base = new char[(size_t)size];
+				if (m_zipmem.base != NULL) { free(m_zipmem.base); }
+				m_zipmem.base = (char*) malloc (size * sizeof (char));
 				stream.read(m_zipmem.base, size);
 			}
 
@@ -71,8 +78,9 @@ namespace zipper {
 
 			if (!buffer.empty())
 			{
-				m_zipmem.base = new char[buffer.size()];
-				memcpy(m_zipmem.base, (char*)buffer.data(), buffer.size());
+				if (m_zipmem.base != NULL) { free(m_zipmem.base); }
+				m_zipmem.base = (char*) malloc (buffer.size() * sizeof (char));
+				memcpy(m_zipmem.base, (char*) buffer.data(), buffer.size());
 				m_zipmem.size = (uLong)buffer.size();
 			}
 
@@ -168,8 +176,11 @@ namespace zipper {
 
 		void close()
 		{
-			if (m_zf)
+			if (m_zf != NULL)
+			{
 				zipClose(m_zf, NULL);
+				m_zf = NULL;
+			}
 
 			if (m_zipmem.base && m_zipmem.limit > 0)
 			{
@@ -183,7 +194,11 @@ namespace zipper {
 					m_outer.m_obuffer.write(m_zipmem.base, m_zipmem.limit);
 			}
 
-			free(m_zipmem.base);
+			if (m_zipmem.base != NULL)
+			{
+				free(m_zipmem.base);
+				m_zipmem.base = NULL;
+			}
 		}
 	};
 
@@ -199,8 +214,10 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initFile(zipname))
+		{
+			release();
 			throw EXCEPTION_CLASS("Error creating zip in file!");
-
+		}
 		m_open = true;
 	}
 
@@ -214,8 +231,10 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initFile(zipname))
+		{
+			release();
 			throw EXCEPTION_CLASS("Error creating zip in file!");
-
+		}
 		m_open = true;
 	}
 
@@ -227,8 +246,10 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initWithStream(m_obuffer))
+		{
+			release();
 			throw EXCEPTION_CLASS("Error creating zip in memory!");
-
+		}
 		m_open = true;
 	}
 
@@ -240,14 +261,30 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initWithVector(m_vecbuffer))
+		{
+			release();
 			throw EXCEPTION_CLASS("Error creating zip in memory!");
-
+		}
 		m_open = true;
 	}
 
-	Zipper::~Zipper(void)
+	Zipper::~Zipper()
 	{
 		close();
+		release();
+        }
+
+        void Zipper::release()
+        {
+                if (!m_usingMemoryVector)
+                {
+                        delete &m_vecbuffer;
+                }
+                if (!m_usingStream)
+                {
+                        delete &m_obuffer;
+                }
+                delete m_impl;
 	}
 
 	bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags flags)

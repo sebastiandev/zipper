@@ -329,17 +329,28 @@ namespace zipper {
 
     Impl(Unzipper& outer) : m_outer(outer), m_zipmem(), m_filefunc()
     {
+      m_zipmem.base = NULL;
       m_zf = NULL;
     }
 
     ~Impl()
     {
+      close();
     }
 
     void close()
     {
-      if (m_zf)
+      if (m_zf != NULL)
+      {
         unzClose(m_zf);
+        m_zf = NULL;
+      }
+
+      if (m_zipmem.base != NULL)
+      {
+        free(m_zipmem.base);
+        m_zipmem.base = NULL;
+      }
     }
 
     bool initFile(const std::string& filename)
@@ -362,7 +373,7 @@ namespace zipper {
 
       if (size > 0)
       {
-        m_zipmem.base = new char[(size_t)size];
+        m_zipmem.base = (char*) malloc (size * sizeof (char));
         stream.read(m_zipmem.base, size);
       }
 
@@ -375,7 +386,8 @@ namespace zipper {
     {
       if (!buffer.empty())
       {
-        m_zipmem.base = (char*)buffer.data();
+        m_zipmem.base = (char*) malloc (buffer.size() * sizeof (char));
+        memcpy(m_zipmem.base, (char*) buffer.data(), buffer.size());
         m_zipmem.size = (uLong)buffer.size();
       }
 
@@ -466,7 +478,10 @@ namespace zipper {
     , m_impl(new Impl(*this))
   {
     if (!m_impl->initWithStream(m_ibuffer))
-      throw EXCEPTION_CLASS("Error loading zip in memory!");
+      {
+        release();
+        throw EXCEPTION_CLASS("Error loading zip in memory!");
+      }
     m_open = true;
   }
 
@@ -478,7 +493,10 @@ namespace zipper {
     , m_impl(new Impl(*this))
   {
     if (!m_impl->initWithVector(m_vecbuffer))
-      throw EXCEPTION_CLASS("Error loading zip in memory!");
+      {
+        release();
+        throw EXCEPTION_CLASS("Error loading zip in memory!");
+      }
 
     m_open = true;
   }
@@ -492,7 +510,10 @@ namespace zipper {
     , m_impl(new Impl(*this))
   {
     if (!m_impl->initFile(zipname))
-      throw EXCEPTION_CLASS("Error loading zip file!");
+      {
+        release();
+        throw EXCEPTION_CLASS("Error loading zip file!");
+      }
 
     m_open = true;
   }
@@ -507,14 +528,17 @@ namespace zipper {
     , m_impl(new Impl(*this))
   {
     if (!m_impl->initFile(zipname))
-      throw EXCEPTION_CLASS("Error loading zip file!");
-
+      {
+        release();
+        throw EXCEPTION_CLASS("Error loading zip file!");
+      }
     m_open = true;
   }
 
-  Unzipper::~Unzipper(void)
+  Unzipper::~Unzipper()
   {
     close();
+    release();
   }
 
   std::vector<ZipEntry> Unzipper::entries()
@@ -547,6 +571,19 @@ namespace zipper {
   Unzipper::extract(const std::string& destination)
   {
     return m_impl->extractAll(destination, std::map<std::string, std::string>());
+  }
+
+  void Unzipper::release()
+  {
+    if (!m_usingMemoryVector)
+    {
+      delete &m_vecbuffer;
+    }
+    if (!m_usingStream)
+    {
+      delete &m_ibuffer;
+    }
+    delete m_impl;
   }
 
   void Unzipper::close()

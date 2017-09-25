@@ -20,7 +20,7 @@ namespace zipper {
 		Zipper(const std::string& zipname);
 		Zipper(const std::string& zipname, const std::string& password);
 
-		~Zipper(void);
+		~Zipper();
 
 		bool add(std::istream& source, const std::string& nameInZip = std::string(), zipFlags flags = Better);
 		bool add(const std::string& fileOrFolderPath, zipFlags flags = Better);
@@ -29,6 +29,7 @@ namespace zipper {
 		void close();
 
 	private:
+		void release();
 		std::string m_password;
 		std::string m_zipname;
 		std::iostream& m_obuffer;
