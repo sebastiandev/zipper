@@ -363,6 +363,7 @@ namespace zipper {
       if (size > 0)
       {
         m_zipmem.base = new char[(size_t)size];
+        m_zipmem.size = (uLong)size;
         stream.read(m_zipmem.base, size);
       }
 
