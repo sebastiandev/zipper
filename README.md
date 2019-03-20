@@ -1,4 +1,5 @@
 ![Zipper](https://github.com/sebastiandev/zipper/blob/master/logo.png)
+[![Build Status](https://travis-ci.org/sebastiandev/zipper.svg?branch=development)](https://travis-ci.org/sebastiandev/zipper) [![Build Status](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper)](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper)
 
 C++ wrapper around minizip compression library
 
