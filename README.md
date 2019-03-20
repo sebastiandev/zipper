@@ -25,7 +25,7 @@ the repo and it gets compiled with the project.
 #### Download dependencies
 
 ```shell
-sudo apt-get install zlib-dev  # for ubuntu
+sudo apt-get install zlib1g-dev  # for ubuntu
 
 sudo dnf install zlib-devel  # for fedora
 sudo dnf install gcc-c++  # for fedora
