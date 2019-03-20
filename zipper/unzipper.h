@@ -20,7 +20,7 @@ namespace zipper {
     Unzipper(const std::string& zipname);
     Unzipper(const std::string& zipname, const std::string& password);
 
-    ~Unzipper(void);
+    ~Unzipper();
 
     std::vector<ZipEntry> entries();
 
@@ -33,6 +33,7 @@ namespace zipper {
     void close();
 
   private:
+    void release();
     std::string m_password;
     std::string m_zipname;
     std::istream& m_ibuffer;
