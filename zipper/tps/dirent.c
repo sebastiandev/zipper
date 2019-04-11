@@ -127,7 +127,7 @@ DIR *opendir(char const *name)
     /* Must be a valid name */
     if( !name ||
         !*name ||
-        (dwAttr = GetFileAttributes(name)) == 0xFFFFFFFF)
+        (dwAttr = GetFileAttributesA(name)) == 0xFFFFFFFF)
     {
         errno = ENOENT;
     }
