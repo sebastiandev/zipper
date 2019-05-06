@@ -88,11 +88,8 @@ if(WITH_WALL)
     endif()
 endif()
 
-if (UNIX)
-  set(ZIPPER_LIBRARY Zipper)
-else()
-  set(ZIPPER_LIBRARY libZipper)
-endif()
+set(ZIPPER_LIBRARY Zipper)
+
 # Set build type default.
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING
   "Choose the type of build to perform. The options are: None (CMAKE_CXX_FLAGS
@@ -342,11 +339,7 @@ if (BUILD_SHARED_VERSION)
   
   target_link_libraries(${ZIPPER_LIBRARY} ${LIBZ_LIBRARY} ${EXTRA_LIBS})
   
-  INSTALL(TARGETS ${ZIPPER_LIBRARY}
-          RUNTIME DESTINATION bin
-          LIBRARY DESTINATION lib
-          ARCHIVE DESTINATION lib
-  )
+  list(APPEND TARGET_LIST ${ZIPPER_LIBRARY})
 endif()
 
 option(BUILD_STATIC_VERSION "Build the static version of the library." ON)
@@ -355,11 +348,7 @@ if (BUILD_STATIC_VERSION)
   
   target_link_libraries(${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
   
-  INSTALL(TARGETS ${ZIPPER_LIBRARY}-static
-          RUNTIME DESTINATION bin
-          LIBRARY DESTINATION lib
-          ARCHIVE DESTINATION lib
-  )
+  list(APPEND TARGET_LIST ${ZIPPER_LIBRARY}-static)
 endif()
 
 
@@ -384,6 +373,7 @@ if (BUILD_TEST)
 
   add_executable(${ZIPPER_LIBRARY}-test ${TEST_SOURCES})
   target_link_libraries(${ZIPPER_LIBRARY}-test  ${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+  list(APPEND TARGET_LIST ${ZIPPER_LIBRARY}-test)
 
   add_test(
     NAME test_zipper_run
@@ -395,11 +385,32 @@ if (BUILD_TEST)
   )
 endif()
 
+configure_file(${CMAKE_SOURCE_DIR}/zipperConfig.cmake.in
+               ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+               @ONLY)
+
+export(TARGETS ${TARGET_LIST} FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake)
+
+install(TARGETS ${TARGET_LIST} EXPORT ${PROJECT_NAME}
+    RUNTIME DESTINATION bin COMPONENT lib
+    LIBRARY DESTINATION lib${LIB_SUFFIX} COMPONENT lib
+    ARCHIVE DESTINATION lib${LIB_SUFFIX} COMPONENT lib
+    INCLUDES DESTINATION include
+    PUBLIC_HEADER DESTINATION include/zipper
+)
+
 file(GLOB ZIPPER_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/zipper/*.h ${CMAKE_CURRENT_SOURCE_DIR}/minizip/*.h  )
 install(FILES 
         ${ZIPPER_HEADERS}
         DESTINATION include/zipper
 )
+
+install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        DESTINATION lib${LIB_SUFFIX}/cmake)
+
+install(EXPORT ${PROJECT_NAME}
+        DESTINATION lib${LIB_SUFFIX}/cmake
+        FILE ${PROJECT_NAME}Targets.cmake)
 
 message(STATUS "
 ----------------------------------------------------------------------
