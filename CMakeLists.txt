@@ -88,11 +88,8 @@ if(WITH_WALL)
     endif()
 endif()
 
-if (UNIX)
-  set(ZIPPER_LIBRARY Zipper)
-else()
-  set(ZIPPER_LIBRARY libZipper)
-endif()
+set(ZIPPER_LIBRARY Zipper)
+
 # Set build type default.
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING
   "Choose the type of build to perform. The options are: None (CMAKE_CXX_FLAGS
