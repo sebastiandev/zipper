@@ -385,7 +385,7 @@ if (BUILD_TEST)
   )
 endif()
 
-configure_file(${CMAKE_SOURCE_DIR}/zipperConfig.cmake.in
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zipperConfig.cmake.in
                ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
                @ONLY)
 
