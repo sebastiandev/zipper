@@ -6,6 +6,7 @@
 #include <CDirEntry.h>
 
 #include <cstdio>
+#include <iostream>
 
 #if defined(WIN32) && !defined(CYGWIN)
 #  include "tps/dirent.h"
@@ -40,7 +41,8 @@ namespace zipper {
 
     } while (size_read > 0);
 
-    input_stream.seekg(0);
+    input_stream.clear();
+    input_stream.seekg(0, std::ios_base::beg);
     result_crc = calculate_crc;
   }
 
