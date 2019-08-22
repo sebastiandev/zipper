@@ -289,7 +289,7 @@ namespace zipper {
 
 	bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags flags)
 	{
-		return m_impl->add(source, nameInZip, "", flags);
+		return m_impl->add(source, nameInZip, m_password, flags);
 	}
 
 	bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
