@@ -296,7 +296,7 @@ namespace zipper {
 
 	bool Zipper::add(std::istream& source, const std::tm& timestamp, const std::string& nameInZip, zipFlags flags)
 	{
-		return m_impl->add(source, timestamp, nameInZip, "", flags);
+		return m_impl->add(source, timestamp, nameInZip, m_password, flags);
 	}
 
 	bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags flags)
