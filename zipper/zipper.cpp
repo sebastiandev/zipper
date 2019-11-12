@@ -95,7 +95,7 @@ namespace zipper {
 			return m_zf != NULL;
 		}
 
-		bool add(std::istream& input_stream, const std::string& nameInZip, const std::string& password, int flags)
+		bool add(std::istream& input_stream, const std::tm& timestamp, const std::string& nameInZip, const std::string& password, int flags)
 		{
 			if (!m_zf) return false;
 
@@ -106,6 +106,13 @@ namespace zipper {
 			unsigned long crcFile = 0;
 
 			zip_fileinfo zi = { 0 };
+			zi.tmz_date.tm_sec  = timestamp.tm_sec;
+			zi.tmz_date.tm_min  = timestamp.tm_min;
+			zi.tmz_date.tm_hour = timestamp.tm_hour;
+			zi.tmz_date.tm_mday = timestamp.tm_mday;
+			zi.tmz_date.tm_mon  = timestamp.tm_mon;
+			zi.tmz_date.tm_year = timestamp.tm_year;
+
 			size_t size_read;
 
 			std::vector<char> buff;
@@ -287,9 +294,14 @@ namespace zipper {
                 delete m_impl;
 	}
 
+	bool Zipper::add(std::istream& source, const std::tm& timestamp, const std::string& nameInZip, zipFlags flags)
+	{
+		return m_impl->add(source, timestamp, nameInZip, "", flags);
+	}
+
 	bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags flags)
 	{
-		return m_impl->add(source, nameInZip, m_password, flags);
+		return add(source, {}, nameInZip, flags);
 	}
 
 	bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
