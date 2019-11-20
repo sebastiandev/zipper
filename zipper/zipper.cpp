@@ -310,7 +310,15 @@ namespace zipper {
 		else
 		{
 			std::ifstream input(fileOrFolderPath.c_str(), std::ios::binary);
-			add(input, fileNameFromPath(fileOrFolderPath), flags);
+			std::string fullFileName;
+
+			if (flags & Zipper::SaveHierarchy)
+				fullFileName = fileOrFolderPath;
+			else
+				fullFileName = fileNameFromPath(fileOrFolderPath);
+
+			add(input, fullFileName, flags);
+
 			input.close();
 		}
 
