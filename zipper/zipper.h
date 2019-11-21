@@ -5,6 +5,7 @@
 #include <sstream>
 #include <vector>
 #include <memory>
+#include <ctime>
 
 namespace zipper {
 
@@ -22,6 +23,7 @@ namespace zipper {
 
 		~Zipper();
 
+		bool add(std::istream& source, const std::tm& timestamp, const std::string& nameInZip = std::string(), zipFlags flags = Better);
 		bool add(std::istream& source, const std::string& nameInZip = std::string(), zipFlags flags = Better);
 		bool add(const std::string& fileOrFolderPath, zipFlags flags = Better);
 		
