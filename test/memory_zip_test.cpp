@@ -164,5 +164,54 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
 			std::remove("strdata");
 			zipvec.clear();
 		}
+
+		WHEN("a file containing 'test file compression' is added and named 'test1' in subdirectory 'subdirectory'")
+		{
+			bool fileWasCreated = zipper::makedir("subdirectory");
+
+			REQUIRE(fileWasCreated);
+
+			std::ofstream test1("./subdirectory/test1.txt");
+			test1 << "test file compression";
+			test1.flush();
+			test1.close();
+
+
+			auto flags = Zipper::zipFlags::Better | Zipper::zipFlags::SaveHierarchy;
+			zipper.add("./subdirectory/test1.txt", static_cast<Zipper::zipFlags>(flags));
+
+			zipper.close();
+
+			std::remove("./subdirectory/test1.txt");
+
+			zipper::Unzipper unzipper(zipvec);
+
+			THEN("the zip vector has entry named './subdirectory/test1.txt'")
+			{
+				REQUIRE(unzipper.entries().size() == 1);
+				REQUIRE(unzipper.entries().front().name == "./subdirectory/test1.txt");
+
+				AND_THEN("extracting the test1.txt entry creates a file named 'test1.txt' with the text 'test file compression'")
+				{
+					unzipper.extractEntry("./subdirectory/test1.txt");
+					// due to sections forking or creating different stacks we need to make sure the local instance is closed to
+					// prevent mixing the closing when both instances are freed at the end of the scope
+					unzipper.close();
+
+					REQUIRE(checkFileExists("./subdirectory/test1.txt"));
+
+					std::ifstream testfile("./subdirectory/test1.txt");
+					REQUIRE(testfile.good());
+
+					std::string test((std::istreambuf_iterator<char>(testfile)), std::istreambuf_iterator<char>());
+					testfile.close();
+					REQUIRE(test == "test file compression");
+
+					removeFolder("subdirectory");
+				}
+			}
+
+			zipvec.clear();
+		}
 	}
 }
