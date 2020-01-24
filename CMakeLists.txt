@@ -333,7 +333,9 @@ file(GLOB TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/test/*.hpp
 )
 
-option(BUILD_SHARED_VERSION "Build the shared version of the library." OFF)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" VERSION)
+
+option(BUILD_SHARED_VERSION "Build the shared version of the library." ON)
 if (BUILD_SHARED_VERSION)
   add_library (${ZIPPER_LIBRARY} SHARED ${ZIPPER_SOURCES} ${MINIZIP_SOURCES} )
   
@@ -350,10 +352,16 @@ endif()
 
 option(BUILD_STATIC_VERSION "Build the static version of the library." ON)
 if (BUILD_STATIC_VERSION)
+  set(STATIC_ZIPPER_LIBRARY static${ZIPPER_LIBRARY})
+  add_library (${STATIC_ZIPPER_LIBRARY} STATIC ${ZIPPER_SOURCES} ${MINIZIP_SOURCES})
+  set_target_properties(${STATIC_ZIPPER_LIBRARY} PROPERTIES OUTPUT_NAME ${ZIPPER_LIBRARY})
+  target_link_libraries(${STATIC_ZIPPER_LIBRARY} ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+  list(APPEND TARGET_LIST ${STATIC_ZIPPER_LIBRARY})
+
+  # Deprecated code: old zipper static lib was named libZipper-static.a but this was not
+  # a good unix name. Anyway keep installing it to avoid breaking programs link with it.
   add_library (${ZIPPER_LIBRARY}-static STATIC ${ZIPPER_SOURCES} ${MINIZIP_SOURCES})
-  
   target_link_libraries(${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
-  
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY}-static)
 endif()
 
@@ -378,7 +386,7 @@ if (BUILD_TEST)
   include(CTest)
 
   add_executable(${ZIPPER_LIBRARY}-test ${TEST_SOURCES})
-  target_link_libraries(${ZIPPER_LIBRARY}-test  ${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+  target_link_libraries(${ZIPPER_LIBRARY}-test  static${ZIPPER_LIBRARY} ${LIBZ_LIBRARY} ${EXTRA_LIBS})
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY}-test)
 
   add_test(
@@ -394,22 +402,26 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zipperConfig.cmake.in
                ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
                @ONLY)
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/zipper.pc.cmakein
+		${PROJECT_BINARY_DIR}/zipper.pc
+               @ONLY)
 
 export(TARGETS ${TARGET_LIST} FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake)
+
+set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
 
 install(TARGETS ${TARGET_LIST} EXPORT ${PROJECT_NAME}
     RUNTIME DESTINATION bin COMPONENT lib
     LIBRARY DESTINATION lib${LIB_SUFFIX} COMPONENT lib
     ARCHIVE DESTINATION lib${LIB_SUFFIX} COMPONENT lib
     INCLUDES DESTINATION include
-    PUBLIC_HEADER DESTINATION include/zipper
-)
+    PUBLIC_HEADER DESTINATION include/zipper)
+install(FILES ${PROJECT_BINARY_DIR}/zipper.pc DESTINATION ${INSTALL_PKGCONFIG_DIR})
 
 file(GLOB ZIPPER_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/zipper/*.h ${CMAKE_CURRENT_SOURCE_DIR}/minizip/*.h  )
 install(FILES 
         ${ZIPPER_HEADERS}
-        DESTINATION include/zipper
-)
+        DESTINATION include/zipper)
 
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
         DESTINATION lib${LIB_SUFFIX}/cmake)

@@ -48,6 +48,42 @@ cmake ../
 make
 ```
 
+#### Installing
+
+Following the previous section `Compiling`, still from the `build` folder, type:
+```shell
+sudo make install
+```
+
+You will see a message like:
+```
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /usr/local/lib/libZipper.so.1.0.1
+-- Up-to-date: /usr/local/lib/libZipper.so.1
+-- Up-to-date: /usr/local/lib/libZipper.so
+-- Installing: /usr/local/lib/libZipper.a
+-- Installing: /usr/local/lib/libZipper-static.a
+-- Installing: /usr/local/bin/Zipper-test
+-- Installing: /usr/local/share/pkgconfig/zipper.pc
+-- Installing: /usr/local/bin/Zipper-test
+-- Installing: /usr/local/include/zipper/crypt.h
+-- Installing: /usr/local/include/zipper/ioapi.h
+-- Installing: /usr/local/include/zipper/ioapi_buf.h
+-- Installing: /usr/local/include/zipper/ioapi_mem.h
+-- Installing: /usr/local/include/zipper/iowin32.h
+-- Installing: /usr/local/include/zipper/unzip.h
+-- Installing: /usr/local/include/zipper/zip.h
+-- Installing: /usr/local/include/zipper/CDirEntry.h
+-- Installing: /usr/local/include/zipper/defs.h
+-- Installing: /usr/local/include/zipper/tools.h
+-- Installing: /usr/local/include/zipper/unzipper.h
+-- Installing: /usr/local/include/zipper/zipper.h
+-- Installing: /usr/local/lib/cmake/zipperConfig.cmake
+-- Installing: /usr/local/lib/cmake/zipperTargets.cmake
+-- Installing: /usr/local/lib/cmake/zipperTargets-release.cmake
+```
+
 ### Usage:
 
 There are two classes available Zipper and Unzipper. They behave in the same manner regarding constructors and storage parameters. (for a complete example take a look at the [tests](https://github.com/sebastiandev/zipper/blob/develop/test/file_zip_test.cpp ) using the awesome BDD's from Catch library )
@@ -152,3 +188,21 @@ unzipper.close();
 ```
 
 **Note:** Methods `extract`, `extractEntry`, `extractEntryToMemory` return a boolean indicating the success (`true`) or the failure (`false`).
+
+##### Linking Zipper to your project
+
+In your project add the needed headers in your c++ files:
+```c++
+#include <zipper/unzipper.h>
+#include <zipper/zipper.h>
+```
+
+There are several ways to link your project against Zipper:
+- Straight forward: `g++ -W -Wall -I/usr/local/include main.cpp -o prog -L/usr/local/lib/ -lZipper -lz`. Note: you may have to adapt `/usr/local` to your installation directory (see the previous section `Installing`). You can also adapt and export your environment variable `LD_LIBRARY_PATH` (via you .bashrc for example).
+- Pkg-config is a better alternative to the previous command:
+```
+g++ -W -Wall main.cpp -o prog `pkg-config libZipper --cflags --libs`
+```
+Indeed pkg-config knows for you where to find libraries and, by default, it will choose the shared library. In the case it is not present then the static library will be chosen. You can force choosing the static library with `pkg-config libZipper --static --libs`
+- Makefile: set `LDFLAGS` to `pkg-config zipper --libs` and set `CPPFLAGS` to `pkg-config zipper --cflags`
+- CMake: TODO
