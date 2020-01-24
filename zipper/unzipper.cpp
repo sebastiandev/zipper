@@ -240,7 +240,7 @@ namespace zipper {
 
       if (output_file.good())
       {
-        if (extractToStream(output_file, info))
+        if (UNZ_OK == extractToStream(output_file, info))
           err = UNZ_OK;
 
         output_file.close();
@@ -259,9 +259,7 @@ namespace zipper {
 
     int extractToStream(std::ostream& stream, ZipEntry& info)
     {
-      size_t err = UNZ_ERRNO;
-
-      err = unzOpenCurrentFilePassword(m_zf, m_outer.m_password.c_str());
+      size_t err = unzOpenCurrentFilePassword(m_zf, m_outer.m_password.c_str());
       if (UNZ_OK != err)
       {
         std::stringstream str;

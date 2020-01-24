@@ -150,3 +150,5 @@ Unzipper unzipper("zipfile.zip");
 unzipper.extractEntryToMemory("entry name", unzipped_entry);
 unzipper.close();
 ```
+
+**Note:** Methods `extract`, `extractEntry`, `extractEntryToMemory` return a boolean indicating the success (`true`) or the failure (`false`).
