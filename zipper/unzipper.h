@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <iostream> // TODO: to be removed when removing extractEntryToStream and extractEntryToMemory
 
 namespace zipper {
   
@@ -27,8 +28,18 @@ namespace zipper {
     bool extract(const std::string& destination, const std::map<std::string, std::string>& alternativeNames);
     bool extract(const std::string& destination=std::string());
     bool extractEntry(const std::string& name, const std::string& destination = std::string());
-    bool extractEntryToStream(const std::string& name, std::ostream& stream);
-    bool extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec);
+    bool extractEntryFromStream(const std::string& name, std::ostream& stream);
+    bool extractEntryFromMemory(const std::string& name, std::vector<unsigned char>& vec);
+    inline bool extractEntryToStream(const std::string& name, std::ostream& stream)
+    {
+      std::cerr << "*** warning: extractEntryToStream is deprecated. Use extractEntryFromMemory instead!" << std::endl;
+      return extractEntryFromStream(name, stream);
+    }
+    inline bool extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec)
+    {
+      std::cerr << "*** warning: extractEntryToMemory is deprecated. Use extractEntryFromMemory instead!" << std::endl;
+      return extractEntryFromMemory(name, vec);
+    }
 
     void close();
 

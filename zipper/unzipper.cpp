@@ -125,7 +125,7 @@ namespace zipper {
       if (!entryinfo.valid())
         return false;
 
-      err = extractToFile(fileName, entryinfo);
+      err = extractFromFile(fileName, entryinfo);
       if (UNZ_OK == err)
       {
         err = unzCloseCurrentFile(m_zf);
@@ -149,7 +149,7 @@ namespace zipper {
       if (!entryinfo.valid())
         return false;
 
-      err = extractToStream(stream, entryinfo);
+      err = extractFromStream(stream, entryinfo);
       if (UNZ_OK == err)
       {
         err = unzCloseCurrentFile(m_zf);
@@ -173,7 +173,7 @@ namespace zipper {
       if (!entryinfo.valid())
         return false;
 
-      err = extractToMemory(outvec, entryinfo);
+      err = extractFromMemory(outvec, entryinfo);
       if (UNZ_OK == err)
       {
         err = unzCloseCurrentFile(m_zf);
@@ -228,7 +228,7 @@ namespace zipper {
     }
 
 
-    int extractToFile(const std::string& filename, ZipEntry& info)
+    int extractFromFile(const std::string& filename, ZipEntry& info)
     {
       int err = UNZ_ERRNO;
 
@@ -240,7 +240,7 @@ namespace zipper {
 
       if (output_file.good())
       {
-        if (UNZ_OK == extractToStream(output_file, info))
+        if (UNZ_OK == extractFromStream(output_file, info))
           err = UNZ_OK;
 
         output_file.close();
@@ -257,7 +257,7 @@ namespace zipper {
       return err;
     }
 
-    int extractToStream(std::ostream& stream, ZipEntry& info)
+    int extractFromStream(std::ostream& stream, ZipEntry& info)
     {
       size_t err = unzOpenCurrentFilePassword(m_zf, m_outer.m_password.c_str());
       if (UNZ_OK != err)
@@ -292,7 +292,7 @@ namespace zipper {
       return (int)err;
     }
 
-    int extractToMemory(std::vector<unsigned char>& outvec, ZipEntry& info)
+    int extractFromMemory(std::vector<unsigned char>& outvec, ZipEntry& info)
     {
       size_t err = UNZ_ERRNO;
 
@@ -443,7 +443,7 @@ namespace zipper {
       }
     }
 
-    bool extractEntryToStream(const std::string& name, std::ostream& stream)
+    bool extractEntryFromStream(const std::string& name, std::ostream& stream)
     {
       if (locateEntry(name))
       {
@@ -456,7 +456,7 @@ namespace zipper {
       }
     }
 
-    bool extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec)
+    bool extractEntryFromMemory(const std::string& name, std::vector<unsigned char>& vec)
     {
       if (locateEntry(name))
       {
@@ -551,14 +551,14 @@ namespace zipper {
     return m_impl->extractEntry(name, destination);
   }
 
-  bool Unzipper::extractEntryToStream(const std::string& name, std::ostream& stream)
+  bool Unzipper::extractEntryFromStream(const std::string& name, std::ostream& stream)
   {
-    return m_impl->extractEntryToStream(name, stream);
+    return m_impl->extractEntryFromStream(name, stream);
   }
 
-  bool Unzipper::extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec)
+  bool Unzipper::extractEntryFromMemory(const std::string& name, std::vector<unsigned char>& vec)
   {
-    return m_impl->extractEntryToMemory(name, vec);
+    return m_impl->extractEntryFromMemory(name, vec);
   }
 
 
