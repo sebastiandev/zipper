@@ -15,13 +15,14 @@
 
 namespace zipper
 {
-  /**
-   * This class provides an OS independent interface to directory entries
-   * such as files and directories.
-   */
-  class CDirEntry
-  {
-  public:
+/**
+ * This class provides an OS independent interface to directory entries
+ * such as files and directories.
+ */
+class CDirEntry
+{
+public:
+
     /**
      * The character used to separate directory entries.
      */
@@ -104,7 +105,7 @@ namespace zipper
      * @return bool success
      */
     static bool createDir(const std::string & dir,
-      const std::string & parent = "");
+                          const std::string & parent = "");
 
     /**
      * Create a name for a temporary directory entry. The directory entry
@@ -114,7 +115,7 @@ namespace zipper
      * @return std::string tmpName
      */
     static std::string createTmpName(const std::string & dir,
-      const std::string & suffix);
+                                     const std::string & suffix);
 
     /**
      * Move a file from. If to is the directory the filename of from is
@@ -124,7 +125,7 @@ namespace zipper
      * @return bool success
      */
     static bool move(const std::string & from,
-      const std::string & to);
+                     const std::string & to);
 
     /**
      * Removes a file or directory specified by path.
@@ -140,7 +141,7 @@ namespace zipper
      * @return bool success
      */
     static bool removeFiles(const std::string & pattern,
-      const std::string & dir);
+                            const std::string & dir);
 
     /**
      * Compiles the pattern to a patternList. Valid wildcards in the pattern are:
@@ -159,7 +160,7 @@ namespace zipper
      * @return bool match
      */
     static bool match(const std::string & name,
-      const std::vector< std::string > & patternList);
+                      const std::vector< std::string > & patternList);
 
     /**
      * Checks whether the given path is relative
@@ -174,7 +175,7 @@ namespace zipper
      * @return bool success
      */
     static bool makePathRelative(std::string & absolutePath,
-      const std::string & relativeTo);
+                                 const std::string & relativeTo);
 
     /**
      * Makes the relative path absolute to the path given in absoluteTo
@@ -183,7 +184,7 @@ namespace zipper
      * @return bool success
      */
     static bool makePathAbsolute(std::string & relativePath,
-      const std::string & absoluteTo);
+                                 const std::string & absoluteTo);
 
     /**
      * This method normalizes the path, i.e.,
@@ -194,7 +195,8 @@ namespace zipper
      */
     static std::string normalize(const std::string & path);
 
-  private:
+private:
+
     /**
      * This private methods checks whether the active section matches the
      * specified patter. The section is automatically advanced to allow
@@ -207,9 +209,9 @@ namespace zipper
      * @return bool match
      */
     static bool matchInternal(const std::string & name,
-      const std::string pattern,
-      std::string::size_type & at,
-      std::string::size_type & after);
-  };
+                              const std::string pattern,
+                              std::string::size_type & at,
+                              std::string::size_type & after);
+};
 }
 #endif // ZIPPER_CDirEntry
