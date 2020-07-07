@@ -367,7 +367,12 @@ namespace zipper {
     bool initWithStream(std::istream& stream)
     {
       stream.seekg(0, std::ios::end);
-      size_t size = (size_t)stream.tellg();
+      std::streampos s = stream.tellg();
+      if (s < 0)
+      {
+        return false;
+      }
+      size_t size = static_cast<size_t>(s);
       stream.seekg(0);
 
       if (size > 0)
