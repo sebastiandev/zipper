@@ -8,7 +8,7 @@
 C++ wrapper around minizip compression library
 
 **Zipper**'s goal is to bring the power and simplicity of minizip to a more object oriented/c++ user friendly library.
-It was born out of the necessity of a compression library that would be reliable, simple and flexible. 
+It was born out of the necessity of a compression library that would be reliable, simple and flexible.
 By flexibility I mean supporting all kinds of inputs and outputs, but specifically been able to compress into memory instead of been restricted to file compression only, and using data from memory instead of just files as well.
 
 ### Features:
@@ -149,7 +149,19 @@ zipper.add(input1, "Test1");
 zipper.close();
 ```
 
+##### Zipping strategies
+
+Possible options to `add()` methods (`enum zipFlags`):
+
+- `Overwrite`: Overwrite existing file.zip.
+- `Append`: Append to existing file.zip.
+- `Store`: Store only.
+- `Faster`: Compress faster.
+- `Better`: Compress better.
+- `NoPaths`: exclude path. store only the file name.
+
 ##### Unzipping
+
 - Getting all entries in zip
 ```c++
 Unzipper unzipper("zipfile.zip");
