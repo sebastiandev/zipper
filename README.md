@@ -151,14 +151,11 @@ zipper.close();
 
 ##### Zipping strategies
 
-Possible options to `add()` methods (`enum zipFlags`):
+Possible options to `add()` methods:
 
-- `Overwrite`: Overwrite existing file.zip.
-- `Append`: Append to existing file.zip.
-- `Store`: Store only.
-- `Faster`: Compress faster.
-- `Better`: Compress better.
-- `NoPaths`: exclude path. store only the file name.
+- `zipper::Zipper::Faster`: Compress faster.
+- `zipper::Zipper::Better`: Compress better (default).
+- Do not use other enum zipFlags they are not taken into account.
 
 ##### Unzipping
 
