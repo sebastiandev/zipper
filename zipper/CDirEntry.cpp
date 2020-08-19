@@ -18,7 +18,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#if defined(WIN32) || defined(__WIN32__) || defined(_WIN32) || defined(_MSC_VER)
+#if defined(__WIN32__) || defined(_WIN32) || defined(_MSC_VER)
+#define WIN32 1
+#endif
+
+#ifdef WIN32
 #  include <io.h>
 #  include <direct.h>
 typedef struct _stat STAT;
