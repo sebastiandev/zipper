@@ -106,40 +106,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
 or CMAKE_C_FLAGS are used), Debug, Release, RelWithDebInfo, MinSizeRel." FORCE)
 endif()
 
-
-find_library(LIBZ_LIBRARY
-    NAMES zdll.lib z zlib.lib
-    PATHS /usr/lib /usr/local/lib
-          ${CMAKE_OSX_SYSROOT}/usr/lib
-          ${ZIPPER_DEPENDENCY_DIR}/lib
-          ${ADDITIONAL_LIB_DIRS}
-          $ENV{ZLIBROOT}/lib
-    DOC "The file name of the zip compression library."
-)
-
-
-if (NOT LIBZ_INCLUDE_DIR)
-  find_path(LIBZ_INCLUDE_DIR
-      NAMES zlib.h zlib/zlib.h
-      PATHS ${CMAKE_OSX_SYSROOT}/usr/include
-            /usr/include /usr/local/include
-            ${ZIPPER_DEPENDENCY_DIR}/include
-            $ENV{ZLIBROOT}/include
-            NO_DEFAULT_PATH
-      DOC "The directory containing the zlib include files."
-            )
-endif()
-    
-if (NOT LIBZ_INCLUDE_DIR)
-    find_path(LIBZ_INCLUDE_DIR
-    NAMES zlib.h zlib/zlib.h
-    PATHS ${CMAKE_OSX_SYSROOT}/usr/include
-          /usr/include /usr/local/include
-          ${ZIPPER_DEPENDENCY_DIR}/include
-          $ENV{ZLIBROOT}/include
-    DOC "The directory containing the zlib include files."
-          )
-endif()
+find_package(ZLIB REQUIRED)
 
 # allow the user to define additional compilation symbols
 if (EXTRA_DEFS)
@@ -152,7 +119,7 @@ set(USE_ZLIB ON)
 add_definitions( -DUSE_ZLIB )
 
 # make sure that we have a valid zip library
-check_library_exists("${LIBZ_LIBRARY}" "gzopen" "" LIBZ_FOUND_SYMBOL)
+check_library_exists("${ZLIB_LIBRARIES}" "gzopen" "" LIBZ_FOUND_SYMBOL)
 if(NOT LIBZ_FOUND_SYMBOL)
     # this is odd, but on windows this check always fails! must be a
     # bug in the current cmake version so for now only issue this
@@ -160,17 +127,17 @@ if(NOT LIBZ_FOUND_SYMBOL)
     if(UNIX)
         message(WARNING
 "The chosen zlib library does not appear to be valid because it is
-missing certain required symbols. Please check that ${LIBZ_LIBRARY} is
+missing certain required symbols. Please check that ${ZLIB_LIBRARIES} is
 the correct zlib library. For details about the error, please see
 ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log")
     endif()
 endif()
 
-if(NOT EXISTS "${LIBZ_INCLUDE_DIR}/zlib.h")
+if(NOT EXISTS "${ZLIB_INCLUDE_DIRS}/zlib.h")
     message(FATAL_ERROR
 "The include directory specified for zlib does not appear to be
 valid. It should contain the file zlib.h, but it does not. Please
-verify the LIBZ_INCLUDE_DIR variable.")
+verify the ZLIB_INCLUDE_DIRS (${ZLIB_INCLUDE_DIRS}) variable.")
 endif()
 
 set(USING_INTEL)
@@ -284,7 +251,7 @@ add_definitions(-D__APPLE__)
 endif()
 
 
-include_directories(BEFORE ${LIBZ_INCLUDE_DIR})
+include_directories(BEFORE ${ZLIB_INCLUDE_DIRS})
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/zipper)
@@ -345,7 +312,7 @@ if (BUILD_SHARED_VERSION)
                           VERSION ${ZIPPER_VERSION_MAJOR}.${ZIPPER_VERSION_MINOR}.${ZIPPER_VERSION_PATCH})
   endif()
   
-  target_link_libraries(${ZIPPER_LIBRARY} ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+  target_link_libraries(${ZIPPER_LIBRARY} ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
   
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY})
 endif()
@@ -355,13 +322,13 @@ if (BUILD_STATIC_VERSION)
   set(STATIC_ZIPPER_LIBRARY static${ZIPPER_LIBRARY})
   add_library (${STATIC_ZIPPER_LIBRARY} STATIC ${ZIPPER_SOURCES} ${MINIZIP_SOURCES})
   set_target_properties(${STATIC_ZIPPER_LIBRARY} PROPERTIES OUTPUT_NAME ${ZIPPER_LIBRARY})
-  target_link_libraries(${STATIC_ZIPPER_LIBRARY} ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+  target_link_libraries(${STATIC_ZIPPER_LIBRARY} ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
   list(APPEND TARGET_LIST ${STATIC_ZIPPER_LIBRARY})
 
   # Deprecated code: old zipper static lib was named libZipper-static.a but this was not
   # a good unix name. Anyway keep installing it to avoid breaking programs link with it.
   add_library (${ZIPPER_LIBRARY}-static STATIC ${ZIPPER_SOURCES} ${MINIZIP_SOURCES})
-  target_link_libraries(${ZIPPER_LIBRARY}-static ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+  target_link_libraries(${ZIPPER_LIBRARY}-static ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY}-static)
 endif()
 
@@ -386,7 +353,7 @@ if (BUILD_TEST)
   include(CTest)
 
   add_executable(${ZIPPER_LIBRARY}-test ${TEST_SOURCES})
-  target_link_libraries(${ZIPPER_LIBRARY}-test  static${ZIPPER_LIBRARY} ${LIBZ_LIBRARY} ${EXTRA_LIBS})
+  target_link_libraries(${ZIPPER_LIBRARY}-test  static${ZIPPER_LIBRARY} ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY}-test)
 
   add_test(
@@ -449,8 +416,8 @@ Zipper version ${PACKAGE_VERSION}
      LDFLAGS                         = ${CMAKE_EXE_LINKER_FLAGS}
 
    Zlib library configuration:
-     Zlib library                    = ${LIBZ_LIBRARY}
-     Zlib include dir                = ${LIBZ_INCLUDE_DIR}
+     Zlib library                    = ${ZLIB_LIBRARIES}
+     Zlib include dir                = ${ZLIB_INCLUDE_DIRS}
 
    Other configuration settings:
      Installation $prefix            = ${CMAKE_INSTALL_PREFIX}
