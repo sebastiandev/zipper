@@ -105,8 +105,31 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     "Choose the type of build to perform. The options are: None (CMAKE_CXX_FLAGS
 or CMAKE_C_FLAGS are used), Debug, Release, RelWithDebInfo, MinSizeRel." FORCE)
 endif()
+add_library(ZLIB INTERFACE)
+find_package(ZLIB)
+if(NOT ZLIB_FOUND)
+  include(ExternalProject)
+  set(ZLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib)
+  set(ZLIB_BIN ${CMAKE_CURRENT_BINARY_DIR}/zlib_bin)
+  ExternalProject_Add(ZLIB_EXTERNAL
+  SOURCE_DIR ${ZLIB_DIR}
+  BINARY_DIR ${ZLIB_BIN}
+  CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}"
+                                 "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
+                                 "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+                                 "-DCMAKE_INSTALL_PREFIX=${ZLIB_BIN}"
 
-find_package(ZLIB REQUIRED)
+  )
+  add_dependencies(ZLIB ZLIB_EXTERNAL)
+  set(ZLIB_LIBRARIES ${ZLIB_BIN}/zlib_bin/${CMAKE_INSTALL_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}zlib${CMAKE_STATIC_LIBRARY_SUFFIX})
+  set(ZLIB_INCLUDE_DIRS ${ZLIB_BIN}/include)
+  list(APPEND TARGET_LIST ZLIB)
+endif()
+target_link_libraries(ZLIB INTERFACE ${ZLIB_LIBRARIES})
+target_include_directories(ZLIB INTERFACE  
+$<BUILD_INTERFACE:${ZLIB_DIR}>
+$<INSTALL_INTERFACE:zlib>
+)
 
 # allow the user to define additional compilation symbols
 if (EXTRA_DEFS)
@@ -131,13 +154,6 @@ missing certain required symbols. Please check that ${ZLIB_LIBRARIES} is
 the correct zlib library. For details about the error, please see
 ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log")
     endif()
-endif()
-
-if(NOT EXISTS "${ZLIB_INCLUDE_DIRS}/zlib.h")
-    message(FATAL_ERROR
-"The include directory specified for zlib does not appear to be
-valid. It should contain the file zlib.h, but it does not. Please
-verify the ZLIB_INCLUDE_DIRS (${ZLIB_INCLUDE_DIRS}) variable.")
 endif()
 
 set(USING_INTEL)
@@ -302,7 +318,7 @@ file(GLOB TEST_SOURCES
 
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" VERSION)
 
-option(BUILD_SHARED_VERSION "Build the shared version of the library." ON)
+option(BUILD_SHARED_VERSION "Build the shared version of the library." OFF)
 if (BUILD_SHARED_VERSION)
   add_library (${ZIPPER_LIBRARY} SHARED ${ZIPPER_SOURCES} ${MINIZIP_SOURCES} )
   
@@ -312,7 +328,7 @@ if (BUILD_SHARED_VERSION)
                           VERSION ${ZIPPER_VERSION_MAJOR}.${ZIPPER_VERSION_MINOR}.${ZIPPER_VERSION_PATCH})
   endif()
   
-  target_link_libraries(${ZIPPER_LIBRARY} ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
+  target_link_libraries(${ZIPPER_LIBRARY} ZLIB ${EXTRA_LIBS})
   
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY})
 endif()
@@ -321,20 +337,20 @@ option(BUILD_STATIC_VERSION "Build the static version of the library." ON)
 if (BUILD_STATIC_VERSION)
   set(STATIC_ZIPPER_LIBRARY static${ZIPPER_LIBRARY})
   add_library (${STATIC_ZIPPER_LIBRARY} STATIC ${ZIPPER_SOURCES} ${MINIZIP_SOURCES})
-  set_target_properties(${STATIC_ZIPPER_LIBRARY} PROPERTIES OUTPUT_NAME ${ZIPPER_LIBRARY})
-  target_link_libraries(${STATIC_ZIPPER_LIBRARY} ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
+  add_dependencies(${STATIC_ZIPPER_LIBRARY} ZLIB)
+  target_link_libraries(${STATIC_ZIPPER_LIBRARY} ZLIB ${EXTRA_LIBS})
   list(APPEND TARGET_LIST ${STATIC_ZIPPER_LIBRARY})
 
   # Deprecated code: old zipper static lib was named libZipper-static.a but this was not
   # a good unix name. Anyway keep installing it to avoid breaking programs link with it.
   add_library (${ZIPPER_LIBRARY}-static STATIC ${ZIPPER_SOURCES} ${MINIZIP_SOURCES})
-  target_link_libraries(${ZIPPER_LIBRARY}-static ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
+  target_link_libraries(${ZIPPER_LIBRARY}-static ZLIB ${EXTRA_LIBS})
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY}-static)
 endif()
 
 
 
-option(BUILD_TEST "Build the test program." ON)
+option(BUILD_TEST "Build the test program." OFF)
 if (BUILD_TEST)
   enable_testing()
 
@@ -353,7 +369,7 @@ if (BUILD_TEST)
   include(CTest)
 
   add_executable(${ZIPPER_LIBRARY}-test ${TEST_SOURCES})
-  target_link_libraries(${ZIPPER_LIBRARY}-test  static${ZIPPER_LIBRARY} ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
+  target_link_libraries(${ZIPPER_LIBRARY}-test static${ZIPPER_LIBRARY} ZLIB ${EXTRA_LIBS})
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY}-test)
 
   add_test(
