@@ -1,8 +1,8 @@
 [submodule "minizip"]
 	path = minizip
 	url = https://github.com/sebastiandev/minizip 
-	
+
 [submodule "zlib"]
 	path = zlib
-	url = https://github.com/madler/zlib
-	branch = master
+	url = https://github.com/Togtja/zlib
+	branch = optional_zconf_rename
