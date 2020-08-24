@@ -16,6 +16,6 @@ function mingw_packages
     done
 }
 
-mingw_packages "zlib cmake toolchain clang"
+mingw_packages "zlib minizip cmake toolchain clang"
 
 sh -c "pacman -S --noconfirm git make $packages"
