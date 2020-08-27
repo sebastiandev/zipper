@@ -1,10 +1,3 @@
-version: 1.0.{build}
-image:
-  - Visual Studio 2017
-
-shallow_clone: true
-clone_depth: 1
-
 environment:
   matrix:
     - MSYS2_ARCH: x86_64
@@ -12,15 +5,27 @@ environment:
     - MSYS2_ARCH: i686
       MSYSTEM: MINGW32
 
+clone_depth: 1
+branches:
+  only:
+    - master
+
+install:
+  - set PATH=C:\msys64\usr\bin;%PATH%
+  # Download new keyring until appveyor updates its installation
+  - bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
+  - bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
+  - bash -lc "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
+  - bash -lc "pacman -U msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz --noconfirm"
+  - bash -lc "pacman --needed --noconfirm -Syu"
+  # This is needed because without killing all processes -Su will fail
+  - ps: Get-Process | Where-Object {$_.path -like 'C:\msys64*'} | Stop-Process
+  - bash -lc "pacman --needed --noconfirm -Su"
+
 before_build:
-  - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh --sysupgrade
   - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh pacman
   - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh git
   - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/.integration/appveyor-install-window.sh"
 
 build_script:
   - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/.integration/appveyor-launch_tests.sh"
-
-branches:
-  only:
-    - master
