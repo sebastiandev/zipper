@@ -1,3 +1,10 @@
+version: 1.0.{build}
+image:
+  - Visual Studio 2017
+
+shallow_clone: true
+clone_depth: 1
+
 environment:
   matrix:
     - MSYS2_ARCH: x86_64
@@ -6,9 +13,9 @@ environment:
       MSYSTEM: MINGW32
 
 before_build:
-  - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh --refresh --sysupgrade --sysupgrade
-  - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh --refresh pacman
-  - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh --refresh git
+  - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh --sysupgrade
+  - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh pacman
+  - C:\msys64\usr\bin\pacman --noconfirm --sync --refresh git
   - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/.integration/appveyor-install-window.sh"
 
 build_script:
