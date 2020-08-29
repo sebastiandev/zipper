@@ -12,6 +12,9 @@ branches:
 
 install:
   - set PATH=C:\msys64\usr\bin;%PATH%
+  # Fix appveyor not git cloning recursively
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - git submodule update --init --recursive
   # Download new keyring until appveyor updates its installation
   - bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
   - bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
