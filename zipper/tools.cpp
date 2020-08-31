@@ -8,14 +8,14 @@
 #include <cstdio>
 #include <iostream>
 
-#if defined(WIN32) && !defined(CYGWIN)
+#if (USE_WINDOWS)
 #  include "tps/dirent.h"
 #  include "tps/dirent.c"
 #else
 #  include <sys/types.h>
 #  include <dirent.h>
 #  include <unistd.h>
-#endif  /* WIN32 */
+#endif  /* WINDOWS */
 
 namespace zipper {
 
