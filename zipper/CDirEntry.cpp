@@ -14,41 +14,15 @@
 // All rights reserved.
 // -----------------------------------------------------------------------------
 
+#include "defs.h"
+#include "CDirEntry.h"
 #include <algorithm>
 #include <sys/types.h>
-#include <sys/stat.h>
-
-#if defined(__WIN32__) || defined(_WIN32) || defined(_MSC_VER)
-#define WIN32 1
-#endif
-
-#ifdef WIN32
-#  include <io.h>
-#  include <direct.h>
-typedef struct _stat STAT;
-#  define stat _stat
-#  define S_IFREG _S_IFREG
-#  define S_IFDIR _S_IFDIR
-#  define access _access
-#  define mkdir _mkdir
-#  define rmdir _rmdir
-#else
-typedef struct stat STAT;
-#  include <dirent.h>
-#  include <unistd.h>
-#endif // WIN32
-
-#include "CDirEntry.h"
-#include <stdlib.h>
 #include <fstream>
 
 using namespace zipper;
 
-#ifdef WIN32
-const std::string CDirEntry::Separator = "\\";
-#else
-const std::string CDirEntry::Separator = "/";
-#endif
+const std::string CDirEntry::Separator(DIRECTORY_SEPARATOR);
 
 // -----------------------------------------------------------------------------
 bool CDirEntry::isFile(const std::string & path)
@@ -58,7 +32,7 @@ bool CDirEntry::isFile(const std::string & path)
     if (stat(path.c_str(), & st) == -1)
         return false;
 
-#ifdef WIN32
+#if defined(USE_WINDOWS)
     return ((st.st_mode & S_IFREG) == S_IFREG);
 #else
     return S_ISREG(st.st_mode);
@@ -73,7 +47,7 @@ bool CDirEntry::isDir(const std::string & path)
     if (stat(path.c_str(), & st) == -1)
         return false;
 
-#ifdef WIN32
+#if defined(USE_WINDOWS)
     return ((st.st_mode & S_IFDIR) == S_IFDIR);
 #else
     return S_ISDIR(st.st_mode);
@@ -88,7 +62,7 @@ bool CDirEntry::exist(const std::string & path)
     if (stat(path.c_str(), & st) == -1)
         return false;
 
-#ifdef WIN32
+#if defined(USE_WINDOWS)
     return ((st.st_mode & S_IFREG) == S_IFREG ||
             (st.st_mode & S_IFDIR) == S_IFDIR);
 #else
@@ -113,7 +87,7 @@ std::string CDirEntry::baseName(const std::string & path)
 {
     std::string::size_type start = path.find_last_of(Separator);
 
-#ifdef WIN32 // WIN32 also understands '/' as the separator.
+#if defined(USE_WINDOWS) // WIN32 also understands '/' as the separator.
     if (start == std::string::npos)
     {
         start = path.find_last_of("/");
@@ -144,7 +118,7 @@ std::string CDirEntry::fileName(const std::string & path)
 {
     std::string::size_type start = path.find_last_of(Separator);
 
-#ifdef WIN32 // WIN32 also understands '/' as the separator.
+#if defined(USE_WINDOWS) // WIN32 also understands '/' as the separator.
     if (start == std::string::npos)
     {
         start = path.find_last_of("/");
@@ -169,7 +143,7 @@ std::string CDirEntry::dirName(const std::string & path)
     if (path == "")
         return path;
 
-#ifdef WIN32 // WIN32 also understands '/' as the separator.
+#if defined(USE_WINDOWS) // WIN32 also understands '/' as the separator.
     std::string::size_type end = path.find_last_of(Separator + "/");
 #else
     std::string::size_type end = path.find_last_of(Separator);
@@ -177,7 +151,7 @@ std::string CDirEntry::dirName(const std::string & path)
 
     if (end == path.length() - 1)
     {
-#ifdef WIN32 // WIN32 also understands '/' as the separator.
+#if defined(USE_WINDOWS) // WIN32 also understands '/' as the separator.
         end = path.find_last_of(Separator + "/", end);
 #else
         end = path.find_last_of(Separator, end);
@@ -195,7 +169,7 @@ std::string CDirEntry::suffix(const std::string & path)
 {
     std::string::size_type start = path.find_last_of(Separator);
 
-#ifdef WIN32 // WIN32 also understands '/' as the separator.
+#if defined(USE_WINDOWS) // WIN32 also understands '/' as the separator.
     if (start == std::string::npos)
     {
         start = path.find_last_of("/");
@@ -249,7 +223,7 @@ bool CDirEntry::createDir(const std::string & dir, const std::string & parent)
         createDir(actualParent);
     }
 
-#ifdef WIN32
+#if defined(USE_WINDOWS)
     return (mkdir(Dir.c_str()) == 0);
 #else
     return (mkdir(Dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0);
@@ -303,7 +277,7 @@ bool CDirEntry::move(const std::string & from, const std::string & to)
     if (isDir(To))
         return false;
 
-#ifdef WIN32
+#if defined(USE_WINDOWS)
 
     // The target must not exist under WIN32 for rename to succeed.
     if (exist(To) && !remove(To))
@@ -337,7 +311,7 @@ bool CDirEntry::remove(const std::string & path)
     if (isDir(path))
         return (rmdir(path.c_str()) == 0);
     else if (isFile(path))
-#ifdef WIN32
+#if defined(USE_WINDOWS)
         return (::remove(path.c_str()) == 0);
 #else
         return (::remove(path.c_str()) == 0);
@@ -355,7 +329,7 @@ bool CDirEntry::removeFiles(const std::string & pattern,
 
     PatternList = compilePattern(pattern);
 
-#ifdef WIN32
+#if defined(USE_WINDOWS)
 
     // We want the same pattern matching behaviour for all platforms.
     // Therefore, we do not use the MS provided one and list all files instead.
@@ -475,7 +449,7 @@ bool CDirEntry::match(const std::string & name,
 // -----------------------------------------------------------------------------
 bool CDirEntry::isRelativePath(const std::string & path)
 {
-#ifdef WIN32
+#if defined(USE_WINDOWS)
     std::string Path = normalize(path);
 
     if (Path.length() < 2)
@@ -523,7 +497,7 @@ bool CDirEntry::makePathRelative(std::string & absolutePath, const std::string &
         i = absolutePath.find_last_of('/', i) + 1;
     }
 
-#ifdef WIN32
+#if defined(USE_WINDOWS)
 
     if (i == 0)
     {
@@ -635,7 +609,7 @@ std::string CDirEntry::normalize(const std::string & path)
 {
     std::string Normalized = path;
 
-#ifdef WIN32
+#if defined(USE_WINDOWS)
     // converts all '\' to '/' (only on WIN32)
     size_t i, imax;
 
