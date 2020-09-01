@@ -54,12 +54,7 @@ typedef struct stat STAT;
 #  include <filesystem>
 #endif
 
-#if defined(USE_WINDOWS)
-#  define EXCEPTION_CLASS std::exception
-#else
-#  define EXCEPTION_CLASS std::runtime_error
-#endif
-
+#define EXCEPTION_CLASS std::runtime_error
 
 #if defined(_WIN64) && (!defined(__APPLE__))
 #  ifndef __USE_FILE_OFFSET64
