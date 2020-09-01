@@ -105,33 +105,42 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     "Choose the type of build to perform. The options are: None (CMAKE_CXX_FLAGS
 or CMAKE_C_FLAGS are used), Debug, Release, RelWithDebInfo, MinSizeRel." FORCE)
 endif()
-add_library(ZLIB INTERFACE)
 find_package(ZLIB)
 if(NOT ZLIB_FOUND)
   include(ExternalProject)
   set(ZLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib)
   set(ZLIB_BIN ${CMAKE_CURRENT_BINARY_DIR}/zlib_bin)
+  set(ZLIB_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/zlib_install)
   ExternalProject_Add(ZLIB_EXTERNAL
   SOURCE_DIR ${ZLIB_DIR}
   BINARY_DIR ${ZLIB_BIN}
-  CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}"
-                                 "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
-                                 "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
-                                 "-DCMAKE_INSTALL_PREFIX=${ZLIB_BIN}"
-                                 "-DRENAME_ZCONF=OFF"
+  INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/zlib_install
+  CMAKE_ARGS 
+    -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+    -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+    -DCMAKE_BIN_DIR:PATH=<INSTALL_DIR>/bin
+    -DINSTALL_INC_DIR:PATH=<INSTALL_DIR>/include
+    -DINSTALL_LIB_DIR:PATH=<INSTALL_DIR>/lib
+    -DINSTALL_MAN_DIR:PATH=<INSTALL_DIR>/share/man
+    -DRENAME_ZCONF=OFF
 
   )
+  add_library(ZLIB INTERFACE)
   add_dependencies(ZLIB ZLIB_EXTERNAL)
-  set(ZLIB_LIBRARIES ${ZLIB_BIN}/zlib_bin/${CMAKE_INSTALL_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}zlib${CMAKE_STATIC_LIBRARY_SUFFIX})
-  set(ZLIB_INCLUDE_DIRS ${ZLIB_BIN}/include)
+  set(ZLIB_LIBRARIES 
+    ${ZLIB_INSTALL}/lib/zlibd.lib
+    ${ZLIB_INSTALL}/lib/zlibstaticd.lib
+  )
+  set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/zlib_install/include)
   list(APPEND TARGET_LIST ZLIB)
 endif()
 target_link_libraries(ZLIB INTERFACE ${ZLIB_LIBRARIES})
 target_include_directories(ZLIB INTERFACE  
 $<BUILD_INTERFACE:${ZLIB_DIR}>
-$<INSTALL_INTERFACE:zlib>
+$<INSTALL_INTERFACE:zlib_install/include>
 )
-
 # allow the user to define additional compilation symbols
 if (EXTRA_DEFS)
   foreach(var ${EXTRA_DEFS})
@@ -319,9 +328,11 @@ file(GLOB TEST_SOURCES
 
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" VERSION)
 
-option(BUILD_SHARED_VERSION "Build the shared version of the library." OFF)
+option(BUILD_SHARED_VERSION "Build the shared version of the library." ON)
 if (BUILD_SHARED_VERSION)
   add_library (${ZIPPER_LIBRARY} SHARED ${ZIPPER_SOURCES} ${MINIZIP_SOURCES} )
+  add_dependencies(${ZIPPER_LIBRARY} ZLIB ZLIB_EXTERNAL)
+  target_link_libraries(${ZIPPER_LIBRARY} ZLIB ${EXTRA_LIBS})
   
   if (UNIX)
     SET_TARGET_PROPERTIES(${ZIPPER_LIBRARY} PROPERTIES
@@ -329,7 +340,6 @@ if (BUILD_SHARED_VERSION)
                           VERSION ${ZIPPER_VERSION_MAJOR}.${ZIPPER_VERSION_MINOR}.${ZIPPER_VERSION_PATCH})
   endif()
   
-  target_link_libraries(${ZIPPER_LIBRARY} ZLIB ${EXTRA_LIBS})
   
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY})
 endif()
