@@ -201,7 +201,7 @@ There are several ways to link your project against Zipper:
 - Straight forward: `g++ -W -Wall -I/usr/local/include main.cpp -o prog -L/usr/local/lib/ -lZipper -lz`. Note: you may have to adapt `/usr/local` to your installation directory (see the previous section `Installing`). You can also adapt and export your environment variable `LD_LIBRARY_PATH` (via you .bashrc for example).
 - Pkg-config is a better alternative to the previous command:
 ```
-g++ -W -Wall main.cpp -o prog `pkg-config libZipper --cflags --libs`
+g++ -W -Wall main.cpp -o prog `pkg-config zipper --cflags --libs`
 ```
 Indeed pkg-config knows for you where to find libraries and, by default, it will choose the shared library. In the case it is not present then the static library will be chosen. You can force choosing the static library with `pkg-config libZipper --static --libs`
 - Makefile: set `LDFLAGS` to `pkg-config zipper --libs` and set `CPPFLAGS` to `pkg-config zipper --cflags`
