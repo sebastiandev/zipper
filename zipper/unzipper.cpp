@@ -192,7 +192,7 @@ public:
 
     void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tmu_date)
     {
-#ifdef _WIN32
+#if defined(USE_WINDOWS)
         HANDLE hFile;
         FILETIME ftm, ftLocal, ftCreate, ftLastAcc, ftLastWrite;
 

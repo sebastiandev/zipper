@@ -8,7 +8,7 @@
 #include <cstdio>
 #include <iostream>
 
-#if (USE_WINDOWS)
+#if defined(USE_WINDOWS)
 #  include "tps/dirent.h"
 #  include "tps/dirent.c"
 #else

@@ -223,7 +223,7 @@ bool CDirEntry::createDir(const std::string & dir, const std::string & parent)
         createDir(actualParent);
     }
 
-#if defined(USE_WINDOWS)
+#if defined(USE_WINDOWS) || defined (__MINGW32__)
     return (mkdir(Dir.c_str()) == 0);
 #else
     return (mkdir(Dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0);

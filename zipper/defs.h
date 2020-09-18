@@ -10,7 +10,7 @@ extern "C"
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#if (defined(__WIN32__) || defined(WIN32) || defined(_WIN32) || defined(_WIN64) || defined(_MSC_VER)) && !defined(CYGWIN)
+#if (defined(__WIN32__) || defined(WIN32) || defined(_WIN32) || defined(_WIN64) || defined(_MSC_VER)) && !defined(CYGWIN) && !defined(__MINGW32__)
 #  define USE_WINDOWS 1
 #endif
 
@@ -71,7 +71,7 @@ typedef struct stat STAT;
 #  endif
 #endif
 
-#if defined(USE_WINDOWS)
+#if defined(USE_WINDOWS) || defined (__MINGW32__)
 #  define MKDIR(d) _mkdir(d)
 #  define CHDIR(d) _chdir(d)
 #else
