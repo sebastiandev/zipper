@@ -2,8 +2,8 @@
 
 |Branch     | **`Linux/Mac OS`** | **`Windows`** |
 |-----------|------------------|-------------|
-|master     |[![Build Status](https://travis-ci.org/sebastiandev/zipper.svg?branch=master)](https://travis-ci.org/sebastiandev/zipper)|[![Build status](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper)](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper)|
-|development|[![Build Status](https://travis-ci.org/sebastiandev/zipper.svg?branch=develop)](https://travis-ci.org/sebastiandev/zipper)||
+|master     |[![Build Status](https://travis-ci.org/sebastiandev/zipper.svg?branch=master)](https://travis-ci.org/sebastiandev/zipper)|[![Build status](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper?branch=master)](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper)|
+|development|[![Build Status](https://travis-ci.org/sebastiandev/zipper.svg?branch=develop)](https://travis-ci.org/sebastiandev/zipper)|[![Build status](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper?branch=develop)](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper)|
 
 C++ wrapper around minizip compression library
 
