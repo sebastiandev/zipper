@@ -116,6 +116,16 @@
 #    define CATCH_CPP14_OR_GREATER
 #  endif
 
+// unless compiled with /Zc:__cplusplus, the __cplusplus value is 199711L with MSVC
+#ifdef _MSVC_LANG
+#  if _MSVC_LANG >= 201103L
+#    define CATCH_CPP11_OR_GREATER
+#  endif
+
+#  if _MSVC_LANG >= 201402L
+#    define CATCH_CPP14_OR_GREATER
+#  endif
+
 #endif
 
 #ifdef __clang__
