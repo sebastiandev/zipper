@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 3.0)
 project(zipper)
 
 # Set useful CMake flags
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(CMAKE_DEBUG_POSTFIX "d")

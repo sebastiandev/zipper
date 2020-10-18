@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <fstream>
+#include <filesystem>
 #include <ostream>
 #include <string>
 #include <map>
@@ -19,7 +20,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
         // just in case the last test fails there
         // will still be one zip file around delete it first
 
-        if (checkFileExists("ziptest.zip"))
+        if (std::filesystem::exists("ziptest.zip"))
             std::remove("ziptest.zip");
 
         zipper::Zipper zipper("ziptest.zip");
@@ -55,7 +56,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
                     // prevent mixing the closing when both instances are freed at the end of the scope
                     unzipper.close();
 
-                    REQUIRE(checkFileExists("test1.txt"));
+                    REQUIRE(std::filesystem::exists("test1.txt"));
 
                     std::ifstream testfile("test1.txt");
                     REQUIRE(testfile.good());
@@ -93,7 +94,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
                                 unzipper.extract();
                                 unzipper.close();
 
-                                REQUIRE(checkFileExists("TestFolder/test2.dat"));
+                                REQUIRE(std::filesystem::exists("TestFolder/test2.dat"));
 
                                 std::ifstream testfile("TestFolder/test2.dat");
                                 REQUIRE(testfile.good());
@@ -104,7 +105,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
                                 AND_WHEN("adding a folder to the zip, creates one entry for each file inside the folder with the name in zip as 'Folder/...'")
                                 {
-                                    makedir(currentPath() + "/TestFiles/subfolder");
+				    makedir(std::filesystem::current_path() / "TestFiles/subfolder");
                                     std::ofstream test("TestFiles/test1.txt");
                                     test << "test file compression";
                                     test.flush();
@@ -129,15 +130,15 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
                                     AND_THEN("extracting to a new folder 'NewDestination' creates the file structure from zip in the new destination folder")
                                     {
-                                        makedir(currentPath() + "/NewDestination");
+					makedir(std::filesystem::current_path() / "NewDestination");
 
-                                        unzipper.extract(currentPath() + "/NewDestination");
+                                        unzipper.extract(std::filesystem::current_path().string() + "/NewDestination");
 
-                                        std::vector<std::string> files =  zipper::filesFromDirectory(currentPath() + "/NewDestination");
+                                        std::vector<std::filesystem::path> files =  zipper::filesFromDirectory(std::filesystem::current_path().string() + "/NewDestination");
 
-                                        REQUIRE(checkFileExists("NewDestination/TestFiles/test1.txt"));
-                                        REQUIRE(checkFileExists("NewDestination/TestFiles/test2.pdf"));
-                                        REQUIRE(checkFileExists("NewDestination/TestFiles/subfolder/test-sub.txt"));
+                                        REQUIRE(std::filesystem::exists("NewDestination/TestFiles/test1.txt"));
+                                        REQUIRE(std::filesystem::exists("NewDestination/TestFiles/test2.pdf"));
+                                        REQUIRE(std::filesystem::exists("NewDestination/TestFiles/subfolder/test-sub.txt"));
                                     }
 
                                     unzipper.close();
@@ -145,9 +146,9 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
                             }
                         }
 
-                        removeFolder("TestFolder");
-                        removeFolder("TestFiles");
-                        removeFolder("NewDestination");
+			std::filesystem::remove_all("TestFolder");
+                        std::filesystem::remove_all("TestFiles");
+                        std::filesystem::remove_all("NewDestination");
                         std::remove("test1.txt");
                     }
                 }
@@ -175,7 +176,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
                 {
                     unzipper.extract();
 
-                    REQUIRE(checkFileExists("strdata"));
+                    REQUIRE(std::filesystem::exists("strdata"));
 
                     std::ifstream testfile("strdata");
                     REQUIRE(testfile.good());
@@ -191,7 +192,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
                         unzipper.extract("", alt_names);
 
-                        REQUIRE(checkFileExists("alternative_strdata.dat"));
+                        REQUIRE(std::filesystem::exists("alternative_strdata.dat"));
 
                         std::ifstream testfile2("alternative_strdata.dat");
                         REQUIRE(testfile2.good());
