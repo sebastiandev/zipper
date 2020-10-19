@@ -334,8 +334,10 @@ bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
 {
     if (isDirectory(fileOrFolderPath))
     {
-        std::string folderName = fileNameFromPath(fileOrFolderPath);
-        std::vector<std::string> files = filesFromDirectory(fileOrFolderPath);
+        std::string folderName = fileNameFromPath(fileOrFolderPath.back() != CDirEntry::Separator[0] ? 
+		fileOrFolderPath : std::string(fileOrFolderPath.begin(), --fileOrFolderPath.end()));
+        std::vector<std::string> files = filesFromDirectory(fileOrFolderPath.back() != CDirEntry::Separator[0] ?
+		fileOrFolderPath : std::string(fileOrFolderPath.begin(), --fileOrFolderPath.end()));
         std::vector<std::string>::iterator it = files.begin();
         for (; it != files.end(); ++it)
         {
