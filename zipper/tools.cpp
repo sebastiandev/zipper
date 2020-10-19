@@ -1,9 +1,8 @@
 #include "tools.h"
 #include "defs.h"
 #include <algorithm>
+#include <filesystem>
 #include <iterator>
-
-#include <CDirEntry.h>
 
 #include <cstdio>
 #include <iostream>
@@ -32,8 +31,9 @@ void getFileCrc(std::istream& input_stream, std::vector<char>& buff, unsigned lo
         input_stream.read(buff.data(), buff.size());
         size_read = (unsigned long)input_stream.gcount();
 
-        if (size_read > 0)
+        if (size_read > 0) {
             calculate_crc = crc32(calculate_crc, (const unsigned char*)buff.data(), size_read);
+	}
 
         total_read += size_read;
 
@@ -55,96 +55,52 @@ bool isLargeFile(std::istream& input_stream)
     return pos >= 0xffffffff;
 }
 
-// -----------------------------------------------------------------------------
-bool checkFileExists(const std::string& filename)
-{
-    return CDirEntry::exist(filename);
-}
+bool makedir(std::filesystem::path newdir){
+    newdir = newdir.lexically_normal();
 
-// -----------------------------------------------------------------------------
-bool makedir(const std::string& newdir)
-{
-    return CDirEntry::createDir(newdir);
-}
-
-// -----------------------------------------------------------------------------
-void removeFolder(const std::string& foldername)
-{
-    if (!CDirEntry::remove(foldername))
-    {
-        std::vector<std::string> files = filesFromDirectory(foldername);
-        std::vector<std::string>::iterator it = files.begin();
-        for (; it != files.end(); ++it)
-        {
-            if (isDirectory(*it) && *it != foldername)
-                removeFolder(*it);
-            else
-                std::remove(it->c_str());
-        }
-        CDirEntry::remove(foldername);
+    if(newdir.empty()) {
+	return false;
     }
+
+    return std::filesystem::create_directories(newdir);
 }
 
 // -----------------------------------------------------------------------------
-bool isDirectory(const std::string& path)
+std::vector<std::filesystem::path> filesFromDirectory(const std::filesystem::path& path)
 {
-    return CDirEntry::isDir(path);
-}
-
-// -----------------------------------------------------------------------------
-std::string parentDirectory(const std::string& filepath)
-{
-    return CDirEntry::dirName(filepath);
-}
-
-// -----------------------------------------------------------------------------
-std::string currentPath()
-{
-    char buffer[1024];
-    getcwd(buffer, 1024);
-    std::string result(buffer);
-    return result;
-}
-
-// -----------------------------------------------------------------------------
-std::vector<std::string> filesFromDirectory(const std::string& path)
-{
-    std::vector<std::string> files;
+    //TODO: remimpl
+ 
+    std::vector<std::filesystem::path> files;
     DIR*           dir;
     struct dirent* entry;
 
-    dir = opendir(path.c_str());
+    dir = opendir(path.string().c_str());
 
-    if (dir == NULL)
+    if (dir == nullptr) {
         return files;
+    }
 
-    for (entry = readdir(dir); entry != NULL; entry = readdir(dir))
+    for (entry = readdir(dir); entry != nullptr; entry = readdir(dir))
     {
         std::string filename(entry->d_name);
 
-        if (filename == "." || filename == "..") continue;
+        if (filename == "." || filename == "..") { continue;}
 
-        if (CDirEntry::isDir(path + CDirEntry::Separator + filename))
+        if (std::filesystem::is_directory(path / filename))
         {
-            std::vector<std::string> moreFiles = filesFromDirectory(path + CDirEntry::Separator + filename);
+            std::vector<std::filesystem::path> moreFiles = filesFromDirectory(path / filename);
             std::copy(moreFiles.begin(), moreFiles.end(), std::back_inserter(files));
             continue;
         }
 
 
-        files.push_back(path + CDirEntry::Separator + filename);
+        files.emplace_back(path / filename);
     }
 
     closedir(dir);
 
 
     return files;
-}
-
-// -----------------------------------------------------------------------------
-std::string fileNameFromPath(const std::string& fullPath)
-{
-    return CDirEntry::fileName(fullPath);
 }
 
 } // namespace zipper

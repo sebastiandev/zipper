@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <filesystem>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -20,13 +21,13 @@ public:
     Zipper(std::iostream& buffer);
     Zipper(std::vector<unsigned char>& buffer);
     Zipper(const std::string& zipname);
-    Zipper(const std::string& zipname, const std::string& password);
+    Zipper(const std::string& zipname, std::string  password);
 
     ~Zipper();
 
     bool add(std::istream& source, const std::tm& timestamp, const std::string& nameInZip = std::string(), zipFlags flags = Better);
     bool add(std::istream& source, const std::string& nameInZip = std::string(), zipFlags flags = Better);
-    bool add(const std::string& fileOrFolderPath, zipFlags flags = Better);
+    bool add(const std::filesystem::path& fileOrFolderPath, zipFlags flags = Better);
 
     void open();
     void close();

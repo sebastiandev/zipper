@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <vector>
 #include <istream>
 #include <ostream>
@@ -18,15 +19,15 @@ public:
     Unzipper(std::istream& buffer);
     Unzipper(std::vector<unsigned char>& buffer);
     Unzipper(const std::string& zipname);
-    Unzipper(const std::string& zipname, const std::string& password);
+    Unzipper(const std::string& zipname, std::string password);
 
     ~Unzipper();
 
     std::vector<ZipEntry> entries();
 
-    bool extract(const std::string& destination, const std::map<std::string, std::string>& alternativeNames);
-    bool extract(const std::string& destination=std::string());
-    bool extractEntry(const std::string& name, const std::string& destination = std::string());
+    bool extract(const std::filesystem::path& destination, const std::map<std::string, std::string>& alternativeNames);
+    bool extract(const std::filesystem::path& destination = {});
+    bool extractEntry(const std::string& name, const std::filesystem::path& destination = {});
     bool extractEntryToStream(const std::string& name, std::ostream& stream);
     bool extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec);
 

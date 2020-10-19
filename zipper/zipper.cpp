@@ -1,10 +1,11 @@
 #include "zipper.h"
 #include "defs.h"
 #include "tools.h"
-#include "CDirEntry.h"
 
+#include <filesystem>
 #include <fstream>
 #include <stdexcept>
+#include <utility>
 
 namespace zipper {
 
@@ -17,8 +18,8 @@ struct Zipper::Impl
 
     Impl(Zipper& outer) : m_outer(outer), m_zipmem(), m_filefunc()
     {
-        m_zf = NULL;
-        m_zipmem.base = NULL;
+        m_zf = nullptr;
+        m_zipmem.base = nullptr;
         //m_filefunc = { 0 };
     }
 
@@ -37,9 +38,9 @@ struct Zipper::Impl
         int flags = Zipper::Append;
 
         /* open the zip file for output */
-        if (checkFileExists(filename))
+        if (std::filesystem::exists(filename))
         {
-            mode = (flags & Zipper::Overwrite) ? APPEND_STATUS_CREATE : APPEND_STATUS_ADDINZIP;
+            mode = (flags & Zipper::Overwrite) != 0 ? APPEND_STATUS_CREATE : APPEND_STATUS_ADDINZIP;
         }
         else
         {
@@ -53,7 +54,7 @@ struct Zipper::Impl
         m_zf = zipOpen64(filename.c_str(), mode);
 #endif
 
-        return NULL != m_zf;
+        return nullptr != m_zf;
     }
 
     bool initWithStream(std::iostream& stream)
@@ -66,12 +67,12 @@ struct Zipper::Impl
         {
             return false;
         }
-        size_t size = static_cast<size_t>(s);
+        auto size = static_cast<size_t>(s);
         stream.seekg(0);
 
         if (size > 0)
         {
-            if (m_zipmem.base != NULL) { free(m_zipmem.base); }
+            if (m_zipmem.base != nullptr) { free(m_zipmem.base); }
             m_zipmem.base = (char*) malloc (size * sizeof (char));
             stream.read(m_zipmem.base, size);
         }
@@ -87,7 +88,7 @@ struct Zipper::Impl
 
         if (!buffer.empty())
         {
-            if (m_zipmem.base != NULL)
+            if (m_zipmem.base != nullptr)
             {
                 free(m_zipmem.base);
             }
@@ -103,15 +104,16 @@ struct Zipper::Impl
 
     bool initMemory(int mode, zlib_filefunc_def& filefunc)
     {
-        m_zf = zipOpen3("__notused__", mode, 0, 0, &filefunc);
-        return m_zf != NULL;
+        m_zf = zipOpen3("__notused__", mode, 0, nullptr, &filefunc);
+        return m_zf != nullptr;
     }
 
     bool add(std::istream& input_stream, const std::tm& timestamp,
-             const std::string& nameInZip, const std::string& password, int flags)
+             const std::string& nameInZip, const std::string& password, int flags) const
     {
-        if (!m_zf)
+        if (m_zf == nullptr) {
             return false;
+        }
 
         int compressLevel = 0;
         int zip64 = 0;
@@ -132,13 +134,17 @@ struct Zipper::Impl
         std::vector<char> buff;
         buff.resize(size_buf);
 
-        if (nameInZip.empty())
+        if (nameInZip.empty()) {
             return false;
+        }
 
-        if (flags & Zipper::Faster)
+        if ((flags & Zipper::Faster) != 0) {
             compressLevel = 1;
-        if (flags & Zipper::Better)
+        }
+
+        if ((flags & Zipper::Better) != 0) {
             compressLevel = 9;
+        }
 
         zip64 = (int)isLargeFile(input_stream);
         if (password.empty())
@@ -146,11 +152,11 @@ struct Zipper::Impl
             err = zipOpenNewFileInZip64(m_zf,
                                         nameInZip.c_str(),
                                         &zi,
-                                        NULL,
+                                        nullptr,
                                         0,
-                                        NULL,
+                                        nullptr,
                                         0,
-                                        NULL /* comment*/,
+                                        nullptr /* comment*/,
                                         (compressLevel != 0) ? Z_DEFLATED : 0,
                                         compressLevel,
                                         zip64);
@@ -161,11 +167,11 @@ struct Zipper::Impl
             err = zipOpenNewFileInZip3_64(m_zf,
                                           nameInZip.c_str(),
                                           &zi,
-                                          NULL,
+                                          nullptr,
                                           0,
-                                          NULL,
+                                          nullptr,
                                           0,
-                                          NULL /* comment*/,
+                                          nullptr /* comment*/,
                                           (compressLevel != 0) ? Z_DEFLATED : 0,
                                           compressLevel,
                                           0,
@@ -208,13 +214,13 @@ struct Zipper::Impl
 
     void close()
     {
-        if (m_zf != NULL)
+        if (m_zf != nullptr)
         {
-            zipClose(m_zf, NULL);
-            m_zf = NULL;
+            zipClose(m_zf, nullptr);
+            m_zf = nullptr;
         }
 
-        if (m_zipmem.base && m_zipmem.limit > 0)
+        if ((m_zipmem.base != nullptr) && m_zipmem.limit > 0)
         {
             if (m_outer.m_usingMemoryVector)
             {
@@ -227,10 +233,10 @@ struct Zipper::Impl
             }
         }
 
-        if (m_zipmem.base != NULL)
+        if (m_zipmem.base != nullptr)
         {
             free(m_zipmem.base);
-            m_zipmem.base = NULL;
+            m_zipmem.base = nullptr;
         }
     }
 };
@@ -254,13 +260,13 @@ Zipper::Zipper(const std::string& zipname)
     m_open = true;
 }
 
-Zipper::Zipper(const std::string& zipname, const std::string& password)
+Zipper::Zipper(const std::string& zipname, std::string  password)
     : m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
     , m_usingMemoryVector(false)
     , m_usingStream(false)
     , m_zipname(zipname)
-    , m_password(password)
+    , m_password(std::move(password))
     , m_impl(new Impl(*this))
 {
     if (!m_impl->initFile(zipname))
@@ -330,20 +336,16 @@ bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags fl
     return add(source, {}, nameInZip, flags);
 }
 
-bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
+bool Zipper::add(const std::filesystem::path& fileOrFolderPath, zipFlags flags)
 {
-    if (isDirectory(fileOrFolderPath))
+    if (std::filesystem::is_directory(fileOrFolderPath))
     {
-        std::string folderName = fileNameFromPath(fileOrFolderPath.back() != CDirEntry::Separator[0] ? 
-		fileOrFolderPath : std::string(fileOrFolderPath.begin(), --fileOrFolderPath.end()));
-        std::vector<std::string> files = filesFromDirectory(fileOrFolderPath.back() != CDirEntry::Separator[0] ?
-		fileOrFolderPath : std::string(fileOrFolderPath.begin(), --fileOrFolderPath.end()));
-        std::vector<std::string>::iterator it = files.begin();
-        for (; it != files.end(); ++it)
+        std::string folderName = fileOrFolderPath.filename().string();
+        std::vector<std::filesystem::path> files = filesFromDirectory(fileOrFolderPath);
+        for (const auto & file : files)
         {
-            std::ifstream input(it->c_str(), std::ios::binary);
-            std::string nameInZip = it->substr(it->rfind(folderName + CDirEntry::Separator), it->size());
-            add(input, nameInZip, flags);
+            std::ifstream input(file.c_str(), std::ios::binary);
+            add(input, file.string(), flags);
             input.close();
         }
     }
@@ -352,13 +354,13 @@ bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
         std::ifstream input(fileOrFolderPath.c_str(), std::ios::binary);
         std::string fullFileName;
 
-        if (flags & Zipper::SaveHierarchy)
+        if ((flags & Zipper::SaveHierarchy) != 0)
         {
-            fullFileName = fileOrFolderPath;
+            fullFileName = fileOrFolderPath.string();
         }
         else
         {
-            fullFileName = fileNameFromPath(fileOrFolderPath);
+            fullFileName = fileOrFolderPath.filename().string();
         }
 
         add(input, fullFileName, flags);
@@ -369,7 +371,6 @@ bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
     return true;
 }
 
-
 void Zipper::open()
 {
     if (!m_open)
@@ -377,17 +378,23 @@ void Zipper::open()
         if (m_usingMemoryVector)
         {
             if (!m_impl->initWithVector(m_vecbuffer))
+            {
                 throw EXCEPTION_CLASS("Error opening zip memory!");
+            }
         }
         else if (m_usingStream)
         {
             if (!m_impl->initWithStream(m_obuffer))
+            {
                 throw EXCEPTION_CLASS("Error opening zip memory!");
+            }
         }
         else
         {
             if (!m_impl->initFile(m_zipname))
+            {
                 throw EXCEPTION_CLASS("Error opening zip file!");
+            }
         }
 
         m_open = true;

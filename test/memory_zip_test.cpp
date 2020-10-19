@@ -1,5 +1,6 @@
 #include "catch.hpp"
 
+#include <filesystem>
 #include <zipper/zipper.h>
 #include <zipper/unzipper.h>
 #include <zipper/tools.h>
@@ -48,7 +49,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
                     // prevent mixing the closing when both instances are freed at the end of the scope
                     unzipper.close();
 
-                    REQUIRE(checkFileExists("test1.txt"));
+                    REQUIRE(std::filesystem::exists("test1.txt"));
 
                     std::ifstream testfile("test1.txt");
                     REQUIRE(testfile.good());
@@ -57,7 +58,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
                     testfile.close();
                     REQUIRE(test == "test file compression");
 
-                    AND_WHEN("another file containing 'other data to compression test' and named 'test2.dat' is added inside a folder 'TestFolder'")
+                    AND_WHEN("another file containstd::filesystem::existng 'other data to compression test' and named 'test2.dat' is added inside a folder 'TestFolder'")
                     {
                         std::ofstream test2("test2.dat");
                         test2 << "other data to compression test";
@@ -85,7 +86,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
                             {
                                 unzipper.extract();
 
-                                REQUIRE(checkFileExists("TestFolder/test2.dat"));
+                                REQUIRE(std::filesystem::exists("TestFolder/test2.dat"));
 
                                 std::ifstream testfile("TestFolder/test2.dat");
                                 REQUIRE(testfile.good());
@@ -110,7 +111,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
                         }
 
                         std::remove("test1.txt");
-                        removeFolder("TestFolder");
+			std::filesystem::remove_all("TestFolder");
                     }
                 }
             }
@@ -137,7 +138,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
                 {
                     unzipper.extract();
 
-                    REQUIRE(checkFileExists("strdata"));
+                    REQUIRE(std::filesystem::exists("strdata"));
 
                     std::ifstream testfile("strdata");
                     REQUIRE(testfile.good());
@@ -167,7 +168,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
 
         WHEN("a file containing 'test file compression' is added and named 'test1' in subdirectory 'subdirectory'")
         {
-            bool fileWasCreated = zipper::makedir("subdirectory");
+	    bool fileWasCreated = makedir("subdirectory");
 
             REQUIRE(fileWasCreated);
 
@@ -198,7 +199,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
                     // prevent mixing the closing when both instances are freed at the end of the scope
                     unzipper.close();
 
-                    REQUIRE(checkFileExists("./subdirectory/test1.txt"));
+                    REQUIRE(std::filesystem::exists("./subdirectory/test1.txt"));
 
                     std::ifstream testfile("./subdirectory/test1.txt");
                     REQUIRE(testfile.good());
@@ -207,7 +208,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
                     testfile.close();
                     REQUIRE(test == "test file compression");
 
-                    removeFolder("subdirectory");
+		    std::filesystem::remove_all("subdirectory");
                 }
             }
 
