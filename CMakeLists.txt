@@ -7,7 +7,7 @@
 ###############################################################################
 
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.8)
 project(zipper)
 
 # Set useful CMake flags
