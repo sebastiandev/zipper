@@ -111,7 +111,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
                         }
 
                         std::remove("test1.txt");
-			std::filesystem::remove_all("TestFolder");
+                        std::filesystem::remove_all("TestFolder");
                     }
                 }
             }
@@ -168,7 +168,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
 
         WHEN("a file containing 'test file compression' is added and named 'test1' in subdirectory 'subdirectory'")
         {
-	    bool fileWasCreated = makedir("subdirectory");
+            bool fileWasCreated = makedir("subdirectory");
 
             REQUIRE(fileWasCreated);
 
@@ -208,7 +208,7 @@ SCENARIO("zip vector feed with different inputs", "[zip]")
                     testfile.close();
                     REQUIRE(test == "test file compression");
 
-		    std::filesystem::remove_all("subdirectory");
+                    std::filesystem::remove_all("subdirectory");
                 }
             }
 

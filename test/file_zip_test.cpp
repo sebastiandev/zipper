@@ -105,7 +105,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
                                 AND_WHEN("adding a folder to the zip, creates one entry for each file inside the folder with the name in zip as 'Folder/...'")
                                 {
-				    makedir(std::filesystem::current_path() / "TestFiles/subfolder");
+                                    makedir(std::filesystem::current_path() / "TestFiles/subfolder");
                                     std::ofstream test("TestFiles/test1.txt");
                                     test << "test file compression";
                                     test.flush();
@@ -130,11 +130,11 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
 
                                     AND_THEN("extracting to a new folder 'NewDestination' creates the file structure from zip in the new destination folder")
                                     {
-					makedir(std::filesystem::current_path() / "NewDestination");
+                                        makedir(std::filesystem::current_path() / "NewDestination");
 
                                         unzipper.extract(std::filesystem::current_path().string() + "/NewDestination");
 
-                                        std::vector<std::filesystem::path> files =  zipper::filesFromDirectory(std::filesystem::current_path().string() + "/NewDestination");
+                                        std::vector<std::filesystem::path> files = zipper::filesFromDirectory(std::filesystem::current_path().string() + "/NewDestination");
 
                                         REQUIRE(std::filesystem::exists("NewDestination/TestFiles/test1.txt"));
                                         REQUIRE(std::filesystem::exists("NewDestination/TestFiles/test2.pdf"));
@@ -146,7 +146,7 @@ SCENARIO("zipfile feed with different inputs", "[zip]")
                             }
                         }
 
-			std::filesystem::remove_all("TestFolder");
+                        std::filesystem::remove_all("TestFolder");
                         std::filesystem::remove_all("TestFiles");
                         std::filesystem::remove_all("NewDestination");
                         std::remove("test1.txt");
