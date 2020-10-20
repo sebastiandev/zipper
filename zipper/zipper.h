@@ -14,13 +14,12 @@ class Zipper
 {
 public:
     // Minizip options/params:
-    //              -o                -a             -0            -1             -9             -j
-    enum zipFlags { Overwrite = 0x01,
-                    Append = 0x02,
-                    Store = 0x04,
-                    Faster = 0x08,
-                    Better = 0x10,
-                    NoPaths = 0x20,
+    enum zipFlags { Overwrite = 0x01, // -o
+                    Append = 0x02, // -a
+                    Store = 0x04, // -0
+                    Faster = 0x08, // -1
+                    Better = 0x10, // -9
+                    NoPaths = 0x20, // -j
                     SaveHierarchy = 0x40 };
 
     Zipper(std::iostream& buffer);
