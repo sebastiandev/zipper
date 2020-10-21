@@ -9,5 +9,6 @@ BraceWrapping:
   BeforeElse: true
 BreakBeforeBraces: Custom
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
+IndentPPDirectives: AfterHash
 MaxEmptyLinesToKeep: 2
 SortIncludes: false

@@ -217,7 +217,7 @@ public:
             CloseHandle(hFile);
         }
 #else
-#if defined unix || defined __APPLE__
+#    if defined unix || defined __APPLE__
         struct utimbuf ut;
         struct tm newdate;
 
@@ -238,7 +238,7 @@ public:
 
         ut.actime = ut.modtime = mktime(&newdate);
         utime(filename.c_str(), &ut);
-#endif
+#    endif
 #endif
     }
 

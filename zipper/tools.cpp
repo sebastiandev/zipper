@@ -8,12 +8,12 @@
 #include <iostream>
 
 #if defined(USE_WINDOWS)
-#include "tps/dirent.h"
-#include "tps/dirent.c"
+#    include "tps/dirent.h"
+#    include "tps/dirent.c"
 #else
-#include <sys/types.h>
-#include <dirent.h>
-#include <unistd.h>
+#    include <sys/types.h>
+#    include <dirent.h>
+#    include <unistd.h>
 #endif /* WINDOWS */
 
 namespace zipper {
