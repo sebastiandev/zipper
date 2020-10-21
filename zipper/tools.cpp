@@ -89,7 +89,10 @@ std::vector<std::filesystem::path> filesFromDirectory(const std::filesystem::pat
     {
         std::string filename(entry->d_name);
 
-        if (filename == "." || filename == "..") { continue; }
+        if (filename == "." || filename == "..")
+        {
+            continue;
+        }
 
         if (std::filesystem::is_directory(path / filename))
         {

@@ -73,7 +73,10 @@ struct Zipper::Impl
 
         if (size > 0)
         {
-            if (m_zipmem.base != nullptr) { free(m_zipmem.base); }
+            if (m_zipmem.base != nullptr)
+            {
+                free(m_zipmem.base);
+            }
             m_zipmem.base = (char*)malloc(size * sizeof(char));
             stream.read(m_zipmem.base, size);
         }
