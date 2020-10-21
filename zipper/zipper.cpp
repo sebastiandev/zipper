@@ -16,7 +16,8 @@ struct Zipper::Impl
     ourmemory_t m_zipmem;
     zlib_filefunc_def m_filefunc;
 
-    Impl(Zipper& outer) : m_outer(outer), m_zipmem(), m_filefunc()
+    Impl(Zipper& outer)
+        : m_outer(outer), m_zipmem(), m_filefunc()
     {
         m_zf = nullptr;
         m_zipmem.base = nullptr;
@@ -73,7 +74,7 @@ struct Zipper::Impl
         if (size > 0)
         {
             if (m_zipmem.base != nullptr) { free(m_zipmem.base); }
-            m_zipmem.base = (char*) malloc (size * sizeof (char));
+            m_zipmem.base = (char*)malloc(size * sizeof(char));
             stream.read(m_zipmem.base, size);
         }
 
@@ -92,8 +93,8 @@ struct Zipper::Impl
             {
                 free(m_zipmem.base);
             }
-            m_zipmem.base = (char*) malloc (buffer.size() * sizeof (char));
-            memcpy(m_zipmem.base, (char*) buffer.data(), buffer.size());
+            m_zipmem.base = (char*)malloc(buffer.size() * sizeof(char));
+            memcpy(m_zipmem.base, (char*)buffer.data(), buffer.size());
             m_zipmem.size = (uLong)buffer.size();
         }
 
@@ -111,7 +112,8 @@ struct Zipper::Impl
     bool add(std::istream& input_stream, const std::tm& timestamp,
              const std::string& nameInZip, const std::string& password, int flags) const
     {
-        if (m_zf == nullptr) {
+        if (m_zf == nullptr)
+        {
             return false;
         }
 
@@ -122,11 +124,11 @@ struct Zipper::Impl
         unsigned long crcFile = 0;
 
         zip_fileinfo zi = { 0 };
-        zi.tmz_date.tm_sec  = timestamp.tm_sec;
-        zi.tmz_date.tm_min  = timestamp.tm_min;
+        zi.tmz_date.tm_sec = timestamp.tm_sec;
+        zi.tmz_date.tm_min = timestamp.tm_min;
         zi.tmz_date.tm_hour = timestamp.tm_hour;
         zi.tmz_date.tm_mday = timestamp.tm_mday;
-        zi.tmz_date.tm_mon  = timestamp.tm_mon;
+        zi.tmz_date.tm_mon = timestamp.tm_mon;
         zi.tmz_date.tm_year = timestamp.tm_year;
 
         size_t size_read;
@@ -134,15 +136,18 @@ struct Zipper::Impl
         std::vector<char> buff;
         buff.resize(size_buf);
 
-        if (nameInZip.empty()) {
+        if (nameInZip.empty())
+        {
             return false;
         }
 
-        if ((flags & Zipper::Faster) != 0) {
+        if ((flags & Zipper::Faster) != 0)
+        {
             compressLevel = 1;
         }
 
-        if ((flags & Zipper::Better) != 0) {
+        if ((flags & Zipper::Better) != 0)
+        {
             compressLevel = 9;
         }
 
@@ -184,7 +189,8 @@ struct Zipper::Impl
 
         if (ZIP_OK == err)
         {
-            do {
+            do
+            {
                 err = ZIP_OK;
                 input_stream.read(buff.data(), buff.size());
                 size_read = (size_t)input_stream.gcount();
@@ -197,7 +203,7 @@ struct Zipper::Impl
                 {
                     err = zipWriteInFileInZip(this->m_zf, buff.data(), (unsigned int)size_read);
                 }
-            } while ((err == ZIP_OK) && (size_read>0));
+            } while ((err == ZIP_OK) && (size_read > 0));
         }
         else
         {
@@ -260,7 +266,7 @@ Zipper::Zipper(const std::string& zipname)
     m_open = true;
 }
 
-Zipper::Zipper(const std::string& zipname, std::string  password)
+Zipper::Zipper(const std::string& zipname, std::string password)
     : m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
     , m_usingMemoryVector(false)
@@ -342,7 +348,7 @@ bool Zipper::add(const std::filesystem::path& fileOrFolderPath, zipFlags flags)
     {
         std::string folderName = fileOrFolderPath.filename().string();
         std::vector<std::filesystem::path> files = filesFromDirectory(fileOrFolderPath);
-        for (const auto & file : files)
+        for (const auto& file : files)
         {
             std::ifstream input(file.c_str(), std::ios::binary);
             add(input, file.string(), flags);

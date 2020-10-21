@@ -18,7 +18,6 @@ struct Unzipper::Impl
     zlib_filefunc_def m_filefunc;
 
 private:
-
     bool initMemory(zlib_filefunc_def& filefunc)
     {
         m_zf = unzOpen2("__notused__", &filefunc);
@@ -36,9 +35,10 @@ private:
         char filename_inzip[256] = { 0 };
 
         int err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip, sizeof(filename_inzip), nullptr, 0, nullptr, 0);
-        if (UNZ_OK != err) {
+        if (UNZ_OK != err)
+        {
             throw EXCEPTION_CLASS("Error, couln't get the current entry info");
-	}
+        }
 
         return ZipEntry(std::string(filename_inzip), file_info.compressed_size, file_info.uncompressed_size,
                         file_info.tmu_date.tm_year, file_info.tmu_date.tm_mon, file_info.tmu_date.tm_mday,
@@ -86,15 +86,17 @@ private:
                     entries.push_back(entryinfo);
                     err = unzGoToNextFile(m_zf);
                 }
-                else {
+                else
+                {
                     err = UNZ_ERRNO;
-		}
+                }
 
             } while (UNZ_OK == err);
 
-            if (UNZ_END_OF_LIST_OF_FILE != err && UNZ_OK != err) {
+            if (UNZ_END_OF_LIST_OF_FILE != err && UNZ_OK != err)
+            {
                 return;
-	    }
+            }
         }
     }
 
@@ -125,9 +127,10 @@ public:
     {
         int err = UNZ_OK;
 
-        if (!entryinfo.valid()) {
+        if (!entryinfo.valid())
+        {
             return false;
-	}
+        }
 
         err = extractToFile(fileName, entryinfo);
         if (UNZ_OK == err)
@@ -150,9 +153,10 @@ public:
     {
         int err = UNZ_OK;
 
-        if (!entryinfo.valid()) {
+        if (!entryinfo.valid())
+        {
             return false;
-	}
+        }
 
         err = extractToStream(stream, entryinfo);
         if (UNZ_OK == err)
@@ -175,9 +179,10 @@ public:
     {
         int err = UNZ_OK;
 
-        if (!entryinfo.valid()) {
+        if (!entryinfo.valid())
+        {
             return false;
-	}
+        }
 
         err = extractToMemory(outvec, entryinfo);
         if (UNZ_OK == err)
@@ -196,7 +201,7 @@ public:
         return UNZ_OK == err;
     }
 
-static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tmu_date)
+    static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tmu_date)
     {
 #if defined(USE_WINDOWS)
         HANDLE hFile;
@@ -212,7 +217,7 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
             CloseHandle(hFile);
         }
 #else
-#if defined unix || defined __APPLE__
+#    if defined unix || defined __APPLE__
         struct utimbuf ut;
         struct tm newdate;
 
@@ -221,16 +226,19 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
         newdate.tm_hour = tmu_date.tm_hour;
         newdate.tm_mday = tmu_date.tm_mday;
         newdate.tm_mon = tmu_date.tm_mon;
-        if (tmu_date.tm_year > 1900) {
+        if (tmu_date.tm_year > 1900)
+        {
             newdate.tm_year = tmu_date.tm_year - 1900;
-        } else {
+        }
+        else
+        {
             newdate.tm_year = tmu_date.tm_year;
-	}
+        }
         newdate.tm_isdst = -1;
 
         ut.actime = ut.modtime = mktime(&newdate);
         utime(filename.c_str(), &ut);
-#endif
+#    endif
 #endif
     }
 
@@ -240,16 +248,17 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
         int err = UNZ_ERRNO;
 
         /* If zip entry is a directory then create it on disk */
-	makedir(filename.parent_path());
+        makedir(filename.parent_path());
 
         /* Create the file on disk so we can unzip to it */
         std::ofstream output_file(filename.c_str(), std::ofstream::binary);
 
         if (output_file.good())
         {
-            if (UNZ_OK == extractToStream(output_file, info)) {
+            if (UNZ_OK == extractToStream(output_file, info))
+            {
                 err = UNZ_OK;
-	    }
+            }
 
             output_file.close();
 
@@ -259,9 +268,10 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
 
             changeFileDate(filename.string(), info.dosdate, timeaux);
         }
-        else {
+        else
+        {
             output_file.close();
-	}
+        }
 
         return err;
     }
@@ -284,9 +294,10 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
         do
         {
             err = unzReadCurrentFile(m_zf, buffer.data(), (unsigned int)buffer.size());
-            if (err < 0 || err == 0) {
+            if (err < 0 || err == 0)
+            {
                 break;
-	    }
+            }
 
             stream.write(buffer.data(), err);
             if (!stream.good())
@@ -324,9 +335,10 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
         do
         {
             err = unzReadCurrentFile(m_zf, buffer.data(), (unsigned int)buffer.size());
-            if (err < 0 || err == 0) {
+            if (err < 0 || err == 0)
+            {
                 break;
-	    }
+            }
 
             outvec.insert(outvec.end(), buffer.data(), buffer.data() + err);
 
@@ -335,7 +347,8 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
         return (int)err;
     }
 
-    Impl(Unzipper& outer) : m_outer(outer), m_zipmem(), m_filefunc()
+    Impl(Unzipper& outer)
+        : m_outer(outer), m_zipmem(), m_filefunc()
     {
         m_zipmem.base = nullptr;
         m_zf = nullptr;
@@ -400,8 +413,8 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
     {
         if (!buffer.empty())
         {
-            m_zipmem.base = (char*) malloc (buffer.size() * sizeof (char));
-            memcpy(m_zipmem.base, (char*) buffer.data(), buffer.size());
+            m_zipmem.base = (char*)malloc(buffer.size() * sizeof(char));
+            memcpy(m_zipmem.base, (char*)buffer.data(), buffer.size());
             m_zipmem.size = (uLong)buffer.size();
         }
 
@@ -418,26 +431,28 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
     }
 
 
-
     bool extractAll(const std::filesystem::path& destination, const std::map<std::string, std::string>& alternativeNames)
     {
         std::vector<ZipEntry> entries;
         getEntries(entries);
 
-        for (auto & entrie : entries)
+        for (auto& entrie : entries)
         {
-            if (!locateEntry(entrie.name)) {
+            if (!locateEntry(entrie.name))
+            {
                 continue;
-	    }
+            }
 
             std::filesystem::path alternativeName = destination;
 
-            if (alternativeNames.find(entrie.name) != alternativeNames.end()) {
+            if (alternativeNames.find(entrie.name) != alternativeNames.end())
+            {
                 alternativeName /= alternativeNames.at(entrie.name);
-            } 
-	    else {
+            }
+            else
+            {
                 alternativeName /= entrie.name;
-	    }
+            }
 
             extractCurrentEntryToFile(entrie, alternativeName.string());
         };
@@ -445,7 +460,7 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
         return true;
     }
 
-    bool extractEntry(const std::string& name, const std::filesystem::path & destination)
+    bool extractEntry(const std::string& name, const std::filesystem::path& destination)
     {
         std::filesystem::path outputFile = destination / name;
 
@@ -454,9 +469,8 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
             ZipEntry entry = currentEntryInfo();
             return extractCurrentEntryToFile(entry, outputFile.string());
         }
-        
-	return false;
-       
+
+        return false;
     }
 
     bool extractEntryToStream(const std::string& name, std::ostream& stream)
@@ -466,9 +480,8 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
             ZipEntry entry = currentEntryInfo();
             return extractCurrentEntryToStream(entry, stream);
         }
-        
+
         return false;
-       
     }
 
     bool extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec)
@@ -478,9 +491,8 @@ static void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tm
             ZipEntry entry = currentEntryInfo();
             return extractCurrentEntryToMemory(entry, vec);
         }
-        
+
         return false;
-       
     }
 };
 
@@ -581,8 +593,7 @@ bool Unzipper::extract(const std::filesystem::path& destination, const std::map<
     return m_impl->extractAll(destination, alternativeNames);
 }
 
-bool
-Unzipper::extract(const std::filesystem::path& destination)
+bool Unzipper::extract(const std::filesystem::path& destination)
 {
     return m_impl->extractAll(destination, std::map<std::string, std::string>());
 }

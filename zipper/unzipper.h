@@ -68,8 +68,7 @@ public:
     {
         // timestamp YYYY-MM-DD HH:MM:SS
         std::stringstream str;
-        str << year << "-" << month << "-" << day <<
-                " " << hour << ":" << minute << ":" << second;
+        str << year << "-" << month << "-" << day << " " << hour << ":" << minute << ":" << second;
         timestamp = str.str();
 
         unixdate.tm_year = year;

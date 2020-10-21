@@ -8,13 +8,13 @@
 #include <iostream>
 
 #if defined(USE_WINDOWS)
-#  include "tps/dirent.h"
-#  include "tps/dirent.c"
+#    include "tps/dirent.h"
+#    include "tps/dirent.c"
 #else
-#  include <sys/types.h>
-#  include <dirent.h>
-#  include <unistd.h>
-#endif  /* WINDOWS */
+#    include <sys/types.h>
+#    include <dirent.h>
+#    include <unistd.h>
+#endif /* WINDOWS */
 
 namespace zipper {
 
@@ -27,13 +27,15 @@ void getFileCrc(std::istream& input_stream, std::vector<char>& buff, unsigned lo
     unsigned long size_read = 0;
     unsigned long total_read = 0;
 
-    do {
+    do
+    {
         input_stream.read(buff.data(), buff.size());
         size_read = (unsigned long)input_stream.gcount();
 
-        if (size_read > 0) {
+        if (size_read > 0)
+        {
             calculate_crc = crc32(calculate_crc, (const unsigned char*)buff.data(), size_read);
-	}
+        }
 
         total_read += size_read;
 
@@ -55,11 +57,13 @@ bool isLargeFile(std::istream& input_stream)
     return pos >= 0xffffffff;
 }
 
-bool makedir(std::filesystem::path newdir){
+bool makedir(std::filesystem::path newdir)
+{
     newdir = newdir.lexically_normal();
 
-    if(newdir.empty()) {
-	return false;
+    if (newdir.empty())
+    {
+        return false;
     }
 
     return std::filesystem::create_directories(newdir);
@@ -69,14 +73,15 @@ bool makedir(std::filesystem::path newdir){
 std::vector<std::filesystem::path> filesFromDirectory(const std::filesystem::path& path)
 {
     //TODO: remimpl
- 
+
     std::vector<std::filesystem::path> files;
-    DIR*           dir;
+    DIR* dir;
     struct dirent* entry;
 
     dir = opendir(path.string().c_str());
 
-    if (dir == nullptr) {
+    if (dir == nullptr)
+    {
         return files;
     }
 
@@ -84,7 +89,7 @@ std::vector<std::filesystem::path> filesFromDirectory(const std::filesystem::pat
     {
         std::string filename(entry->d_name);
 
-        if (filename == "." || filename == "..") { continue;}
+        if (filename == "." || filename == "..") { continue; }
 
         if (std::filesystem::is_directory(path / filename))
         {
