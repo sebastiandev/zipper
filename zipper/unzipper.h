@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <utility>
 #include <vector>
 #include <istream>
 #include <ostream>
@@ -51,7 +52,7 @@ private:
 class ZipEntry
 {
 private:
-    typedef struct
+    using tm_s = struct
     {
         unsigned int tm_sec;
         unsigned int tm_min;
@@ -59,12 +60,12 @@ private:
         unsigned int tm_mday;
         unsigned int tm_mon;
         unsigned int tm_year;
-    } tm_s;
+    };
 
 public:
-    ZipEntry(const std::string& name, unsigned long long int compressed_size, unsigned long long int uncompressed_size,
+    ZipEntry(std::string  name, unsigned long long int compressed_size, unsigned long long int uncompressed_size,
              int year, int month, int day, int hour, int minute, int second, unsigned long dosdate)
-        : name(name), compressedSize(compressed_size), uncompressedSize(uncompressed_size), dosdate(dosdate)
+        : name(std::move(name)), compressedSize(compressed_size), uncompressedSize(uncompressed_size), dosdate(dosdate)
     {
         // timestamp YYYY-MM-DD HH:MM:SS
         std::stringstream str;

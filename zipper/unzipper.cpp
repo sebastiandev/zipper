@@ -24,12 +24,12 @@ private:
         return m_zf != nullptr;
     }
 
-    bool locateEntry(const std::string& name) const
+    [[nodiscard]] bool locateEntry(const std::string& name) const
     {
         return UNZ_OK == unzLocateFile(m_zf, name.c_str(), nullptr);
     }
 
-    ZipEntry currentEntryInfo() const
+    [[nodiscard]] ZipEntry currentEntryInfo() const
     {
         unz_file_info64 file_info = { 0 };
         char filename_inzip[256] = { 0 };

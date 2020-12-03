@@ -33,7 +33,7 @@ typedef struct _stat STAT;
 #    include <dirent.h>
 #    include <unistd.h>
 #    include <utime.h>
-typedef struct stat STAT;
+using STAT = struct stat;
 #endif
 
 #include <zip.h>
