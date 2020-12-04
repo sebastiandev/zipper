@@ -24,12 +24,12 @@ private:
         return m_zf != nullptr;
     }
 
-    bool locateEntry(const std::string& name) const
+    [[nodiscard]] bool locateEntry(const std::string& name) const
     {
         return UNZ_OK == unzLocateFile(m_zf, name.c_str(), nullptr);
     }
 
-    ZipEntry currentEntryInfo() const
+    [[nodiscard]] ZipEntry currentEntryInfo() const
     {
         unz_file_info64 file_info = { 0 };
         char filename_inzip[256] = { 0 };
@@ -37,40 +37,13 @@ private:
         int err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip, sizeof(filename_inzip), nullptr, 0, nullptr, 0);
         if (UNZ_OK != err)
         {
-            throw EXCEPTION_CLASS("Error, couln't get the current entry info");
+            throw std::runtime_error("Error, couln't get the current entry info");
         }
 
         return ZipEntry(std::string(filename_inzip), file_info.compressed_size, file_info.uncompressed_size,
                         file_info.tmu_date.tm_year, file_info.tmu_date.tm_mon, file_info.tmu_date.tm_mday,
                         file_info.tmu_date.tm_hour, file_info.tmu_date.tm_min, file_info.tmu_date.tm_sec, file_info.dosDate);
     }
-
-#if 0
-    // lambda as a parameter https://en.wikipedia.org/wiki/C%2B%2B11#Polymorphic_wrappers_for_function_objects
-    void iterEntries(std::function<void(ZipEntry&)> callback)
-    {
-        int err = unzGoToFirstFile(m_zf);
-        if (UNZ_OK == err)
-        {
-            do
-            {
-                ZipEntry entryinfo = currentEntryInfo();
-
-                if (entryinfo.valid())
-                {
-                    callback(entryinfo);
-                    err = unzGoToNextFile(m_zf);
-                }
-                else
-                    err = UNZ_ERRNO;
-
-            } while (UNZ_OK == err);
-
-            if (UNZ_END_OF_LIST_OF_FILE != err && UNZ_OK != err)
-                return;
-        }
-    }
-#endif
 
     void getEntries(std::vector<ZipEntry>& entries)
     {
@@ -102,26 +75,6 @@ private:
 
 
 public:
-#if 0
-    bool extractCurrentEntry(ZipEntry& entryinfo, int (extractStrategy)(ZipEntry&) )
-    {
-        int err = UNZ_OK;
-
-        if (!entryinfo.valid())
-            return false;
-
-        err = extractStrategy(entryinfo);
-        if (UNZ_OK == err)
-        {
-            err = unzCloseCurrentFile(m_zf);
-            if (UNZ_OK != err)
-                throw EXCEPTION_CLASS(("Error " + std::to_string(err) + " closing internal file '" + entryinfo.name +
-                                       "' in zip").c_str());
-        }
-
-        return UNZ_OK == err;
-    }
-#endif
 
     bool extractCurrentEntryToFile(ZipEntry& entryinfo, const std::string& fileName)
     {
@@ -142,7 +95,7 @@ public:
                 str << "Error " << err << " openinginternal file '"
                     << entryinfo.name << "' in zip";
 
-                throw EXCEPTION_CLASS(str.str().c_str());
+                throw std::runtime_error(str.str());
             }
         }
 
@@ -168,7 +121,7 @@ public:
                 str << "Error " << err << " opening internal file '"
                     << entryinfo.name << "' in zip";
 
-                throw EXCEPTION_CLASS(str.str().c_str());
+                throw std::runtime_error(str.str());
             }
         }
 
@@ -194,7 +147,7 @@ public:
                 str << "Error " << err << " opening internal file '"
                     << entryinfo.name << "' in zip";
 
-                throw EXCEPTION_CLASS(str.str().c_str());
+                throw std::runtime_error(str.str());
             }
         }
 
@@ -285,7 +238,7 @@ public:
             str << "Error " << err << " opening internal file '"
                 << info.name << "' in zip";
 
-            throw EXCEPTION_CLASS(str.str().c_str());
+            throw std::runtime_error(str.str());
         }
 
         std::vector<char> buffer;
@@ -324,7 +277,7 @@ public:
             str << "Error " << err << " opening internal file '"
                 << info.name << "' in zip";
 
-            throw EXCEPTION_CLASS(str.str().c_str());
+            throw std::runtime_error(str.str());
         }
 
         std::vector<unsigned char> buffer;
@@ -506,7 +459,7 @@ Unzipper::Unzipper(std::istream& zippedBuffer)
     if (!m_impl->initWithStream(m_ibuffer))
     {
         release();
-        throw EXCEPTION_CLASS("Error loading zip in memory!");
+        throw std::runtime_error("Error loading zip in memory!");
     }
     m_open = true;
 }
@@ -521,7 +474,7 @@ Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer)
     if (!m_impl->initWithVector(m_vecbuffer))
     {
         release();
-        throw EXCEPTION_CLASS("Error loading zip in memory!");
+        throw std::runtime_error("Error loading zip in memory!");
     }
 
     m_open = true;
@@ -538,7 +491,7 @@ Unzipper::Unzipper(const std::string& zipname)
     if (!m_impl->initFile(zipname))
     {
         release();
-        throw EXCEPTION_CLASS("Error loading zip file!");
+        throw std::runtime_error("Error loading zip file!");
     }
 
     m_open = true;
@@ -556,7 +509,7 @@ Unzipper::Unzipper(const std::string& zipname, std::string password)
     if (!m_impl->initFile(zipname))
     {
         release();
-        throw EXCEPTION_CLASS("Error loading zip file!");
+        throw std::runtime_error("Error loading zip file!");
     }
     m_open = true;
 }

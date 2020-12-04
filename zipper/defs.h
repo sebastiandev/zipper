@@ -33,7 +33,7 @@ typedef struct _stat STAT;
 #    include <dirent.h>
 #    include <unistd.h>
 #    include <utime.h>
-typedef struct stat STAT;
+using STAT = struct stat;
 #endif
 
 #include <zip.h>
@@ -49,12 +49,6 @@ typedef struct stat STAT;
 #endif
 }
 
-#if defined(USE_WINDOWS)
-#    include <filesystem>
-#endif
-
-#define EXCEPTION_CLASS std::runtime_error
-
 #if defined(_WIN64) && (!defined(__APPLE__))
 #    ifndef __USE_FILE_OFFSET64
 #        define __USE_FILE_OFFSET64
@@ -68,12 +62,4 @@ typedef struct stat STAT;
 #    ifndef _FILE_OFFSET_BIT
 #        define _FILE_OFFSET_BIT 64
 #    endif
-#endif
-
-#if defined(USE_WINDOWS) || defined(__MINGW32__)
-#    define MKDIR(d) _mkdir(d)
-#    define CHDIR(d) _chdir(d)
-#else
-#    define MKDIR(d) mkdir(d, 0775)
-#    define CHDIR(d) chdir(d)
 #endif

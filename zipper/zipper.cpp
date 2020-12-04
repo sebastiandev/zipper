@@ -210,7 +210,7 @@ struct Zipper::Impl
         }
         else
         {
-            throw EXCEPTION_CLASS(("Error adding '" + nameInZip + "' to zip").c_str());
+            throw std::runtime_error({"Error adding '" + nameInZip + "' to zip"});
         }
 
         if (ZIP_OK == err)
@@ -264,7 +264,7 @@ Zipper::Zipper(const std::string& zipname)
     if (!m_impl->initFile(zipname))
     {
         release();
-        throw EXCEPTION_CLASS("Error creating zip in file!");
+        throw std::runtime_error("Error creating zip in file!");
     }
     m_open = true;
 }
@@ -281,7 +281,7 @@ Zipper::Zipper(const std::string& zipname, std::string password)
     if (!m_impl->initFile(zipname))
     {
         release();
-        throw EXCEPTION_CLASS("Error creating zip in file!");
+        throw std::runtime_error("Error creating zip in file!");
     }
     m_open = true;
 }
@@ -296,7 +296,7 @@ Zipper::Zipper(std::iostream& buffer)
     if (!m_impl->initWithStream(m_obuffer))
     {
         release();
-        throw EXCEPTION_CLASS("Error creating zip in memory!");
+        throw std::runtime_error("Error creating zip in memory!");
     }
     m_open = true;
 }
@@ -311,7 +311,7 @@ Zipper::Zipper(std::vector<unsigned char>& buffer)
     if (!m_impl->initWithVector(m_vecbuffer))
     {
         release();
-        throw EXCEPTION_CLASS("Error creating zip in memory!");
+        throw std::runtime_error("Error creating zip in memory!");
     }
     m_open = true;
 }
@@ -388,21 +388,21 @@ void Zipper::open()
         {
             if (!m_impl->initWithVector(m_vecbuffer))
             {
-                throw EXCEPTION_CLASS("Error opening zip memory!");
+                throw std::runtime_error("Error opening zip memory!");
             }
         }
         else if (m_usingStream)
         {
             if (!m_impl->initWithStream(m_obuffer))
             {
-                throw EXCEPTION_CLASS("Error opening zip memory!");
+                throw std::runtime_error("Error opening zip memory!");
             }
         }
         else
         {
             if (!m_impl->initFile(m_zipname))
             {
-                throw EXCEPTION_CLASS("Error opening zip file!");
+                throw std::runtime_error("Error opening zip file!");
             }
         }
 

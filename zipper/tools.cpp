@@ -7,15 +7,6 @@
 #include <cstdio>
 #include <iostream>
 
-#if defined(USE_WINDOWS)
-#    include "tps/dirent.h"
-#    include "tps/dirent.c"
-#else
-#    include <sys/types.h>
-#    include <dirent.h>
-#    include <unistd.h>
-#endif /* WINDOWS */
-
 namespace zipper {
 
 // -----------------------------------------------------------------------------
@@ -72,41 +63,15 @@ bool makedir(std::filesystem::path newdir)
 // -----------------------------------------------------------------------------
 std::vector<std::filesystem::path> filesFromDirectory(const std::filesystem::path& path)
 {
-    //TODO: remimpl
-
     std::vector<std::filesystem::path> files;
-    DIR* dir;
-    struct dirent* entry;
 
-    dir = opendir(path.string().c_str());
-
-    if (dir == nullptr)
+    for (auto& entry : std::filesystem::recursive_directory_iterator(path))
     {
-        return files;
+	if(!entry.is_directory())
+	{
+	    files.emplace_back(entry.path());
+	}
     }
-
-    for (entry = readdir(dir); entry != nullptr; entry = readdir(dir))
-    {
-        std::string filename(entry->d_name);
-
-        if (filename == "." || filename == "..")
-        {
-            continue;
-        }
-
-        if (std::filesystem::is_directory(path / filename))
-        {
-            std::vector<std::filesystem::path> moreFiles = filesFromDirectory(path / filename);
-            std::copy(moreFiles.begin(), moreFiles.end(), std::back_inserter(files));
-            continue;
-        }
-
-
-        files.emplace_back(path / filename);
-    }
-
-    closedir(dir);
-
 
     return files;
 }
