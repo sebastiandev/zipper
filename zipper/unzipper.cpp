@@ -476,9 +476,10 @@ public:
     }
 };
 
-Unzipper::Unzipper(std::istream& zippedBuffer)
+Unzipper::Unzipper(std::istream& zippedBuffer, const std::string& password)
     : m_ibuffer(zippedBuffer)
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
+    , m_password(password)
     , m_usingMemoryVector(false)
     , m_usingStream(true)
     , m_impl(new Impl(*this))
@@ -491,9 +492,10 @@ Unzipper::Unzipper(std::istream& zippedBuffer)
     m_open = true;
 }
 
-Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer)
+Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer, const std::string& password)
     : m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(zippedBuffer)
+    , m_password(password)
     , m_usingMemoryVector(true)
     , m_usingStream(false)
     , m_impl(new Impl(*this))
@@ -502,23 +504,6 @@ Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer)
     {
         release();
         throw EXCEPTION_CLASS("Error loading zip in memory!");
-    }
-
-    m_open = true;
-}
-
-Unzipper::Unzipper(const std::string& zipname)
-    : m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
-    , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
-    , m_zipname(zipname)
-    , m_usingMemoryVector(false)
-    , m_usingStream(false)
-    , m_impl(new Impl(*this))
-{
-    if (!m_impl->initFile(zipname))
-    {
-        release();
-        throw EXCEPTION_CLASS("Error loading zip file!");
     }
 
     m_open = true;

@@ -157,6 +157,12 @@ zipper.add(input1, "Test1");
 zipper.close();
 ```
 
+- Adding a password. You can pass your password as a `std::string` as second parameter to any of constructors:
+
+```c++
+Zipper zipper("ziptest.zip", "mypassword");
+```
+
 ##### Unzipping
 
 - Getting all entries in zip
@@ -212,6 +218,12 @@ unzipper.extractEntry("Test1")
 ```
 
 **Note:** Methods `extract`, `extractEntry`, `extractEntryToMemory` return a boolean indicating the success (`true`) or the failure (`false`).
+
+- Extraction using a password. You can pass your password as a `std::string` as second parameter to any of constructors:
+
+```c++
+Zipper unzipper("ziptest.zip", "mypassword");
+```
 
 ##### Linking Zipper to your project
 

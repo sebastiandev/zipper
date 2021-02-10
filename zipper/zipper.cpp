@@ -238,22 +238,6 @@ struct Zipper::Impl
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-Zipper::Zipper(const std::string& zipname)
-    : m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
-    , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
-    , m_usingMemoryVector(false)
-    , m_usingStream(false)
-    , m_zipname(zipname)
-    , m_impl(new Impl(*this))
-{
-    if (!m_impl->initFile(zipname))
-    {
-        release();
-        throw EXCEPTION_CLASS("Error creating zip in file!");
-    }
-    m_open = true;
-}
-
 Zipper::Zipper(const std::string& zipname, const std::string& password)
     : m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
@@ -271,11 +255,12 @@ Zipper::Zipper(const std::string& zipname, const std::string& password)
     m_open = true;
 }
 
-Zipper::Zipper(std::iostream& buffer)
+Zipper::Zipper(std::iostream& buffer, const std::string& password)
     : m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
     , m_obuffer(buffer)
     , m_usingMemoryVector(false)
     , m_usingStream(true)
+    , m_password(password)
     , m_impl(new Impl(*this))
 {
     if (!m_impl->initWithStream(m_obuffer))
@@ -286,11 +271,12 @@ Zipper::Zipper(std::iostream& buffer)
     m_open = true;
 }
 
-Zipper::Zipper(std::vector<unsigned char>& buffer)
+Zipper::Zipper(std::vector<unsigned char>& buffer, const std::string& password)
     : m_vecbuffer(buffer)
     , m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_usingMemoryVector(true)
     , m_usingStream(false)
+    , m_password(password)
     , m_impl(new Impl(*this))
 {
     if (!m_impl->initWithVector(m_vecbuffer))
@@ -327,7 +313,7 @@ bool Zipper::add(std::istream& source, const std::tm& timestamp, const std::stri
 
 bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags flags)
 {
-    return add(source, {}, nameInZip, flags);
+    return m_impl->add(source, {}, nameInZip, m_password, flags);
 }
 
 bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)

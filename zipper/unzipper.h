@@ -15,10 +15,9 @@ class ZipEntry;
 class Unzipper
 {
 public:
-    Unzipper(std::istream& buffer);
-    Unzipper(std::vector<unsigned char>& buffer);
-    Unzipper(const std::string& zipname);
-    Unzipper(const std::string& zipname, const std::string& password);
+    Unzipper(std::istream& buffer, const std::string& password = std::string());
+    Unzipper(std::vector<unsigned char>& buffer, const std::string& password = std::string());
+    Unzipper(const std::string& zipname, const std::string& password = std::string());
 
     ~Unzipper();
 
