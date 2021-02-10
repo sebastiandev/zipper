@@ -89,7 +89,7 @@ Install the project...
 
 ### Usage
 
-There are two classes available Zipper and Unzipper. They behave in the same manner regarding constructors and storage parameters. (for a complete example take a look at the [tests](https://github.com/sebastiandev/zipper/blob/develop/test/file_zip_test.cpp ) using the awesome BDD's from Catch library )
+There are two classes available Zipper and Unzipper. They behave in the same manner regarding constructors and storage parameters. (for a complete example take a look at the [zip file tests](test/file_zip_test.cpp) and [zip memory tests](test/memory_zip_test.cpp) using the awesome BDD's from Catch library )
 
 #### Zipping
 
@@ -149,7 +149,7 @@ zipper.close();
 
 ```c++
 
-std::vector<char> zip_vect;
+std::vector<unsigned char> zip_vect;
 std::ifstream input1("some file");
 
 Zipper zipper(zip_vect);
@@ -199,6 +199,16 @@ std::vector<unsigned char> unzipped_entry;
 Unzipper unzipper("zipfile.zip");
 unzipper.extractEntryToMemory("entry name", unzipped_entry);
 unzipper.close();
+```
+
+- Extracting from a vector:
+
+```c++
+
+std::vector<unsigned char> zip_vect; // Populated with Zipper zipper(zip_vect);
+
+Unzipper unzipper(zip_vect);
+unzipper.extractEntry("Test1")
 ```
 
 **Note:** Methods `extract`, `extractEntry`, `extractEntryToMemory` return a boolean indicating the success (`true`) or the failure (`false`).
