@@ -427,7 +427,8 @@ public:
             else
                 alternativeName += it->name;
 
-            this->extractCurrentEntryToFile(*it, alternativeName);
+            if (!extractCurrentEntryToFile(*it, alternativeName))
+              return false;
         };
 
         return true;
