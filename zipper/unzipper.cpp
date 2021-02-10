@@ -18,7 +18,6 @@ struct Unzipper::Impl
     zlib_filefunc_def m_filefunc;
 
 private:
-
     bool initMemory(zlib_filefunc_def& filefunc)
     {
         m_zf = unzOpen2("__notused__", &filefunc);
@@ -206,7 +205,7 @@ public:
             CloseHandle(hFile);
         }
 #else
-#if defined unix || defined __APPLE__
+#    if defined unix || defined __APPLE__
         struct utimbuf ut;
         struct tm newdate;
 
@@ -223,7 +222,7 @@ public:
 
         ut.actime = ut.modtime = mktime(&newdate);
         utime(filename.c_str(), &ut);
-#endif
+#    endif
 #endif
     }
 
@@ -325,8 +324,8 @@ public:
     }
 
 public:
-
-    Impl(Unzipper& outer) : m_outer(outer), m_zipmem(), m_filefunc()
+    Impl(Unzipper& outer)
+        : m_outer(outer), m_zipmem(), m_filefunc()
     {
         m_zipmem.base = NULL;
         m_zf = NULL;
@@ -391,8 +390,8 @@ public:
     {
         if (!buffer.empty())
         {
-            m_zipmem.base = (char*) malloc (buffer.size() * sizeof (char));
-            memcpy(m_zipmem.base, (char*) buffer.data(), buffer.size());
+            m_zipmem.base = (char*)malloc(buffer.size() * sizeof(char));
+            memcpy(m_zipmem.base, (char*)buffer.data(), buffer.size());
             m_zipmem.size = (uLong)buffer.size();
         }
 
@@ -407,7 +406,6 @@ public:
         getEntries(entrylist);
         return entrylist;
     }
-
 
 
     bool extractAll(const std::string& destination, const std::map<std::string, std::string>& alternativeNames)
@@ -428,7 +426,7 @@ public:
                 alternativeName += it->name;
 
             if (!extractCurrentEntryToFile(*it, alternativeName))
-              return false;
+                return false;
         };
 
         return true;
@@ -558,8 +556,7 @@ bool Unzipper::extract(const std::string& destination, const std::map<std::strin
     return m_impl->extractAll(destination, alternativeNames);
 }
 
-bool
-Unzipper::extract(const std::string& destination)
+bool Unzipper::extract(const std::string& destination)
 {
     return m_impl->extractAll(destination, std::map<std::string, std::string>());
 }

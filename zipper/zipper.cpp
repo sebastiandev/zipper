@@ -15,7 +15,8 @@ struct Zipper::Impl
     ourmemory_t m_zipmem;
     zlib_filefunc_def m_filefunc;
 
-    Impl(Zipper& outer) : m_outer(outer), m_zipmem(), m_filefunc()
+    Impl(Zipper& outer)
+        : m_outer(outer), m_zipmem(), m_filefunc()
     {
         m_zf = NULL;
         m_zipmem.base = NULL;
@@ -71,8 +72,11 @@ struct Zipper::Impl
 
         if (size > 0)
         {
-            if (m_zipmem.base != NULL) { free(m_zipmem.base); }
-            m_zipmem.base = (char*) malloc (size * sizeof (char));
+            if (m_zipmem.base != NULL)
+            {
+                free(m_zipmem.base);
+            }
+            m_zipmem.base = (char*)malloc(size * sizeof(char));
             stream.read(m_zipmem.base, size);
         }
 
@@ -91,8 +95,8 @@ struct Zipper::Impl
             {
                 free(m_zipmem.base);
             }
-            m_zipmem.base = (char*) malloc (buffer.size() * sizeof (char));
-            memcpy(m_zipmem.base, (char*) buffer.data(), buffer.size());
+            m_zipmem.base = (char*)malloc(buffer.size() * sizeof(char));
+            memcpy(m_zipmem.base, (char*)buffer.data(), buffer.size());
             m_zipmem.size = (uLong)buffer.size();
         }
 
@@ -120,11 +124,11 @@ struct Zipper::Impl
         unsigned long crcFile = 0;
 
         zip_fileinfo zi = { 0 };
-        zi.tmz_date.tm_sec  = timestamp.tm_sec;
-        zi.tmz_date.tm_min  = timestamp.tm_min;
+        zi.tmz_date.tm_sec = timestamp.tm_sec;
+        zi.tmz_date.tm_min = timestamp.tm_min;
         zi.tmz_date.tm_hour = timestamp.tm_hour;
         zi.tmz_date.tm_mday = timestamp.tm_mday;
-        zi.tmz_date.tm_mon  = timestamp.tm_mon;
+        zi.tmz_date.tm_mon = timestamp.tm_mon;
         zi.tmz_date.tm_year = timestamp.tm_year;
 
         size_t size_read;
@@ -178,7 +182,8 @@ struct Zipper::Impl
 
         if (ZIP_OK == err)
         {
-            do {
+            do
+            {
                 err = ZIP_OK;
                 input_stream.read(buff.data(), buff.size());
                 size_read = (size_t)input_stream.gcount();
@@ -191,7 +196,7 @@ struct Zipper::Impl
                 {
                     err = zipWriteInFileInZip(this->m_zf, buff.data(), (unsigned int)size_read);
                 }
-            } while ((err == ZIP_OK) && (size_read>0));
+            } while ((err == ZIP_OK) && (size_read > 0));
         }
         else
         {

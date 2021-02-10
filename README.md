@@ -262,3 +262,12 @@ target_link_libraries(
     staticZipper
 )
 ```
+
+##### Coding style
+
+Before submitting a pull request, you can ident the code with the following command:
+
+```shell
+cd src
+clang-format -i *.cpp *.h
+```

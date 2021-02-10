@@ -9,13 +9,13 @@
 #include <iostream>
 
 #if defined(USE_WINDOWS)
-#  include "tps/dirent.h"
-#  include "tps/dirent.c"
+#    include "tps/dirent.h"
+#    include "tps/dirent.c"
 #else
-#  include <sys/types.h>
-#  include <dirent.h>
-#  include <unistd.h>
-#endif  /* WINDOWS */
+#    include <sys/types.h>
+#    include <dirent.h>
+#    include <unistd.h>
+#endif /* WINDOWS */
 
 namespace zipper {
 
@@ -28,7 +28,8 @@ void getFileCrc(std::istream& input_stream, std::vector<char>& buff, unsigned lo
     unsigned long size_read = 0;
     unsigned long total_read = 0;
 
-    do {
+    do
+    {
         input_stream.read(buff.data(), buff.size());
         size_read = (unsigned long)input_stream.gcount();
 
@@ -110,7 +111,7 @@ std::string currentPath()
 std::vector<std::string> filesFromDirectory(const std::string& path)
 {
     std::vector<std::string> files;
-    DIR*           dir;
+    DIR* dir;
     struct dirent* entry;
 
     dir = opendir(path.c_str());
