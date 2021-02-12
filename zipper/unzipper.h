@@ -32,11 +32,15 @@ public:
     void close();
 
 private:
+
     void release();
-    std::string m_password;
-    std::string m_zipname;
+
+private:
+
     std::istream& m_ibuffer;
     std::vector<unsigned char>& m_vecbuffer;
+    std::string m_zipname;
+    std::string m_password;
     bool m_usingMemoryVector;
     bool m_usingStream;
     bool m_open;
@@ -61,7 +65,8 @@ private:
 
 public:
     ZipEntry(const std::string& name, unsigned long long int compressed_size, unsigned long long int uncompressed_size,
-             int year, int month, int day, int hour, int minute, int second, unsigned long dosdate)
+             unsigned int year, unsigned int month, unsigned int day, unsigned int hour, unsigned int minute, unsigned int second,
+             unsigned long dosdate)
         : name(name), compressedSize(compressed_size), uncompressedSize(uncompressed_size), dosdate(dosdate)
     {
         // timestamp YYYY-MM-DD HH:MM:SS

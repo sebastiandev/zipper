@@ -90,7 +90,7 @@ if(WITH_WALL)
     if(MSVC OR USING_INTEL)
         add_definitions(/W4)
     else()
-        add_definitions(-Wall)
+        add_definitions(-Wall -Wextra -Wuninitialized -Wundef -Wunused -Wunused-result -Wunused-parameter -Wtype-limits -Wcast-align -Wcast-qual -Wconversion -Wfloat-equal -Wpointer-arith -Wswitch-enum -pedantic -Wpacked -Wold-style-cast -Wdeprecated -Wvariadic-macros -Wvla -Wsign-conversion -Wtautological-compare -Wformat -Wformat-security -Werror=format-security -D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong)
     endif()
 endif()
 

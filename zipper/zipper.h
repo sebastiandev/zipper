@@ -36,11 +36,15 @@ public:
     void close();
 
 private:
+
     void release();
-    std::string m_password;
-    std::string m_zipname;
+
+private:
+
     std::iostream& m_obuffer;
     std::vector<unsigned char>& m_vecbuffer;
+    std::string m_zipname;
+    std::string m_password;
     bool m_usingMemoryVector;
     bool m_usingStream;
     bool m_open;

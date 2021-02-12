@@ -237,19 +237,19 @@ std::string CDirEntry::createTmpName(const std::string& dir, const std::string& 
     do
     {
         RandomName = dir + Separator;
-        unsigned int Char;
+        int Char;
 
-        for (size_t i = 0; i < 8; i++)
+        for (size_t i = 0; i < 8u; i++)
         {
-            Char = int((rand() / double(RAND_MAX)) * 35.0);
+            Char = static_cast<int>((rand() / double(RAND_MAX)) * 35.0);
 
             if (Char < 10)
             {
-                RandomName += '0' + Char;
+                RandomName += char('0' + Char);
             }
             else
             {
-                RandomName += 'a' - 10 + Char;
+                RandomName += char('a' - 10 + Char);
             }
         }
 
