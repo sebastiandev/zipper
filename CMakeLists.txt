@@ -117,6 +117,7 @@ endif()
 
 set(USE_ZLIB ON)
 add_definitions( -DUSE_ZLIB )
+add_definitions( -DHAVE_AES )
 
 # make sure that we have a valid zip library
 check_library_exists("${ZLIB_LIBRARIES}" "gzopen" "" LIBZ_FOUND_SYMBOL)

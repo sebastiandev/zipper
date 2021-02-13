@@ -16,7 +16,7 @@ By flexibility I mean supporting all kinds of inputs and outputs, but specifical
 - [x] Create zip in memory
 - [x] Allow files, vector and generic streams as input to zip
 - [x] File mappings for replacing strategies (overwrite if exists or use alternative name from mapping)
-- [x] Password protected zip
+- [x] Password protected zip (EAS)
 - [x] Multi platform
 
 ### Getting Started
