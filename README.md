@@ -93,11 +93,16 @@ There are two classes available Zipper and Unzipper. They behave in the same man
 
 #### Zipping
 
+- Header:
+
+```c++
+#include <zipper/zipper.h>
+using namespace zipper;
+```
+
 - Creating a zip file with 2 files:
 
 ```c++
-using namespace zipper;
-
 std::ifstream input1("some file");
 std::ifstream input2("some file");
 
@@ -111,7 +116,6 @@ zipper.close();
 - Adding a file by name and an entire folder to a zip:
 
 ```c++
-
 Zipper zipper("ziptest.zip");
 zipper.add("somefile.txt");
 zipper.add("myFolder");
@@ -165,7 +169,14 @@ Zipper zipper("ziptest.zip", "mypassword");
 
 ##### Unzipping
 
-- Getting all entries in zip
+- Header:
+
+```c++
+#include <zipper/unzipper.h>
+using namespace zipper;
+```
+
+- Getting all entries in zip:
 
 ```c++
 Unzipper unzipper("zipfile.zip");
@@ -173,7 +184,7 @@ std::vector<ZipEntry> entries = unzipper.entries();
 unzipper.close();
 ```
 
-- Extracting all entries from zip
+- Extracting all entries from zip:
 
 ```c++
 Unzipper unzipper("zipfile.zip");
@@ -181,7 +192,7 @@ unzipper.extract();
 unzipper.close();
 ```
 
-- Extracting all entries from zip using alternative names for existing files on disk
+- Extracting all entries from zip using alternative names for existing files on disk:
 
 ```c++
 std::map<std::string, std::string> alternativeNames = { {"Test1", "alternative_name_test1"} };
@@ -190,7 +201,7 @@ unzipper.extract(".", alternativeNames);
 unzipper.close();
 ```
 
-- Extracting a single entry from zip
+- Extracting a single entry from zip:
 
 ```c++
 Unzipper unzipper("zipfile.zip");
@@ -198,7 +209,7 @@ unzipper.extractEntry("entry name");
 unzipper.close();
 ```
 
-- Extracting a single entry from zip to memory
+- Extracting a single entry from zip to memory:
 
 ```c++
 std::vector<unsigned char> unzipped_entry;
