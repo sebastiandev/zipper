@@ -124,6 +124,9 @@ struct Zipper::Impl
         unsigned long crcFile = 0;
 
         zip_fileinfo zi;
+        zi.dosDate = 0; // if dos_date == 0, tmz_date is used
+        zi.internal_fa = 0; // internal file attributes
+        zi.external_fa = 0; // external file attributes
         zi.tmz_date.tm_sec = uInt(timestamp.tm_sec);
         zi.tmz_date.tm_min = uInt(timestamp.tm_min);
         zi.tmz_date.tm_hour = uInt(timestamp.tm_hour);
