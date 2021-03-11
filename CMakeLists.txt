@@ -106,8 +106,50 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
 or CMAKE_C_FLAGS are used), Debug, Release, RelWithDebInfo, MinSizeRel." FORCE)
 endif()
 
-find_package(ZLIB REQUIRED)
+# Foce use zlib submodule
+#find_package(ZLIB REQUIRED)
+if(TRUE)
+  include(ExternalProject)
+  set(ZLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib)
+  set(ZLIB_BIN ${CMAKE_CURRENT_BINARY_DIR}/zlib_bin)
+  set(ZLIB_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/zlib_install)
+  ExternalProject_Add(ZLIB_EXTERNAL
+  SOURCE_DIR ${ZLIB_DIR}
+  BINARY_DIR ${ZLIB_BIN}
+  INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/zlib_install
+  CMAKE_ARGS 
+    -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+    -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+    -DCMAKE_BIN_DIR:PATH=<INSTALL_DIR>/bin
+    -DINSTALL_INC_DIR:PATH=<INSTALL_DIR>/include
+    -DINSTALL_LIB_DIR:PATH=<INSTALL_DIR>/lib
+    -DINSTALL_MAN_DIR:PATH=<INSTALL_DIR>/share/man
+    -DRENAME_ZCONF=OFF
 
+  )
+  add_library(ZLIB INTERFACE)
+  add_dependencies(ZLIB ZLIB_EXTERNAL)
+if (CMAKE_BUILD_TYPE EQUAL Debug)
+  set(ZLIB_LIBRARIES 
+    ${ZLIB_INSTALL}/lib/zlibd.lib
+    ${ZLIB_INSTALL}/lib/zlibstaticd.lib
+  )
+else()
+  set(ZLIB_LIBRARIES 
+    ${ZLIB_INSTALL}/lib/zlib.lib
+    ${ZLIB_INSTALL}/lib/zlibstatic.lib
+  )
+endif()
+  set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/zlib_install/include)
+  list(APPEND TARGET_LIST ZLIB)
+endif()
+target_link_libraries(ZLIB INTERFACE ${ZLIB_LIBRARIES})
+target_include_directories(ZLIB INTERFACE  
+$<BUILD_INTERFACE:${ZLIB_DIR}>
+$<INSTALL_INTERFACE:zlib_install/include>
+)
 # allow the user to define additional compilation symbols
 if (EXTRA_DEFS)
   foreach(var ${EXTRA_DEFS})
@@ -117,7 +159,6 @@ endif()
 
 set(USE_ZLIB ON)
 add_definitions( -DUSE_ZLIB )
-add_definitions( -DHAVE_AES )
 
 # make sure that we have a valid zip library
 check_library_exists("${ZLIB_LIBRARIES}" "gzopen" "" LIBZ_FOUND_SYMBOL)
@@ -132,13 +173,6 @@ missing certain required symbols. Please check that ${ZLIB_LIBRARIES} is
 the correct zlib library. For details about the error, please see
 ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log")
     endif()
-endif()
-
-if(NOT EXISTS "${ZLIB_INCLUDE_DIRS}/zlib.h")
-    message(FATAL_ERROR
-"The include directory specified for zlib does not appear to be
-valid. It should contain the file zlib.h, but it does not. Please
-verify the ZLIB_INCLUDE_DIRS (${ZLIB_INCLUDE_DIRS}) variable.")
 endif()
 
 set(USING_INTEL)
@@ -161,7 +195,7 @@ if(MSVC OR USING_INTEL)
             if(${flag_var} MATCHES "/MD")
                 string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
             endif(${flag_var} MATCHES "/MD")
-
+            
         endforeach(flag_var)
     add_definitions( -D_MT)
     endif(WITH_STATIC_RUNTIME)
@@ -175,16 +209,16 @@ if(MSVC OR USING_INTEL)
               CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
               CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
               CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
-
+  
               if(${flag_var} MATCHES "/Zi")
           STRING(REPLACE "/Zi"  "/Z7" "${flag_var}" "${${flag_var}}")
               endif(${flag_var} MATCHES "/Zi")
-
-          endforeach(flag_var)
+  
+          endforeach(flag_var)      
   endif()
 
 else()
-
+   
    if(APPLE)
        # on osx starting with xcode 4.3 the system root is in
        # the app bundle, however cmake (up to 2.8.8) does not seem
@@ -196,7 +230,7 @@ else()
        endif()
        add_definitions(-DMACOSX)
        set(BUILD_DEFINITIONS "${BUILD_DEFINITIONS} -DMACOSX")
-
+   
        # Since we are encountering errors with the use of libc++ on OSX
        # this option allows to override which stdlib to use
        if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -205,12 +239,12 @@ else()
            SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++" )
          endif()
        endif()
-
+       
        # On OSX it is common to build universal binaries to support multiple
        # processor architectures. The default behavior is not to build
        # multiple architectures, as most users might not need that.
        option(ENABLE_UNIVERSAL "Create universal binaries on Mac OS X." OFF)
-
+   
        set(CMAKE_OSX_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}" CACHE STRING
           "A semicolon-separated list of build architectures to be used.")
        if(ENABLE_UNIVERSAL)
@@ -232,21 +266,21 @@ else()
        endif(ENABLE_UNIVERSAL)
    else(APPLE)
        add_definitions(-DLINUX)
-
+   
        if(NOT CYGWIN)
            # on cygwin all code is position independent so -fPIC is not needed
            set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing -fPIC")
            set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing -fPIC")
        endif()
-
+   
        set(BUILD_DEFINITIONS "${BUILD_DEFINITIONS} -DLINUX")
    endif(APPLE)
 
 endif()
 
-# need an extra definition of __APPLE__ to prevent ioapi.c to
+# need an extra definition of __APPLE__ to prevent ioapi.c to 
 # change the name for the fopen/ftell/fseek commands
-# unfortunately that won't work for qt
+# unfortunately that won't work for qt 
 if (CYGWIN AND NOT WITH_QT_FILESYSTEM)
 add_definitions(-D__APPLE__)
 endif()
@@ -263,7 +297,7 @@ if (EXTRA_INCLUDE_DIRS)
 include_directories(${EXTRA_INCLUDE_DIRS})
 endif()
 
-file(GLOB MINIZIP_SOURCES
+file(GLOB MINIZIP_SOURCES 
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/*.c
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/*.h
   ${CMAKE_CURRENT_SOURCE_DIR}/minizip/aes/*.c
@@ -306,20 +340,16 @@ file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" VERSION)
 option(BUILD_SHARED_VERSION "Build the shared version of the library." ON)
 if (BUILD_SHARED_VERSION)
   add_library (${ZIPPER_LIBRARY} SHARED ${ZIPPER_SOURCES} ${MINIZIP_SOURCES} )
-  target_include_directories(
-    ${ZIPPER_LIBRARY}
-    PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-  )
+  add_dependencies(${ZIPPER_LIBRARY} ZLIB ZLIB_EXTERNAL)
+  target_link_libraries(${ZIPPER_LIBRARY} ZLIB ${EXTRA_LIBS})
+  
   if (UNIX)
     SET_TARGET_PROPERTIES(${ZIPPER_LIBRARY} PROPERTIES
                           SOVERSION ${ZIPPER_VERSION_MAJOR}
                           VERSION ${ZIPPER_VERSION_MAJOR}.${ZIPPER_VERSION_MINOR}.${ZIPPER_VERSION_PATCH})
   endif()
-
-  target_link_libraries(${ZIPPER_LIBRARY} ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
-
+  
+  
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY})
 endif()
 
@@ -327,22 +357,14 @@ option(BUILD_STATIC_VERSION "Build the static version of the library." ON)
 if (BUILD_STATIC_VERSION)
   set(STATIC_ZIPPER_LIBRARY static${ZIPPER_LIBRARY})
   add_library (${STATIC_ZIPPER_LIBRARY} STATIC ${ZIPPER_SOURCES} ${MINIZIP_SOURCES})
-  if (NOT WIN32)
-    set_target_properties(${STATIC_ZIPPER_LIBRARY} PROPERTIES OUTPUT_NAME ${ZIPPER_LIBRARY})
-  endif()
-  target_include_directories(
-    ${STATIC_ZIPPER_LIBRARY}
-    PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-  )
-  target_link_libraries(${STATIC_ZIPPER_LIBRARY} ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
+  add_dependencies(${STATIC_ZIPPER_LIBRARY} ZLIB)
+  target_link_libraries(${STATIC_ZIPPER_LIBRARY} ZLIB ${EXTRA_LIBS})
   list(APPEND TARGET_LIST ${STATIC_ZIPPER_LIBRARY})
 
   # Deprecated code: old zipper static lib was named libZipper-static.a but this was not
   # a good unix name. Anyway keep installing it to avoid breaking programs link with it.
   add_library (${ZIPPER_LIBRARY}-static STATIC ${ZIPPER_SOURCES} ${MINIZIP_SOURCES})
-  target_link_libraries(${ZIPPER_LIBRARY}-static ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
+  target_link_libraries(${ZIPPER_LIBRARY}-static ZLIB ${EXTRA_LIBS})
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY}-static)
 endif()
 
@@ -367,15 +389,15 @@ if (BUILD_TEST)
   include(CTest)
 
   add_executable(${ZIPPER_LIBRARY}-test ${TEST_SOURCES})
-  target_link_libraries(${ZIPPER_LIBRARY}-test  static${ZIPPER_LIBRARY} ${ZLIB_LIBRARIES} ${EXTRA_LIBS})
+  target_link_libraries(${ZIPPER_LIBRARY}-test static${ZIPPER_LIBRARY} ZLIB ${EXTRA_LIBS})
   list(APPEND TARGET_LIST ${ZIPPER_LIBRARY}-test)
 
   add_test(
     NAME test_zipper_run
     COMMAND $<TARGET_FILE:${ZIPPER_LIBRARY}-test>
   )
-
-  set_tests_properties(test_zipper_run
+  
+  set_tests_properties(test_zipper_run 
     PROPERTIES PASS_REGULAR_EXPRESSION "All tests passed"
   )
 endif()
@@ -400,7 +422,7 @@ install(TARGETS ${TARGET_LIST} EXPORT ${PROJECT_NAME}
 install(FILES ${PROJECT_BINARY_DIR}/zipper.pc DESTINATION ${INSTALL_PKGCONFIG_DIR})
 
 file(GLOB ZIPPER_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/zipper/*.h ${CMAKE_CURRENT_SOURCE_DIR}/minizip/*.h  )
-install(FILES
+install(FILES 
         ${ZIPPER_HEADERS}
         DESTINATION include/zipper)
 

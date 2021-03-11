@@ -2,3 +2,7 @@
 	path = minizip
 	url = https://github.com/Lecrapouille/minizip.git
 	branch = master
+[submodule "zlib"]
+	path = zlib
+	url = https://github.com/madler/zlib.git
+	branch = master
