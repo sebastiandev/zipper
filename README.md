@@ -25,7 +25,7 @@ In order to use and compile zipper you need to have [zlib](http://www.zlib.net) 
 **Zipper** depends on minizip as well but since it is used as a submodule, you get it when cloning
 the repo and it gets compiled with the project.
 
-*Note*: For windows users, zlib is expected to be found at ZLIBROOT.
+*Note*: For windows user, zlib is contained as a submodule. Due to how zlib named its libaray, you would need to build the whole project with release first, and then copy the zlib.dll under ./zlib_bin/Release to your executable.
 
 #### Download dependencies
 
@@ -35,6 +35,7 @@ sudo apt-get install zlib1g-dev  # for ubuntu
 sudo dnf install zlib-devel  # for fedora
 sudo dnf install gcc-c++  # for fedora
 ```
+
 
 #### Compiling
 
