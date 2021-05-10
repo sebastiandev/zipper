@@ -2,6 +2,7 @@
 #include "defs.h"
 #include "tools.h"
 #include "CDirEntry.h"
+#include "Timestamp.h"
 
 #include <fstream>
 #include <stdexcept>
@@ -321,7 +322,8 @@ bool Zipper::add(std::istream& source, const std::tm& timestamp, const std::stri
 
 bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags flags)
 {
-    return m_impl->add(source, {}, nameInZip, m_password, flags);
+    Timestamp time;
+    return m_impl->add(source, time.timestamp, nameInZip, m_password, flags);
 }
 
 bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
@@ -333,14 +335,16 @@ bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
         std::vector<std::string>::iterator it = files.begin();
         for (; it != files.end(); ++it)
         {
+            Timestamp time(*it);
             std::ifstream input(it->c_str(), std::ios::binary);
             std::string nameInZip = it->substr(it->rfind(folderName + CDirEntry::Separator), it->size());
-            add(input, nameInZip, flags);
+            add(input, time.timestamp, nameInZip, flags);
             input.close();
         }
     }
     else
     {
+        Timestamp time(fileOrFolderPath);
         std::ifstream input(fileOrFolderPath.c_str(), std::ios::binary);
         std::string fullFileName;
 
@@ -353,7 +357,7 @@ bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
             fullFileName = fileNameFromPath(fileOrFolderPath);
         }
 
-        add(input, fullFileName, flags);
+        add(input, time.timestamp, fullFileName, flags);
 
         input.close();
     }
