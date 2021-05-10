@@ -6,7 +6,10 @@ function brew_install
     (brew install "$1") || (echo "Error installing $1"; return 1)
 }
 
-brew update
+#brew update
 #brew upgrade
-brew_install valgrind
-brew link --force valgrind
+#brew_install valgrind
+#brew link --force valgrind
+
+brew tap LouisBrunner/valgrind
+brew install --HEAD LouisBrunner/valgrind/valgrind
