@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <system_error>
 
 namespace zipper {
 
@@ -18,7 +19,6 @@ class ZipEntry;
 class Unzipper
 {
 public:
-
     // -------------------------------------------------------------------------
     //! \brief Regular zip decompressor (from zip archive file).
     //!
@@ -27,6 +27,9 @@ public:
     //!   if no password is needed).
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
+    Unzipper(std::error_code& ec, const std::string& zipname,
+             const std::string& password = std::string());
+
     Unzipper(const std::string& zipname,
              const std::string& password = std::string());
 
@@ -38,6 +41,8 @@ public:
     //!   if no password is needed).
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
+    Unzipper(std::error_code& ec, std::istream& buffer,
+             const std::string& password = std::string());
     Unzipper(std::istream& buffer,
              const std::string& password = std::string());
 
@@ -49,6 +54,8 @@ public:
     //!   if no password is needed).
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
+    Unzipper(std::error_code& ec, std::vector<unsigned char>& buffer,
+             const std::string& password = std::string());
     Unzipper(std::vector<unsigned char>& buffer,
              const std::string& password = std::string());
 
@@ -131,12 +138,10 @@ public:
     void close();
 
 private:
-
     //! \brief Relese memory
     void release();
 
 private:
-
     std::istream& m_ibuffer;
     std::vector<unsigned char>& m_vecbuffer;
     std::string m_zipname;
@@ -155,7 +160,6 @@ private:
 class ZipEntry
 {
 private:
-
     typedef struct
     {
         unsigned int tm_sec;
@@ -167,7 +171,6 @@ private:
     } tm_s;
 
 public:
-
     ZipEntry(const std::string& name,
              unsigned long long int compressed_size,
              unsigned long long int uncompressed_size,
@@ -178,8 +181,7 @@ public:
              unsigned int minute,
              unsigned int second,
              unsigned long dosdate)
-        : name(name), compressedSize(compressed_size),
-          uncompressedSize(uncompressed_size), dosdate(dosdate)
+        : name(name), compressedSize(compressed_size), uncompressedSize(uncompressed_size), dosdate(dosdate)
     {
         // timestamp YYYY-MM-DD HH:MM:SS
         std::stringstream str;
