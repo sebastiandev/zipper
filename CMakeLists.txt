@@ -105,42 +105,47 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     "Choose the type of build to perform. The options are: None (CMAKE_CXX_FLAGS
 or CMAKE_C_FLAGS are used), Debug, Release, RelWithDebInfo, MinSizeRel." FORCE)
 endif()
-find_package(ZLIB)
+# find_package(ZLIB)
 if(NOT ZLIB_FOUND)
-  include(ExternalProject)
+
   set(ZLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib)
   set(ZLIB_BIN ${CMAKE_CURRENT_BINARY_DIR}/zlib_bin)
   set(ZLIB_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/zlib_install)
-  ExternalProject_Add(ZLIB_EXTERNAL
-  SOURCE_DIR ${ZLIB_DIR}
-  BINARY_DIR ${ZLIB_BIN}
-  INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/zlib_install
-  CMAKE_ARGS 
-    -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-    -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-    -DCMAKE_BIN_DIR:PATH=<INSTALL_DIR>/bin
-    -DINSTALL_INC_DIR:PATH=<INSTALL_DIR>/include
-    -DINSTALL_LIB_DIR:PATH=<INSTALL_DIR>/lib
-    -DINSTALL_MAN_DIR:PATH=<INSTALL_DIR>/share/man
-    -DRENAME_ZCONF=OFF
+  execute_process(
+    COMMAND ${CMAKE_COMMAND}
+    "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -fPIC"
+    "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -fPIC"
+    "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${ZLIB_INSTALL}"
+    "-DCMAKE_BIN_DIR:PATH=${ZLIB_INSTALL}/bin"
+    "-DINSTALL_INC_DIR:PATH=${ZLIB_INSTALL}/include"
+    "-DINSTALL_LIB_DIR:PATH=${ZLIB_INSTALL}/lib"
+    "-DINSTALL_MAN_DIR:PATH=${ZLIB_INSTALL}/share/man"
+    "-DRENAME_ZCONF=OFF"
+    "-H${ZLIB_DIR}"
+    "-B${ZLIB_BIN}"
+    "-G" "${CMAKE_GENERATOR}"
 
+    WORKING_DIRECTORY ${ZLIB_DIR} 
   )
+
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} "--build" "${ZLIB_BIN}"
+    "--config" "${CMAKE_BUILD_TYPE}"
+    "--target" "install"
+    "--" 
+)
   add_library(ZLIB INTERFACE)
   add_dependencies(ZLIB ZLIB_EXTERNAL)
   set(ZLIB_LIBRARIES 
-    ${ZLIB_INSTALL}/lib/zlibd.lib
-    ${ZLIB_INSTALL}/lib/zlibstaticd.lib
+    ${ZLIB_INSTALL}/lib/libz.a
+    ${ZLIB_INSTALL}/lib/libz.so
   )
   set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/zlib_install/include)
   list(APPEND TARGET_LIST ZLIB)
 endif()
-target_link_libraries(ZLIB INTERFACE ${ZLIB_LIBRARIES})
-target_include_directories(ZLIB INTERFACE  
-$<BUILD_INTERFACE:${ZLIB_DIR}>
-$<INSTALL_INTERFACE:zlib_install/include>
-)
+
+#find_package(ZLIB REQUIRED)
 
 # allow the user to define additional compilation symbols
 if (EXTRA_DEFS)
