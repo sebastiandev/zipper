@@ -18,7 +18,6 @@ struct Unzipper::Impl
     zlib_filefunc_def m_filefunc;
 
 private:
-
     bool initMemory(zlib_filefunc_def& filefunc)
     {
         m_zf = unzOpen2("__notused__", &filefunc);
@@ -32,7 +31,7 @@ private:
 
     ZipEntry currentEntryInfo()
     {
-        unz_file_info64 file_info = { 0 };
+        unz_file_info64 file_info;
         char filename_inzip[256] = { 0 };
 
         int err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
@@ -190,9 +189,9 @@ public:
         return UNZ_OK == err;
     }
 
-    void changeFileDate(const std::string& filename, uLong dosdate, tm_unz tmu_date)
+#if defined(USE_WINDOWS)
+    void changeFileDate(const std::string& filename, uLong dosdate, tm_unz /*tmu_date*/)
     {
-#ifdef _WIN32
         HANDLE hFile;
         FILETIME ftm, ftLocal, ftCreate, ftLastAcc, ftLastWrite;
 
@@ -205,28 +204,29 @@ public:
             SetFileTime(hFile, &ftm, &ftLastAcc, &ftm);
             CloseHandle(hFile);
         }
-#else
-#if defined unix || defined __APPLE__
+    }
+
+#elif defined unix || defined __APPLE__
+    void changeFileDate(const std::string& filename, uLong /*dosdate*/, tm_unz tmu_date)
+    {
         struct utimbuf ut;
         struct tm newdate;
 
-        newdate.tm_sec = tmu_date.tm_sec;
-        newdate.tm_min = tmu_date.tm_min;
-        newdate.tm_hour = tmu_date.tm_hour;
-        newdate.tm_mday = tmu_date.tm_mday;
-        newdate.tm_mon = tmu_date.tm_mon;
-        if (tmu_date.tm_year > 1900)
-            newdate.tm_year = tmu_date.tm_year - 1900;
+        newdate.tm_sec = int(tmu_date.tm_sec);
+        newdate.tm_min = int(tmu_date.tm_min);
+        newdate.tm_hour = int(tmu_date.tm_hour);
+        newdate.tm_mday = int(tmu_date.tm_mday);
+        newdate.tm_mon = int(tmu_date.tm_mon);
+        if (tmu_date.tm_year > 1900u)
+            newdate.tm_year = int(tmu_date.tm_year - 1900u);
         else
-            newdate.tm_year = tmu_date.tm_year;
+            newdate.tm_year = int(tmu_date.tm_year);
         newdate.tm_isdst = -1;
 
         ut.actime = ut.modtime = mktime(&newdate);
         utime(filename.c_str(), &ut);
-#endif
-#endif
     }
-
+#endif
 
     int extractToFile(const std::string& filename, ZipEntry& info)
     {
@@ -259,7 +259,7 @@ public:
 
     int extractToStream(std::ostream& stream, ZipEntry& info)
     {
-        size_t err = unzOpenCurrentFilePassword(m_zf, m_outer.m_password.c_str());
+        int err = unzOpenCurrentFilePassword(m_zf, m_outer.m_password.c_str());
         if (UNZ_OK != err)
         {
             std::stringstream str;
@@ -274,11 +274,11 @@ public:
 
         do
         {
-            err = unzReadCurrentFile(m_zf, buffer.data(), (unsigned int)buffer.size());
+            err = unzReadCurrentFile(m_zf, buffer.data(), static_cast<unsigned int>(buffer.size()));
             if (err < 0 || err == 0)
                 break;
 
-            stream.write(buffer.data(), err);
+            stream.write(buffer.data(), std::streamsize(err));
             if (!stream.good())
             {
                 err = UNZ_ERRNO;
@@ -289,12 +289,12 @@ public:
 
         stream.flush();
 
-        return (int)err;
+        return err;
     }
 
     int extractToMemory(std::vector<unsigned char>& outvec, ZipEntry& info)
     {
-        size_t err = UNZ_ERRNO;
+        int err = UNZ_ERRNO;
 
         err = unzOpenCurrentFilePassword(m_zf, m_outer.m_password.c_str());
         if (UNZ_OK != err)
@@ -309,11 +309,11 @@ public:
         std::vector<unsigned char> buffer;
         buffer.resize(WRITEBUFFERSIZE);
 
-        outvec.reserve((size_t)info.uncompressedSize);
+        outvec.reserve(static_cast<size_t>(info.uncompressedSize));
 
         do
         {
-            err = unzReadCurrentFile(m_zf, buffer.data(), (unsigned int)buffer.size());
+            err = unzReadCurrentFile(m_zf, buffer.data(), static_cast<unsigned int>(buffer.size()));
             if (err < 0 || err == 0)
                 break;
 
@@ -321,12 +321,12 @@ public:
 
         } while (err > 0);
 
-        return (int)err;
+        return err;
     }
 
 public:
-
-    Impl(Unzipper& outer) : m_outer(outer), m_zipmem(), m_filefunc()
+    Impl(Unzipper& outer)
+        : m_outer(outer), m_zipmem(), m_filefunc()
     {
         m_zipmem.base = NULL;
         m_zf = NULL;
@@ -375,11 +375,11 @@ public:
         size_t size = static_cast<size_t>(s);
         stream.seekg(0);
 
-        if (size > 0)
+        if (size > 0u)
         {
-            m_zipmem.base = new char[(size_t)size];
-            m_zipmem.size = (uLong)size;
-            stream.read(m_zipmem.base, size);
+            m_zipmem.base = new char[size];
+            m_zipmem.size = static_cast<uLong>(size);
+            stream.read(m_zipmem.base, std::streamsize(size));
         }
 
         fill_memory_filefunc(&m_filefunc, &m_zipmem);
@@ -391,9 +391,9 @@ public:
     {
         if (!buffer.empty())
         {
-            m_zipmem.base = (char*) malloc (buffer.size() * sizeof (char));
-            memcpy(m_zipmem.base, (char*) buffer.data(), buffer.size());
-            m_zipmem.size = (uLong)buffer.size();
+            m_zipmem.base = reinterpret_cast<char*>(malloc(buffer.size() * sizeof(char)));
+            memcpy(m_zipmem.base, reinterpret_cast<char*>(buffer.data()), buffer.size());
+            m_zipmem.size = static_cast<uLong>(buffer.size());
         }
 
         fill_memory_filefunc(&m_filefunc, &m_zipmem);
@@ -407,7 +407,6 @@ public:
         getEntries(entrylist);
         return entrylist;
     }
-
 
 
     bool extractAll(const std::string& destination, const std::map<std::string, std::string>& alternativeNames)
@@ -427,7 +426,8 @@ public:
             else
                 alternativeName += it->name;
 
-            this->extractCurrentEntryToFile(*it, alternativeName);
+            if (!extractCurrentEntryToFile(*it, alternativeName))
+                return false;
         };
 
         return true;
@@ -475,9 +475,10 @@ public:
     }
 };
 
-Unzipper::Unzipper(std::istream& zippedBuffer)
+Unzipper::Unzipper(std::istream& zippedBuffer, const std::string& password)
     : m_ibuffer(zippedBuffer)
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
+    , m_password(password)
     , m_usingMemoryVector(false)
     , m_usingStream(true)
     , m_impl(new Impl(*this))
@@ -490,9 +491,10 @@ Unzipper::Unzipper(std::istream& zippedBuffer)
     m_open = true;
 }
 
-Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer)
+Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer, const std::string& password)
     : m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(zippedBuffer)
+    , m_password(password)
     , m_usingMemoryVector(true)
     , m_usingStream(false)
     , m_impl(new Impl(*this))
@@ -501,23 +503,6 @@ Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer)
     {
         release();
         throw EXCEPTION_CLASS("Error loading zip in memory!");
-    }
-
-    m_open = true;
-}
-
-Unzipper::Unzipper(const std::string& zipname)
-    : m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
-    , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
-    , m_zipname(zipname)
-    , m_usingMemoryVector(false)
-    , m_usingStream(false)
-    , m_impl(new Impl(*this))
-{
-    if (!m_impl->initFile(zipname))
-    {
-        release();
-        throw EXCEPTION_CLASS("Error loading zip file!");
     }
 
     m_open = true;
@@ -572,8 +557,7 @@ bool Unzipper::extract(const std::string& destination, const std::map<std::strin
     return m_impl->extractAll(destination, alternativeNames);
 }
 
-bool
-Unzipper::extract(const std::string& destination)
+bool Unzipper::extract(const std::string& destination)
 {
     return m_impl->extractAll(destination, std::map<std::string, std::string>());
 }

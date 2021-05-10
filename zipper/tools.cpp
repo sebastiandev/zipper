@@ -8,14 +8,14 @@
 #include <cstdio>
 #include <iostream>
 
-#if defined(WIN32) && !defined(CYGWIN)
-#  include "tps/dirent.h"
-#  include "tps/dirent.c"
+#if defined(USE_WINDOWS)
+#    include "tps/dirent.h"
+#    include "tps/dirent.c"
 #else
-#  include <sys/types.h>
-#  include <dirent.h>
-#  include <unistd.h>
-#endif  /* WIN32 */
+#    include <sys/types.h>
+#    include <dirent.h>
+#    include <unistd.h>
+#endif /* WINDOWS */
 
 namespace zipper {
 
@@ -25,17 +25,18 @@ namespace zipper {
 void getFileCrc(std::istream& input_stream, std::vector<char>& buff, unsigned long& result_crc)
 {
     unsigned long calculate_crc = 0;
-    unsigned long size_read = 0;
+    unsigned int size_read = 0;
     unsigned long total_read = 0;
 
-    do {
-        input_stream.read(buff.data(), buff.size());
-        size_read = (unsigned long)input_stream.gcount();
+    do
+    {
+        input_stream.read(buff.data(), std::streamsize(buff.size()));
+        size_read = static_cast<unsigned int>(input_stream.gcount());
 
         if (size_read > 0)
-            calculate_crc = crc32(calculate_crc, (const unsigned char*)buff.data(), size_read);
+            calculate_crc = crc32(calculate_crc, reinterpret_cast<const unsigned char*>(buff.data()), size_read);
 
-        total_read += size_read;
+        total_read += static_cast<unsigned long>(size_read);
 
     } while (size_read > 0);
 
@@ -47,7 +48,7 @@ void getFileCrc(std::istream& input_stream, std::vector<char>& buff, unsigned lo
 // -----------------------------------------------------------------------------
 bool isLargeFile(std::istream& input_stream)
 {
-    ZPOS64_T pos = 0;
+    std::streampos pos = 0;
     input_stream.seekg(0, std::ios::end);
     pos = input_stream.tellg();
     input_stream.seekg(0);
@@ -100,17 +101,15 @@ std::string parentDirectory(const std::string& filepath)
 // -----------------------------------------------------------------------------
 std::string currentPath()
 {
-    char buffer[1024];
-    getcwd(buffer, 1024);
-    std::string result(buffer);
-    return result;
+    char buffer[1024u];
+    return (getcwd(buffer, sizeof(buffer)) ? std::string(buffer) : std::string(""));
 }
 
 // -----------------------------------------------------------------------------
 std::vector<std::string> filesFromDirectory(const std::string& path)
 {
     std::vector<std::string> files;
-    DIR*           dir;
+    DIR* dir;
     struct dirent* entry;
 
     dir = opendir(path.c_str());
