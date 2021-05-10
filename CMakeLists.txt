@@ -140,26 +140,31 @@ if(NOT ZLIB_FOUND)
   )
   add_library(ZLIB INTERFACE)
   #Set Zlib libaries for Unix system
+  set(ZLIB_LIBRARY ${ZLIB_INSTALL}/lib/libz.a)
   set(ZLIB_LIBRARIES 
     ${ZLIB_INSTALL}/lib/libz.a
     ${ZLIB_INSTALL}/lib/libz.so
   )
   #Overwrite the Zlib libraries if MSVC
   if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(ZLIB_LIBRARY ${ZLIB_INSTALL}/lib/zlibd.lib)
     set(ZLIB_LIBRARIES 
       ${ZLIB_INSTALL}/lib/zlibd.lib
       ${ZLIB_INSTALL}/lib/zlibstaticd.lib
     )
   elseif(MSVC)
+  set(ZLIB_LIBRARY ${ZLIB_INSTALL}/lib/zlib.lib)
     set(ZLIB_LIBRARIES 
       ${ZLIB_INSTALL}/lib/zlib.lib
       ${ZLIB_INSTALL}/lib/zlibstatic.lib
     )
   endif()
   set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/zlib_install/include)
+
+  set(ZLIB_INCLUDE_DIR ${ZLIB_INCLUDE_DIRS})
 endif()
 
-#find_package(ZLIB REQUIRED)
+find_package(ZLIB REQUIRED)
 
 # allow the user to define additional compilation symbols
 if (EXTRA_DEFS)
