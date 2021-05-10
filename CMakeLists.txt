@@ -157,7 +157,6 @@ if(NOT ZLIB_FOUND)
     )
   endif()
   set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/zlib_install/include)
-  list(APPEND TARGET_LIST ZLIB)
 endif()
 
 #find_package(ZLIB REQUIRED)
