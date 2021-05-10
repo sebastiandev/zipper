@@ -402,7 +402,7 @@ endif()
 
 
 
-option(BUILD_TEST "Build the test program." OFF)
+option(BUILD_TEST "Build the test program." ON)
 if (BUILD_TEST)
   enable_testing()
 
