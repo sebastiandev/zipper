@@ -141,6 +141,17 @@ if(NOT ZLIB_FOUND)
     ${ZLIB_INSTALL}/lib/libz.a
     ${ZLIB_INSTALL}/lib/libz.so
   )
+  if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(ZLIB_LIBRARIES 
+      ${ZLIB_INSTALL}/lib/zlibd.lib
+      ${ZLIB_INSTALL}/lib/zlibstaticd.lib
+    )
+  elseif(MSVC)
+    set(ZLIB_LIBRARIES 
+      ${ZLIB_INSTALL}/lib/zlib.lib
+      ${ZLIB_INSTALL}/lib/zlibstatic.lib
+   )
+  endif()
   set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/zlib_install/include)
   list(APPEND TARGET_LIST ZLIB)
 endif()
