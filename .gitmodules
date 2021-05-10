@@ -2,3 +2,8 @@
 	path = minizip
 	url = https://github.com/Lecrapouille/minizip.git
 	branch = master
+
+[submodule "zlib"]
+	path = zlib
+	url = https://github.com/Togtja/zlib
+	branch = optional_zconf_rename
