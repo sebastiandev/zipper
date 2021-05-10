@@ -105,7 +105,8 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     "Choose the type of build to perform. The options are: None (CMAKE_CXX_FLAGS
 or CMAKE_C_FLAGS are used), Debug, Release, RelWithDebInfo, MinSizeRel." FORCE)
 endif()
-# find_package(ZLIB)
+
+find_package(ZLIB)
 if(NOT ZLIB_FOUND)
 
   set(ZLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib)
@@ -136,7 +137,6 @@ if(NOT ZLIB_FOUND)
     "--" 
 )
   add_library(ZLIB INTERFACE)
-  add_dependencies(ZLIB ZLIB_EXTERNAL)
   set(ZLIB_LIBRARIES 
     ${ZLIB_INSTALL}/lib/libz.a
     ${ZLIB_INSTALL}/lib/libz.so
