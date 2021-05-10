@@ -206,7 +206,7 @@ public:
         }
     }
 
-#elif defined unix || defined __APPLE__
+#elif defined(unix) || defined(__APPLE__) || defined(__linux__)
     void changeFileDate(const std::string& filename, uLong /*dosdate*/, tm_unz tmu_date)
     {
         struct utimbuf ut;
