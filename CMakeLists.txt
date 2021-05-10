@@ -112,6 +112,8 @@ if(NOT ZLIB_FOUND)
   set(ZLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib)
   set(ZLIB_BIN ${CMAKE_CURRENT_BINARY_DIR}/zlib_bin)
   set(ZLIB_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/zlib_install)
+
+  #cmake Configure zlib
   execute_process(
     COMMAND ${CMAKE_COMMAND}
     "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -fPIC"
@@ -129,18 +131,20 @@ if(NOT ZLIB_FOUND)
 
     WORKING_DIRECTORY ${ZLIB_DIR} 
   )
-
+  #cmake Build zlib
   execute_process(
     COMMAND ${CMAKE_COMMAND} "--build" "${ZLIB_BIN}"
     "--config" "${CMAKE_BUILD_TYPE}"
     "--target" "install"
     "--" 
-)
+  )
   add_library(ZLIB INTERFACE)
+  #Set Zlib libaries for Unix system
   set(ZLIB_LIBRARIES 
     ${ZLIB_INSTALL}/lib/libz.a
     ${ZLIB_INSTALL}/lib/libz.so
   )
+  #Overwrite the Zlib libraries if MSVC
   if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(ZLIB_LIBRARIES 
       ${ZLIB_INSTALL}/lib/zlibd.lib
@@ -150,7 +154,7 @@ if(NOT ZLIB_FOUND)
     set(ZLIB_LIBRARIES 
       ${ZLIB_INSTALL}/lib/zlib.lib
       ${ZLIB_INSTALL}/lib/zlibstatic.lib
-   )
+    )
   endif()
   set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/zlib_install/include)
   list(APPEND TARGET_LIST ZLIB)
