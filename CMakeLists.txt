@@ -106,6 +106,64 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
 or CMAKE_C_FLAGS are used), Debug, Release, RelWithDebInfo, MinSizeRel." FORCE)
 endif()
 
+find_package(ZLIB)
+if(NOT ZLIB_FOUND)
+
+  set(ZLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib)
+  set(ZLIB_BIN ${CMAKE_CURRENT_BINARY_DIR}/zlib_bin)
+  set(ZLIB_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/zlib_install)
+
+  #cmake Configure zlib
+  execute_process(
+    COMMAND ${CMAKE_COMMAND}
+    "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -fPIC"
+    "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -fPIC"
+    "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${ZLIB_INSTALL}"
+    "-DCMAKE_BIN_DIR:PATH=${ZLIB_INSTALL}/bin"
+    "-DINSTALL_INC_DIR:PATH=${ZLIB_INSTALL}/include"
+    "-DINSTALL_LIB_DIR:PATH=${ZLIB_INSTALL}/lib"
+    "-DINSTALL_MAN_DIR:PATH=${ZLIB_INSTALL}/share/man"
+    "-DRENAME_ZCONF=OFF"
+    "-H${ZLIB_DIR}"
+    "-B${ZLIB_BIN}"
+    "-G" "${CMAKE_GENERATOR}"
+
+    WORKING_DIRECTORY ${ZLIB_DIR} 
+  )
+  #cmake Build zlib
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} "--build" "${ZLIB_BIN}"
+    "--config" "${CMAKE_BUILD_TYPE}"
+    "--target" "install"
+    "--" 
+  )
+  add_library(ZLIB INTERFACE)
+  #Set Zlib libaries for Unix system
+  set(ZLIB_LIBRARY ${ZLIB_INSTALL}/lib/libz.a)
+  set(ZLIB_LIBRARIES 
+    ${ZLIB_INSTALL}/lib/libz.a
+    ${ZLIB_INSTALL}/lib/libz.so
+  )
+  #Overwrite the Zlib libraries if MSVC
+  if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(ZLIB_LIBRARY ${ZLIB_INSTALL}/lib/zlibd.lib)
+    set(ZLIB_LIBRARIES 
+      ${ZLIB_INSTALL}/lib/zlibd.lib
+      ${ZLIB_INSTALL}/lib/zlibstaticd.lib
+    )
+  elseif(MSVC)
+  set(ZLIB_LIBRARY ${ZLIB_INSTALL}/lib/zlib.lib)
+    set(ZLIB_LIBRARIES 
+      ${ZLIB_INSTALL}/lib/zlib.lib
+      ${ZLIB_INSTALL}/lib/zlibstatic.lib
+    )
+  endif()
+  set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/zlib_install/include)
+
+  set(ZLIB_INCLUDE_DIR ${ZLIB_INCLUDE_DIRS})
+endif()
+
 find_package(ZLIB REQUIRED)
 
 # allow the user to define additional compilation symbols
