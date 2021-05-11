@@ -31,8 +31,9 @@ Timestamp::Timestamp()
 
 Timestamp::Timestamp(const std::string& filepath)
 {
-
+    //Set default
     std::time_t now = std::time(nullptr);
+    timestamp = *std::localtime(&now);
 #if defined(USE_WINDOWS)
     //Implementation based on Ian Boyd's https://stackoverflow.com/questions/20370920/convert-current-time-from-windows-to-unix-timestamp-in-c-or-c
     HANDLE hFile1;
@@ -41,13 +42,11 @@ Timestamp::Timestamp(const std::string& filepath)
 
     if (hFile1 == INVALID_HANDLE_VALUE)
     {
-        timestamp = *std::localtime(&now);
         return;
     }
 
     if (!GetFileTime(hFile1, &filetime, NULL, NULL))
     {
-        timestamp = *std::localtime(&now);
         return;
     }
     const int64_t UNIX_TIME_START = 0x019DB1DED53E8000; //January 1, 1970 (start of Unix epoch) in "ticks"
@@ -68,7 +67,7 @@ Timestamp::Timestamp(const std::string& filepath)
     struct stat buf;
     if (stat(filepath.c_str(), &buf) != 0)
     {
-        timestamp = *std::localtime(&now);
+        return;
     }
     auto timet = static_cast<time_t>(buf.st_mtim.tv_sec);
     timestamp = *std::localtime(&timet);
