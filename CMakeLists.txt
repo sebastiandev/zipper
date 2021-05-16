@@ -147,17 +147,17 @@ if(NOT ZLIB_FOUND)
   )
   #Overwrite the Zlib libraries if MSVC
   if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(ZLIB_LIBRARY ${ZLIB_INSTALL}/lib/zlibd.lib)
-    set(ZLIB_LIBRARIES 
-      ${ZLIB_INSTALL}/lib/zlibd.lib
-      ${ZLIB_INSTALL}/lib/zlibstaticd.lib
-    )
+	  if (BUILD_STATIC_VERSION)
+      set(ZLIB_LIBRARIES ${ZLIB_INSTALL}/lib/zlibstaticd.lib)
+	  else()
+	  set(ZLIB_LIBRARIES ${ZLIB_INSTALL}/lib/zlibd.lib)
+	  endif()
   elseif(MSVC)
-  set(ZLIB_LIBRARY ${ZLIB_INSTALL}/lib/zlib.lib)
-    set(ZLIB_LIBRARIES 
-      ${ZLIB_INSTALL}/lib/zlib.lib
-      ${ZLIB_INSTALL}/lib/zlibstatic.lib
-    )
+	  if (BUILD_STATIC_VERSION)
+      set(ZLIB_LIBRARIES ${ZLIB_INSTALL}/lib/zlibstatic.lib)
+	  else()
+      set(ZLIB_LIBRARIES ${ZLIB_INSTALL}/lib/zlib.lib)
+	  endif()
   endif()
   set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/zlib_install/include)
 
