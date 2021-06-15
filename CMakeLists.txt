@@ -405,10 +405,10 @@ install(FILES
         DESTINATION include/zipper)
 
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-        DESTINATION lib${LIB_SUFFIX}/cmake)
+        DESTINATION lib${LIB_SUFFIX}/cmake/zipper)
 
 install(EXPORT ${PROJECT_NAME}
-        DESTINATION lib${LIB_SUFFIX}/cmake
+        DESTINATION lib${LIB_SUFFIX}/cmake/zipper
         FILE ${PROJECT_NAME}Targets.cmake)
 
 message(STATUS "
