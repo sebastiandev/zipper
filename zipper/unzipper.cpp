@@ -124,17 +124,25 @@ public:
         if (!entryinfo.valid())
             return false;
 
-        err = extractToFile(fileName, entryinfo);
-        if (UNZ_OK == err)
+        if (!entryinfo.uncompressedSize)
         {
-            err = unzCloseCurrentFile(m_zf);
-            if (UNZ_OK != err)
+            if (!makedir(fileName))
+                err = UNZ_ERRNO;
+        }
+        else
+        {
+            err = extractToFile(fileName, entryinfo);
+            if (UNZ_OK == err)
             {
-                std::stringstream str;
-                str << "Error " << err << " openinginternal file '"
-                    << entryinfo.name << "' in zip";
+                err = unzCloseCurrentFile(m_zf);
+                if (UNZ_OK != err)
+                {
+                    std::stringstream str;
+                    str << "Error " << err << " openinginternal file '"
+                        << entryinfo.name << "' in zip";
 
-                throw EXCEPTION_CLASS(str.str().c_str());
+                    throw EXCEPTION_CLASS(str.str().c_str());
+                }
             }
         }
 
