@@ -151,9 +151,9 @@ std::string CDirEntry::dirName(const std::string& path)
     if (end == path.length() - 1)
     {
 #if defined(USE_WINDOWS) // WIN32 also understands '/' as the separator.
-        end = path.find_last_of(Separator + "/", end);
+        end = path.find_last_of(Separator + "/", end - 1);
 #else
-        end = path.find_last_of(Separator, end);
+        end = path.find_last_of(Separator, end - 1);
 #endif
     }
 
