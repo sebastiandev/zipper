@@ -7,7 +7,7 @@
 ###############################################################################
 
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.15)
 project(zipper)
 
 # Set useful CMake flags
@@ -125,6 +125,7 @@ if(NOT ZLIB_FOUND)
     "-DINSTALL_LIB_DIR:PATH=${ZLIB_INSTALL}/lib"
     "-DINSTALL_MAN_DIR:PATH=${ZLIB_INSTALL}/share/man"
     "-DRENAME_ZCONF=OFF"
+    "-A${CMAKE_GENERATOR_PLATFORM}"
     "-H${ZLIB_DIR}"
     "-B${ZLIB_BIN}"
     "-G" "${CMAKE_GENERATOR}"
