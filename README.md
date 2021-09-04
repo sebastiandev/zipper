@@ -152,7 +152,6 @@ zipper.close();
 - Creating a zip in a vector with files:
 
 ```c++
-
 std::vector<unsigned char> zip_vect;
 std::ifstream input1("some file");
 
@@ -161,11 +160,23 @@ zipper.add(input1, "Test1");
 zipper.close();
 ```
 
-- Adding a password. You can pass your password as a `std::string` as second parameter to any of constructors:
+- Changing the compression factor: By default the `add` method uses an implicit flag `Zipper::Better`
+which compress the best but can takes some time to perform the compression. You can change this flag by `Zipper::Store` (no compression) or `Zipper::Faster` (for a light compression) or `Zipper::Medium` (for a compromise).
+
+```c++
+zipper.add(input1, "Test1", Zipper::Medium);
+```
+
+- Adding a password. You can protect your file by adding a password as a `std::string` as second parameter to any of `Zipper` constructors. For example:
 
 ```c++
 Zipper zipper("ziptest.zip", "mypassword");
 ```
+
+- Appending files inside the archive.
+
+By default the constructor `Zipper` for zip file uses an implicit flag `Zipper::Overwrite` you can
+change it by `Zipper::Append`. Note: in previous versions of Zipper the `Zipper::Append` flag was the one by default but now replaced by `Zipper::Overwrite`.
 
 ##### Unzipping
 
@@ -279,6 +290,6 @@ target_link_libraries(
 Before submitting a pull request, you can ident the code with the following command:
 
 ```shell
-cd src
+cd zipper
 clang-format -i *.cpp *.h
 ```

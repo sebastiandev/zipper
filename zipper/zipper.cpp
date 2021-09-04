@@ -29,19 +29,18 @@ struct Zipper::Impl
         close();
     }
 
-    bool initFile(const std::string& filename)
+    bool initFile(const std::string& filename, Zipper::openFlags flags)
     {
 #ifdef USEWIN32IOAPI
         zlib_filefunc64_def ffunc = { 0 };
 #endif
 
         int mode = 0;
-        int flags = Zipper::Append;
 
         /* open the zip file for output */
         if (checkFileExists(filename))
         {
-            mode = (flags & Zipper::Overwrite) ? APPEND_STATUS_CREATE : APPEND_STATUS_ADDINZIP;
+            mode = (flags & Zipper::openFlags::Overwrite) ? APPEND_STATUS_CREATE : APPEND_STATUS_ADDINZIP;
         }
         else
         {
@@ -118,7 +117,7 @@ struct Zipper::Impl
         if (!m_zf)
             return false;
 
-        int compressLevel = 0;
+        int compressLevel = 5; // Zipper::zipFlags::Medium
         bool zip64;
         size_t size_buf = WRITEBUFFERSIZE;
         int err = ZIP_OK;
@@ -143,9 +142,12 @@ struct Zipper::Impl
         if (nameInZip.empty())
             return false;
 
-        if (flags & Zipper::Faster)
+        flags = flags & ~int(Zipper::zipFlags::SaveHierarchy);
+        if (flags == Zipper::zipFlags::Store)
+            compressLevel = 0;
+        else if (flags == Zipper::zipFlags::Faster)
             compressLevel = 1;
-        if (flags & Zipper::Better)
+        else if (flags == Zipper::zipFlags::Better)
             compressLevel = 9;
 
         zip64 = isLargeFile(input_stream);
@@ -247,7 +249,7 @@ struct Zipper::Impl
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-Zipper::Zipper(const std::string& zipname, const std::string& password)
+Zipper::Zipper(const std::string& zipname, const std::string& password, Zipper::openFlags flags)
     : m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
     , m_zipname(zipname)
@@ -256,7 +258,7 @@ Zipper::Zipper(const std::string& zipname, const std::string& password)
     , m_usingStream(false)
     , m_impl(new Impl(*this))
 {
-    if (!m_impl->initFile(zipname))
+    if (!m_impl->initFile(zipname, flags))
     {
         release();
         throw EXCEPTION_CLASS("Error creating zip in file!");
@@ -326,7 +328,7 @@ bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags fl
     return m_impl->add(source, time.timestamp, nameInZip, m_password, flags);
 }
 
-bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
+bool Zipper::add(const std::string& fileOrFolderPath, Zipper::zipFlags flags)
 {
     if (isDirectory(fileOrFolderPath))
     {
@@ -366,7 +368,7 @@ bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
 }
 
 
-void Zipper::open()
+void Zipper::open(Zipper::openFlags flags)
 {
     if (!m_open)
     {
@@ -382,7 +384,7 @@ void Zipper::open()
         }
         else
         {
-            if (!m_impl->initFile(m_zipname))
+            if (!m_impl->initFile(m_zipname, flags))
                 throw EXCEPTION_CLASS("Error opening zip file!");
         }
 

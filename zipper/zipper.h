@@ -17,34 +17,58 @@ class Zipper
 public:
 
     // -------------------------------------------------------------------------
-    //! \brief Compression options.
+    //! \brief Archive flags.
     // -------------------------------------------------------------------------
-    enum zipFlags
+    enum openFlags
     {
         //! \brief Minizip options/params: -o  Overwrite existing file.zip
         Overwrite = 0x01,
         //! \brief Minizip options/params: -a  Append to existing file.zip
         Append = 0x02,
-        //! \brief Minizip options/params: -0  Store only
-        Store = 0x04,
-        //! \brief Minizip options/params: -1  Compress faster
-        Faster = 0x08,
-        //! \brief Minizip options/params: -9  Compress better
-        Better = 0x10,
         //! \brief Minizip options/params: -j  Exclude path. store only the file name.
-        NoPaths = 0x20,
-        //! \brief
+        //TODO NoPaths = 0x20,
+    };
+
+    // -------------------------------------------------------------------------
+    //! \brief Compression options for files.
+    // -------------------------------------------------------------------------
+    enum zipFlags
+    {
+        //! \brief Minizip options/params: -0  Store only
+        Store = 0x00,
+        //! \brief Minizip options/params: -1  Compress faster
+        Faster = 0x01,
+        //! \brief Minizip options/params: -5  Compress faster
+        Medium = 0x05,
+        //! \brief Minizip options/params: -9  Compress better
+        Better = 0x09,
+        //! \brief ???
         SaveHierarchy = 0x40
     };
 
     // -------------------------------------------------------------------------
-    //! \brief Regular zip compression (inside a disk zip archive file).
+    //! \brief Regular zip compression (inside a disk zip archive file) with a
+    //! password.
     //!
     //! \param[in] zipname: the path where to create your zip file.
     //! \param[in] password: optional password (set empty for not using password).
+    //! \param[in] flags: Overwrite (default) or append existing zip file (zipname).
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
-    Zipper(const std::string& zipname, const std::string& password = std::string());
+    Zipper(const std::string& zipname, const std::string& password,
+           Zipper::openFlags flags = Zipper::openFlags::Overwrite);
+
+    // -------------------------------------------------------------------------
+    //! \brief Regular zip compression (inside a disk zip archive file) without
+    //! password.
+    //!
+    //! \param[in] zipname: the path where to create your zip file.
+    //! \param[in] flags: Overwrite (default) or append existing zip file (zipname).
+    //! \throw std::runtime_error if something odd happened.
+    // -------------------------------------------------------------------------
+    Zipper(const std::string& zipname, Zipper::openFlags flags = Zipper::openFlags::Overwrite)
+        : Zipper(zipname, std::string(), flags)
+    {}
 
     // -------------------------------------------------------------------------
     //! \brief In-memory zip compression (storage inside std::iostream).
@@ -81,8 +105,8 @@ public:
     //! \return true on success, else return false.
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
-    bool add(std::istream& source, const std::tm& timestamp,
-             const std::string& nameInZip, zipFlags flags = Better);
+    bool add(std::istream& source, const std::tm& timestamp, const std::string& nameInZip,
+             Zipper::zipFlags flags = Zipper::zipFlags::Better);
 
     // -------------------------------------------------------------------------
     //! \brief Compress data \c source in the archive with the given name \c
@@ -95,7 +119,7 @@ public:
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
     bool add(std::istream& source, const std::string& nameInZip,
-             zipFlags flags = Better);
+             Zipper::zipFlags flags = Zipper::zipFlags::Better);
 
     // -------------------------------------------------------------------------
     //! \brief Compress a folder or a file in the archive.
@@ -105,7 +129,8 @@ public:
     //! \return true on success, else return false.
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
-    bool add(const std::string& fileOrFolderPath, zipFlags flags = Better);
+    bool add(const std::string& fileOrFolderPath,
+             Zipper::zipFlags flags = Zipper::zipFlags::Better);
 
     // -------------------------------------------------------------------------
     //! \brief Depending on your selection of constructor, this method will do
@@ -119,9 +144,10 @@ public:
     //! \brief To be called after a close(). Depending on your selection of
     //! constructor, this method will do some actions such as opening the zip
     //! file, reserve buffers.
+    //! \param[in] flags: Overwrite or append (default) existing zip file (zipname).
     //! \note this method is not called by the constructor.
     // -------------------------------------------------------------------------
-    void open();
+    void open(Zipper::openFlags flags = Zipper::openFlags::Append);
 
 private:
 
