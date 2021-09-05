@@ -5,5 +5,5 @@
 
 [submodule "zlib"]
 	path = zlib
-	url = https://github.com/Togtja/zlib
-	branch = optional_zconf_rename
+	url = https://github.com/Lecrapouille/zlib
+	branch = develop-fixes
