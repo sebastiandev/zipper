@@ -114,6 +114,7 @@ if(NOT ZLIB_FOUND)
   set(ZLIB_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/zlib_install)
 
   #cmake Configure zlib
+  if(MSVC OR WIN32)
   execute_process(
     COMMAND ${CMAKE_COMMAND}
     "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -fPIC"
@@ -130,8 +131,28 @@ if(NOT ZLIB_FOUND)
     "-B${ZLIB_BIN}"
     "-G" "${CMAKE_GENERATOR}"
 
-    WORKING_DIRECTORY ${ZLIB_DIR} 
+    WORKING_DIRECTORY ${ZLIB_DIR}
   )
+  else()
+  execute_process(
+    COMMAND ${CMAKE_COMMAND}
+    "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -fPIC"
+    "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -fPIC"
+    "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${ZLIB_INSTALL}"
+    "-DCMAKE_BIN_DIR:PATH=${ZLIB_INSTALL}/bin"
+    "-DINSTALL_INC_DIR:PATH=${ZLIB_INSTALL}/include"
+    "-DINSTALL_LIB_DIR:PATH=${ZLIB_INSTALL}/lib"
+    "-DINSTALL_MAN_DIR:PATH=${ZLIB_INSTALL}/share/man"
+    "-DRENAME_ZCONF=OFF"
+    "-H${ZLIB_DIR}"
+    "-B${ZLIB_BIN}"
+    "-G" "${CMAKE_GENERATOR}"
+
+    WORKING_DIRECTORY ${ZLIB_DIR}
+  )
+  endif()
+
   #cmake Build zlib
   execute_process(
     COMMAND ${CMAKE_COMMAND} "--build" "${ZLIB_BIN}"
