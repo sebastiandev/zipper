@@ -5,5 +5,5 @@
 
 [submodule "zlib"]
 	path = zlib
-	url = https://github.com/Lecrapouille/zlib
-	branch = develop-fixes
+	url = https://github.com/zlib-ng/zlib-ng.git
+	branch = develop

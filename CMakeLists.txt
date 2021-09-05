@@ -106,15 +106,15 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
 or CMAKE_C_FLAGS are used), Debug, Release, RelWithDebInfo, MinSizeRel." FORCE)
 endif()
 
-find_package(ZLIB)
-if(NOT ZLIB_FOUND)
+# Force compiling the local "new generation" Zlib
+#find_package(ZLIB)
+if(true)#NOT ZLIB_FOUND)
 
   set(ZLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib)
   set(ZLIB_BIN ${CMAKE_CURRENT_BINARY_DIR}/zlib_bin)
   set(ZLIB_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/zlib_install)
 
   #cmake Configure zlib
-  if(MSVC OR WIN32)
   execute_process(
     COMMAND ${CMAKE_COMMAND}
     "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -fPIC"
@@ -125,45 +125,26 @@ if(NOT ZLIB_FOUND)
     "-DINSTALL_INC_DIR:PATH=${ZLIB_INSTALL}/include"
     "-DINSTALL_LIB_DIR:PATH=${ZLIB_INSTALL}/lib"
     "-DINSTALL_MAN_DIR:PATH=${ZLIB_INSTALL}/share/man"
-    "-DRENAME_ZCONF=OFF"
-    "-A${CMAKE_GENERATOR_PLATFORM}"
+    "-DZLIB_COMPAT=ON"
+    "-DZLIB_ENABLE_TESTS=OFF"
     "-H${ZLIB_DIR}"
     "-B${ZLIB_BIN}"
     "-G" "${CMAKE_GENERATOR}"
 
     WORKING_DIRECTORY ${ZLIB_DIR}
   )
-  else()
-  execute_process(
-    COMMAND ${CMAKE_COMMAND}
-    "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -fPIC"
-    "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -fPIC"
-    "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${ZLIB_INSTALL}"
-    "-DCMAKE_BIN_DIR:PATH=${ZLIB_INSTALL}/bin"
-    "-DINSTALL_INC_DIR:PATH=${ZLIB_INSTALL}/include"
-    "-DINSTALL_LIB_DIR:PATH=${ZLIB_INSTALL}/lib"
-    "-DINSTALL_MAN_DIR:PATH=${ZLIB_INSTALL}/share/man"
-    "-DRENAME_ZCONF=OFF"
-    "-H${ZLIB_DIR}"
-    "-B${ZLIB_BIN}"
-    "-G" "${CMAKE_GENERATOR}"
-
-    WORKING_DIRECTORY ${ZLIB_DIR}
-  )
-  endif()
 
   #cmake Build zlib
   execute_process(
     COMMAND ${CMAKE_COMMAND} "--build" "${ZLIB_BIN}"
     "--config" "${CMAKE_BUILD_TYPE}"
     "--target" "install"
-    "--" 
+    "--"
   )
   add_library(ZLIB INTERFACE)
   #Set Zlib libaries for Unix system
   set(ZLIB_LIBRARY ${ZLIB_INSTALL}/lib/libz.a)
-  set(ZLIB_LIBRARIES 
+  set(ZLIB_LIBRARIES
     ${ZLIB_INSTALL}/lib/libz.a
     ${ZLIB_INSTALL}/lib/libz.so
   )
