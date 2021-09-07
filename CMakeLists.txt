@@ -311,7 +311,6 @@ else()
            endif()
        endif(ENABLE_UNIVERSAL)
    else(APPLE)
-       add_definitions(-DLINUX)
 
        if(NOT CYGWIN)
            # on cygwin all code is position independent so -fPIC is not needed
@@ -319,7 +318,7 @@ else()
            set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing -fPIC")
        endif()
 
-       set(BUILD_DEFINITIONS "${BUILD_DEFINITIONS} -DLINUX")
+       set(BUILD_DEFINITIONS "${BUILD_DEFINITIONS}")
    endif(APPLE)
 
 endif()
