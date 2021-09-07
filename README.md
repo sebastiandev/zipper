@@ -13,11 +13,12 @@ By flexibility I mean supporting all kinds of inputs and outputs, but specifical
 
 ### Features
 
-- [x] Create zip in memory
-- [x] Allow files, vector and generic streams as input to zip
-- [x] File mappings for replacing strategies (overwrite if exists or use alternative name from mapping)
-- [x] Password protected zip (EAS)
-- [x] Multi platform
+- [x] Create zip in memory.
+- [x] Allow files, vector and generic streams as input to zip.
+- [x] File mappings for replacing strategies (overwrite if exists or use alternative name from mapping).
+- [x] Password protected zip (EAS).
+- [x] Multi platform.
+- [x] Protection against [Zip Slip](https://github.com/sebastiandev/zipper/issues/33).
 
 ### Getting Started
 
@@ -25,7 +26,11 @@ In order to use and compile zipper you need to have [zlib](http://www.zlib.net) 
 **Zipper** depends on minizip as well but since it is used as a submodule, you get it when cloning
 the repo and it gets compiled with the project.
 
-*Note*: For windows users, zlib is expected to be found at ZLIBROOT.
+*Note*: Zipper follows and unmaintained version of minizip!
+
+*Note*: For windows users, zlib is expected to be found at ZLIBROOT. Soon Zipper
+will follow the new generation of zlib named [zlib-ng](https://github.com/zlib-ng/zlib-ng) and will be
+compiled directly with this project.
 
 #### Download dependencies
 
@@ -270,7 +275,7 @@ Indeed pkg-config knows for you where to find libraries and, by default, it will
 
 - Makefile: set `LDFLAGS` to `pkg-config zipper --libs` and set `CPPFLAGS` to `pkg-config zipper --cflags`
 
-- CMake:  Simply place zipper in your project hieracy, and then use `add_subdirectory(zipper)` or whatever you called the zipper folder. Then link it with `Zipper`/`staticZipper`
+- CMake:  Simply place zipper in your project hierarchy, and then use `add_subdirectory(zipper)` or whatever you called the zipper folder. Then link it with `Zipper`/`staticZipper`
 
 ```cmake
 Project(projZipper)
@@ -285,9 +290,23 @@ target_link_libraries(
 )
 ```
 
+### For developpers
+
+##### Git branches
+
+- The `developement` is here for your pull requests. This branch contains the latest fixes but can have regressions.
+- The `master` is for maintenaning the stablest version.
+
+Because, Zipper uses submodules, when your are commuting of branch, do not forget to synchronize your submodules:
+
+``` shell
+git submodule sync
+git submodule update
+```
+
 ##### Coding style
 
-Before submitting a pull request, you can ident the code with the following command:
+Before submitting a pull request, you can indent the code with the following command:
 
 ```shell
 cd zipper
