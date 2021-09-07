@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <sys/types.h>
 #include <fstream>
+#include <iterator>
+#include <sstream>
 
 using namespace zipper;
 
@@ -139,7 +141,7 @@ std::string CDirEntry::fileName(const std::string& path)
 // -----------------------------------------------------------------------------
 std::string CDirEntry::dirName(const std::string& path)
 {
-    if (path == "")
+    if (path.empty())
         return path;
 
 #if defined(USE_WINDOWS) // WIN32 also understands '/' as the separator.
@@ -197,7 +199,7 @@ bool CDirEntry::createDir(const std::string& dir, const std::string& parent)
 {
     std::string Dir;
 
-    if (parent != "")
+    if (!parent.empty())
     {
         Dir = parent + Separator;
     }
@@ -668,4 +670,70 @@ std::string CDirEntry::normalize(const std::string& path)
     }
 
     return Normalized;
+}
+
+std::string CDirEntry::canonicalPath(const std::string& path)
+{
+    if (path.empty()) return "";
+
+    std::vector<std::string> segments;
+
+    // If the path starts with a / we must preserve it
+    bool starts_with_slash = path.front() == DIRECTORY_SEPARATOR_CHAR;
+    // If the path does not end with a / we need to remove the
+    // extra / added by the join process
+    bool ends_with_slash = path.back() == DIRECTORY_SEPARATOR_CHAR;
+
+    size_t current;
+    ssize_t next = -1;
+
+    do {
+        current = size_t(next + 1);
+        // Handle both Unix and Windows style separators
+        next = path.find_first_of("/\\", current);
+
+        std::string segment(path.substr(current, next - current));
+        size_t size = segment.length();
+
+        // skip empty (keedp initial)
+        if (size == 0 && segments.size() > 0) {
+            continue;
+        }
+
+        // skip . (keep initial)
+        if (segment == "." && segments.size() > 0) {
+            continue;
+        }
+
+        // remove ..
+        if (segment == ".." && segments.size() > 0) {
+            if (segments.back().empty()) { // ignore if .. follows initial /
+                continue;
+            }
+            if (segments.back() != "..") {
+                segments.pop_back();
+                continue;
+            }
+        }
+
+        segments.push_back(segment);
+    } while (next != std::string::npos);
+
+    // Join the vector as a single string, every element is
+    // separated by a '/'. This process adds an extra / at
+    // the end that might need to be removed
+    std::stringstream clean_path;
+    std::copy(segments.begin(), segments.end(),
+            std::ostream_iterator<std::string>(clean_path, DIRECTORY_SEPARATOR));
+    std::string new_path = clean_path.str();
+
+    if (starts_with_slash && new_path.empty()) {
+        new_path = DIRECTORY_SEPARATOR;
+    }
+
+    if (!ends_with_slash && new_path.length() > 1) {
+        new_path.pop_back();
+    }
+
+    return new_path;
 }
