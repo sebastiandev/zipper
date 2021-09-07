@@ -218,7 +218,7 @@ public:
         }
     }
 
-#elif defined(unix) || defined(__APPLE__) || defined(__linux__)
+#elif defined(unix) || defined(__APPLE__) || defined(__linux__) || defined(__MINGW32__)  || defined(__MINGW64__)
     void changeFileDate(const std::string& filename, uLong /*dosdate*/, tm_unz tmu_date)
     {
         struct utimbuf ut;
@@ -237,6 +237,12 @@ public:
 
         ut.actime = ut.modtime = mktime(&newdate);
         utime(filename.c_str(), &ut);
+    }
+#else
+#warning "changeFileDate not defined"
+    void changeFileDate(const std::string& filename, uLong /*dosdate*/, tm_unz tmu_date)
+    {
+       // FIXME
     }
 #endif
 

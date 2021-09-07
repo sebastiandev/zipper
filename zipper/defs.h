@@ -69,7 +69,7 @@ typedef struct stat STAT;
 #    endif
 #endif
 
-#if defined(USE_WINDOWS) || defined(__MINGW32__)
+#if defined(USE_WINDOWS)
 #    define MKDIR(d) _mkdir(d)
 #    define CHDIR(d) _chdir(d)
 #else
