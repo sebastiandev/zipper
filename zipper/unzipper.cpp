@@ -1,4 +1,7 @@
 #include "unzipper.h"
+#include "minizip/zip.h"
+#include "minizip/unzip.h"
+#include "minizip/ioapi_mem.h"
 #include "CDirEntry.h"
 #include "defs.h"
 #include "tools.h"

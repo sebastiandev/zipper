@@ -1,4 +1,6 @@
 #include "zipper.h"
+#include "minizip/zip.h"
+#include "minizip/ioapi_mem.h"
 #include "defs.h"
 #include "tools.h"
 #include "CDirEntry.h"
