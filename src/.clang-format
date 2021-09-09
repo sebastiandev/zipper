@@ -1,0 +1,14 @@
+BasedOnStyle: WebKit
+AlignAfterOpenBracket: Align
+AllowShortIfStatementsOnASingleLine: true
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: true
+  AfterFunction: true
+  AfterStruct: true
+  BeforeElse: true
+BreakBeforeBraces: Custom
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+IndentPPDirectives: AfterHash
+MaxEmptyLinesToKeep: 2
+SortIncludes: false

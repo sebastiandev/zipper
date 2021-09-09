@@ -1,0 +1,4 @@
+Version 2.0.0:
+    * Complete code refacto
+    * No more CMake
+    * No more submodules to third part libs
