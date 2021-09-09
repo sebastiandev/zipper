@@ -52,8 +52,8 @@ struct Zipper::Impl
     Impl(Zipper& outer)
         : m_outer(outer), m_zipmem(), m_filefunc()
     {
-        m_zf = NULL;
-        m_zipmem.base = NULL;
+        m_zf = nullptr;
+        m_zipmem.base = nullptr;
         //m_filefunc = { 0 };
     }
 
@@ -82,12 +82,12 @@ struct Zipper::Impl
 
 #ifdef USEWIN32IOAPI
         fill_win32_filefunc64A(&ffunc);
-        m_zf = zipOpen2_64(filename.c_str(), mode, NULL, &ffunc);
+        m_zf = zipOpen2_64(filename.c_str(), mode, nullptr, &ffunc);
 #else
         m_zf = zipOpen64(filename.c_str(), mode);
 #endif
 
-        return NULL != m_zf;
+        return nullptr != m_zf;
     }
 
     bool initWithStream(std::iostream& stream)
@@ -105,7 +105,7 @@ struct Zipper::Impl
 
         if (size > 0)
         {
-            if (m_zipmem.base != NULL)
+            if (m_zipmem.base != nullptr)
             {
                 free(m_zipmem.base);
             }
@@ -124,7 +124,7 @@ struct Zipper::Impl
 
         if (!buffer.empty())
         {
-            if (m_zipmem.base != NULL)
+            if (m_zipmem.base != nullptr)
             {
                 free(m_zipmem.base);
             }
@@ -141,7 +141,7 @@ struct Zipper::Impl
     bool initMemory(int mode, zlib_filefunc_def& filefunc)
     {
         m_zf = zipOpen3("__notused__", mode, 0, 0, &filefunc);
-        return m_zf != NULL;
+        return m_zf != nullptr;
     }
 
     bool add(std::istream& input_stream, const std::tm& timestamp,
@@ -192,11 +192,11 @@ struct Zipper::Impl
             err = zipOpenNewFileInZip64(m_zf,
                                         nameInZip.c_str(),
                                         &zi,
-                                        NULL,
+                                        nullptr,
                                         0,
-                                        NULL,
+                                        nullptr,
                                         0,
-                                        NULL /* comment*/,
+                                        nullptr /* comment*/,
                                         (compressLevel != 0) ? Z_DEFLATED : 0,
                                         compressLevel,
                                         zip64);
@@ -207,11 +207,11 @@ struct Zipper::Impl
             err = zipOpenNewFileInZip3_64(m_zf,
                                           nameInZip.c_str(),
                                           &zi,
-                                          NULL,
+                                          nullptr,
                                           0,
-                                          NULL,
+                                          nullptr,
                                           0,
-                                          NULL /* comment*/,
+                                          nullptr /* comment*/,
                                           (compressLevel != 0) ? Z_DEFLATED : 0,
                                           compressLevel,
                                           0,
@@ -255,10 +255,10 @@ struct Zipper::Impl
 
     void close()
     {
-        if (m_zf != NULL)
+        if (m_zf != nullptr)
         {
-            zipClose(m_zf, NULL);
-            m_zf = NULL;
+            zipClose(m_zf, nullptr);
+            m_zf = nullptr;
         }
 
         if (m_zipmem.base && m_zipmem.limit > 0)
@@ -274,10 +274,10 @@ struct Zipper::Impl
             }
         }
 
-        if (m_zipmem.base != NULL)
+        if (m_zipmem.base != nullptr)
         {
             free(m_zipmem.base);
-            m_zipmem.base = NULL;
+            m_zipmem.base = nullptr;
         }
     }
 };

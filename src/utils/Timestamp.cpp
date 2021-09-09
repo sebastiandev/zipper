@@ -24,14 +24,14 @@ Timestamp::Timestamp(const std::string& filepath)
     // https://stackoverflow.com/questions/20370920/convert-current-time-from-windows-to-unix-timestamp-in-c-or-c
     HANDLE hFile1;
     FILETIME filetime;
-    hFile1 = CreateFile(filepath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile1 = CreateFile(filepath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
     if (hFile1 == INVALID_HANDLE_VALUE)
     {
         return;
     }
 
-    if (!GetFileTime(hFile1, &filetime, NULL, NULL))
+    if (!GetFileTime(hFile1, &filetime, nullptr, nullptr))
     {
         return;
     }

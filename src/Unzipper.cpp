@@ -25,15 +25,16 @@ struct Unzipper::Impl
     zlib_filefunc_def m_filefunc;
 
 private:
+
     bool initMemory(zlib_filefunc_def& filefunc)
     {
         m_zf = unzOpen2("__notused__", &filefunc);
-        return m_zf != NULL;
+        return m_zf != nullptr;
     }
 
     bool locateEntry(const std::string& name)
     {
-        return UNZ_OK == unzLocateFile(m_zf, name.c_str(), NULL);
+        return UNZ_OK == unzLocateFile(m_zf, name.c_str(), nullptr);
     }
 
     ZipEntry currentEntryInfo()
@@ -41,7 +42,7 @@ private:
         unz_file_info64 file_info;
         char filename_inzip[256] = { 0 };
 
-        int err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
+        int err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip, sizeof(filename_inzip), nullptr, 0, nullptr, 0);
         if (UNZ_OK != err)
             throw std::runtime_error("Error, couln't get the current entry info");
 
@@ -210,7 +211,7 @@ public:
         HANDLE hFile;
         FILETIME ftm, ftLocal, ftCreate, ftLastAcc, ftLastWrite;
 
-        hFile = CreateFileA(filename.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+        hFile = CreateFileA(filename.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
         if (hFile != INVALID_HANDLE_VALUE)
         {
             GetFileTime(hFile, &ftCreate, &ftLastAcc, &ftLastWrite);
@@ -372,8 +373,8 @@ public:
     Impl(Unzipper& outer)
         : m_outer(outer), m_zipmem(), m_filefunc()
     {
-        m_zipmem.base = NULL;
-        m_zf = NULL;
+        m_zipmem.base = nullptr;
+        m_zf = nullptr;
     }
 
     ~Impl()
@@ -383,16 +384,16 @@ public:
 
     void close()
     {
-        if (m_zf != NULL)
+        if (m_zf != nullptr)
         {
             unzClose(m_zf);
-            m_zf = NULL;
+            m_zf = nullptr;
         }
 
-        if (m_zipmem.base != NULL)
+        if (m_zipmem.base != nullptr)
         {
             free(m_zipmem.base);
-            m_zipmem.base = NULL;
+            m_zipmem.base = nullptr;
         }
     }
 
@@ -405,7 +406,7 @@ public:
 #else
         m_zf = unzOpen64(filename.c_str());
 #endif
-        return m_zf != NULL;
+        return m_zf != nullptr;
     }
 
     bool initWithStream(std::istream& stream)

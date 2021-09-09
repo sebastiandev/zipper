@@ -279,10 +279,10 @@ std::vector<std::string> Path::filesFromDir(const std::string& path)
 
     dir = opendir(path.c_str());
 
-    if (dir == NULL)
+    if (dir == nullptr)
         return files;
 
-    for (entry = readdir(dir); entry != NULL; entry = readdir(dir))
+    for (entry = readdir(dir); entry != nullptr; entry = readdir(dir))
     {
         std::string filename(entry->d_name);
 
@@ -445,7 +445,7 @@ bool Path::removeFiles(const std::string& pattern,
 
     struct dirent* pEntry;
 
-    while ((pEntry = readdir(pDir)) != NULL)
+    while ((pEntry = readdir(pDir)) != nullptr)
     {
         std::string Utf8 = pEntry->d_name;
 
