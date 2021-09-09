@@ -15,10 +15,8 @@ extern "C" {
 
 #if defined(USE_WINDOWS)
 #    define DIRECTORY_SEPARATOR "\\"
-#    define DIRECTORY_SEPARATOR_CHAR '\\'
 #else
 #    define DIRECTORY_SEPARATOR "/"
-#    define DIRECTORY_SEPARATOR_CHAR '/'
 #endif
 
 #if defined(USE_WINDOWS)

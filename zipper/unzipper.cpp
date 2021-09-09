@@ -10,7 +10,6 @@
 #include <exception>
 #include <fstream>
 #include <stdexcept>
-#include <iostream>
 
 namespace zipper {
 
@@ -251,38 +250,11 @@ public:
         int err = UNZ_ERRNO;
 
         /* If zip entry is a directory then create it on disk */
-        std::string folder = parentDirectory(filename);
-        if (!folder.empty())
-        {
-            std::string canon = CDirEntry::canonicalPath(folder);
-            if (canon.rfind(folder, 0) != 0)
-            {
-                std::stringstream str;
-                str << "Security error: entry '" << filename << "' would be outside your target directory";
-
-                throw EXCEPTION_CLASS(str.str().c_str());
-            }
-            if (!makedir(folder))
-            {
-                std::stringstream str;
-                str << "Error: cannot create the folder '"
-                    << folder << "'";
-
-                throw EXCEPTION_CLASS(str.str().c_str());
-            }
-        }
-
-        /* Avoid to replace the file */
-        if (CDirEntry::exist(filename))
-        {
-            std::stringstream str;
-            str << "Security Error: '" << filename << "' already exists and will be replaced";
-
-            throw EXCEPTION_CLASS(str.str().c_str());
-        }
+        makedir(parentDirectory(filename));
 
         /* Create the file on disk so we can unzip to it */
         std::ofstream output_file(filename.c_str(), std::ofstream::binary);
+
         if (output_file.good())
         {
             if (UNZ_OK == extractToStream(output_file, info))
@@ -297,9 +269,7 @@ public:
             changeFileDate(filename, info.dosdate, timeaux);
         }
         else
-        {
             output_file.close();
-        }
 
         return err;
     }

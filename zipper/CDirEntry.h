@@ -194,11 +194,6 @@ public:
      */
     static std::string normalize(const std::string& path);
 
-    /**
-     * This substitute ../ ie foo/../bar will return bar
-     */
-    static std::string canonicalPath(const std::string& path);
-
 private:
     /**
      * This private methods checks whether the active section matches the
