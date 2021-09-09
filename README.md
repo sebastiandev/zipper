@@ -18,7 +18,6 @@ By flexibility I mean supporting all kinds of inputs and outputs, but specifical
 - [x] File mappings for replacing strategies (overwrite if exists or use alternative name from mapping).
 - [x] Password protected zip (EAS).
 - [x] Multi platform.
-- [x] Protection against [Zip Slip](https://github.com/sebastiandev/zipper/issues/33).
 
 ### Getting Started
 
