@@ -19,13 +19,21 @@ By flexibility I mean supporting all kinds of inputs and outputs, but specifical
 - [x] Password protected zip (EAS).
 - [x] Multi platform.
 
+
+### :warning: Security Notice
+Zipper currently follows an unmaintaind and vulnerable version of the minizip library.
+It is vulnerable to ZipSlip attack and mitigations should be put in place by Zipper's users.
+
+> References: 
+>
+> [ZipSlip](https://snyk.io/research/zip-slip-vulnerability), 
+> [CVE-2014-9485](https://cve.mitre.org/cgi-bin/cvename.cgi?name=2014-9485)
+
 ### Getting Started
 
 In order to use and compile zipper you need to have [zlib](http://www.zlib.net) source files.
 **Zipper** depends on minizip as well but since it is used as a submodule, you get it when cloning
 the repo and it gets compiled with the project.
-
-*Note*: Zipper follows and unmaintained version of minizip!
 
 *Note*: For windows users, zlib is expected to be found at ZLIBROOT. Soon Zipper
 will follow the new generation of zlib named [zlib-ng](https://github.com/zlib-ng/zlib-ng) and will be
