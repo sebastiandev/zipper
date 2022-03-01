@@ -15,6 +15,11 @@ By flexibility I mean supporting all kinds of inputs and outputs, but specifical
 - [x] Multi platform.
 - [x] Protection against [Zip Slip](https://github.com/sebastiandev/zipper/issues/33).
 
+### :warning: Security Notice
+
+Zipper currently follows an unmaintaind and vulnerable version of the minizip library.
+It is vulnerable to ZipSlip attack and mitigations should be put in place by Zipper's users.
+
 ### Getting Started
 
 #### Compiling
