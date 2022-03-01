@@ -1,10 +1,5 @@
 ![Zipper](https://github.com/sebastiandev/zipper/blob/master/logo.png)
 
-|Branch     | **`Linux/Mac OS`** | **`Windows`** |
-|-----------|------------------|-------------|
-|master     |[![Build Status](https://travis-ci.org/sebastiandev/zipper.svg?branch=master)](https://travis-ci.org/sebastiandev/zipper)|[![Build status](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper?branch=master)](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper)|
-|development|[![Build Status](https://travis-ci.org/sebastiandev/zipper.svg?branch=develop)](https://travis-ci.org/sebastiandev/zipper)|[![Build status](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper?branch=develop)](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper)|
-
 C++ wrapper around minizip compression library
 
 **Zipper**'s goal is to bring the power and simplicity of minizip to a more object oriented/c++ user friendly library.
@@ -24,9 +19,9 @@ By flexibility I mean supporting all kinds of inputs and outputs, but specifical
 Zipper currently follows an unmaintaind and vulnerable version of the minizip library.
 It is vulnerable to ZipSlip attack and mitigations should be put in place by Zipper's users.
 
-> References: 
+> References:
 >
-> [ZipSlip](https://snyk.io/research/zip-slip-vulnerability), 
+> [ZipSlip](https://snyk.io/research/zip-slip-vulnerability),
 > [CVE-2014-9485](https://cve.mitre.org/cgi-bin/cvename.cgi?name=2014-9485)
 
 ### Getting Started
