@@ -1,13 +1,8 @@
 ![Zipper](doc/logo.png)
 
-|Branch     | **`Linux/Mac OS`** | **`Windows`** |
-|-----------|------------------|-------------|
-|master     |[![Build Status](https://travis-ci.org/sebastiandev/zipper.svg?branch=master)](https://travis-ci.org/sebastiandev/zipper)|[![Build status](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper?branch=master)](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper)|
-|development|[![Build Status](https://travis-ci.org/sebastiandev/zipper.svg?branch=develop)](https://travis-ci.org/sebastiandev/zipper)|[![Build status](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper?branch=develop)](https://ci.appveyor.com/api/projects/status/github/sebastiandev/zipper)|
+C++ wrapper around minizip compression library. You are reading the work in progress version 2 of this library.
 
-C++ wrapper around minizip compression library
-
-**Zipper**'s goal is to bring the power and simplicity of minizip to a more object oriented/c++ user friendly library.
+[Zipper](https://github.com/sebastiandev/zipper/tree/v2.x.y)'s goal is to bring the power and simplicity of minizip to a more object oriented/c++ user friendly library.
 It was born out of the necessity of a compression library that would be reliable, simple and flexible.
 By flexibility I mean supporting all kinds of inputs and outputs, but specifically been able to compress into memory instead of been restricted to file compression only, and using data from memory instead of just files as well.
 
@@ -32,6 +27,7 @@ cd zipper
 make download-external-libs
 make compile-external-libs
 make -j`nproc --all`
+# make -j`sysctl -n hw.logicalcpu` for MacOS X
 ```
 
 Notes:
