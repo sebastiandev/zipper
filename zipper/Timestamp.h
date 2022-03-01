@@ -47,6 +47,7 @@ Timestamp::Timestamp(const std::string& filepath)
 
     if (!GetFileTime(hFile1, &filetime, NULL, NULL))
     {
+        CloseHandle(hFile1);
         return;
     }
     const int64_t UNIX_TIME_START = 0x019DB1DED53E8000; //January 1, 1970 (start of Unix epoch) in "ticks"
@@ -62,7 +63,7 @@ Timestamp::Timestamp(const std::string& filepath)
     time_t time_s = (li.QuadPart - UNIX_TIME_START) / TICKS_PER_SECOND;
 
     timestamp = *std::localtime(&time_s);
-
+    CloseHandle(hFile1);
 #elif __linux__
     struct stat buf;
     if (stat(filepath.c_str(), &buf) != 0)
