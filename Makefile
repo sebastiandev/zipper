@@ -31,7 +31,7 @@ VPATH += $(P)/src $(P)/src/utils $(P)/external
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external -I$(P)
+INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
 
 ###################################################
 # Compiled files
@@ -42,6 +42,7 @@ OBJS += Timestamp.o Path.o Zipper.o Unzipper.o
 # Project defines.
 #
 DEFINES += -UUSE_WINDOWS -DHAVE_AES
+CXXFLAGS += -Wno-undef
 
 ###################################################
 # Libraries.
@@ -79,8 +80,7 @@ install: $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
 veryclean: clean
 	@rm -fr cov-int $(PROJECT).tgz *.log foo 2> /dev/null
 	@(cd tests && $(MAKE) -s clean)
-	@(cd examples/ && $(MAKE) -s clean)
-	@$(call print-simple,"Cleaning","$(PWD)/doc/html")
+	@$(call print-simple,"Cleaning","$(THIRDPART)")
 	@rm -fr $(THIRDPART)/*/ doc/html 2> /dev/null
 
 ###################################################

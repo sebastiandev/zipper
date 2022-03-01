@@ -1,6 +1,9 @@
 #include "Timestamp.hpp"
 #include <ctime>
 #include <chrono>
+#if !defined(USE_WINDOWS)
+#  include <sys/stat.h>
+#endif
 
 using namespace zipper;
 
@@ -57,7 +60,13 @@ Timestamp::Timestamp(const std::string& filepath)
     {
         return;
     }
+
+#  if defined(__APPLE__)
+    auto timet = static_cast<time_t>(buf.st_mtimespec.tv_sec);
+#  else
     auto timet = static_cast<time_t>(buf.st_mtim.tv_sec);
+#  endif
+
     timestamp = *std::localtime(&timet);
 
 #endif // USE_WINDOWS
