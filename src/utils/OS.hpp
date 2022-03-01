@@ -41,6 +41,7 @@ typedef struct stat STAT;
 
 #  if defined(USE_WINDOWS)
 #    define USEWIN32IOAPI
+#    include "ioapi.h"
 #    include "iowin32.h"
 #  endif
 
