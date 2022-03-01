@@ -1,0 +1,66 @@
+name: Non regression tests for Zipper
+on:
+  workflow_dispatch:
+    branches:
+      - v2.x.y
+  push:
+    branches:
+      - v2.x.y
+  pull_request:
+    branches:
+      - v2.x.y
+
+jobs:
+  non_regression_msys:
+    name: Non regression on Msys2
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:
+          submodules: true
+      - name: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-toolchain
+      - name: CI-Build
+        run: |
+          make download-external-libs
+          make compile-external-libs
+          make -j`nproc --all`
+          make install
+
+  non_regression_linux:
+    name: Non regression on Linux
+    runs-on: linux-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: CI-Build
+        run: |
+          make download-external-libs
+          make compile-external-libs
+          make -j`nproc --all`
+          make install
+
+  non_regression_macos:
+    name: Non regression on MacOS X
+    runs-on: macos-latest
+    steps:
+      - name: Checkou
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: CI-Build
+        run: |
+          make download-external-libs
+          make compile-external-libs
+          make -j`nproc --all`
+          make install
