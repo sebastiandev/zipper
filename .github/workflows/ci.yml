@@ -1,0 +1,79 @@
+name: Non regression tests for Zipper
+on:
+  workflow_dispatch:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  non_regression_msys:
+    name: Non regression on Msys2
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:
+          submodules: true
+      - name: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: git mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-zlib mingw-w64-x86_64-ninja
+      - name: CI-Build
+        run: |
+          cmake -B build -GNinja -DCMAKE_CXX_COMPILER=g++ .
+          cd build
+          cmake --build .
+          echo 'Running non regression tests on Msys2'
+          ./Zipper-test
+
+  non_regression_linux:
+    name: Non regression on Linux
+    runs-on: linux-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Installing packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja
+      - name: CI-Build
+        run: |
+          cmake -B build -GNinja -DCMAKE_CXX_COMPILER=g++ .
+          cd build
+          cmake --build .
+          echo 'Running non regression tests on Linux'
+          ./Zipper-test
+
+  non_regression_macos:
+    name: Non regression on MacOS X
+    runs-on: macos-latest
+    steps:
+      - name: Checkou
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Installing packages
+        run: |
+          brew install ninja
+      - name: CI-Build
+        run: |
+          cmake -B build -GNinja -DCMAKE_CXX_COMPILER=g++ .
+          cd build
+          cmake --build .
+          echo 'Running non regression tests on MacOS X'
+          ./Zipper-test
