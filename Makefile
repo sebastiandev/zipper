@@ -14,7 +14,7 @@ LOGO = logo.png
 # Compilation
 #
 STANDARD = --std=c++14
-BUILD_TYPE = debug
+BUILD_TYPE = release
 
 ###################################################
 # Location of the project directory and Makefiles
