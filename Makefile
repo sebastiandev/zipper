@@ -36,7 +36,7 @@ INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
 ###################################################
 # Compiled files
 #
-OBJS += Timestamp.o Path.o Zipper.o Unzipper.o
+LIB_OBJS += Timestamp.o Path.o Zipper.o Unzipper.o
 
 ###################################################
 # Project defines.
