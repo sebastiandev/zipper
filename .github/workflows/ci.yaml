@@ -1,3 +1,4 @@
+# TODO: non regression tests missing
 name: Non regression tests for Zipper
 on:
   workflow_dispatch:
@@ -11,6 +12,21 @@ on:
       - v2.x.y
 
 jobs:
+  non_regression_windows:
+    name: Non regression on Windows
+    runs-on: windows-2022
+    steps:
+    - uses: ilammy/msvc-dev-cmd@v1.10.0
+    - name: CI-Build
+      shell: powershell
+      run: |
+          git clone https://github.com/sebastiandev/zipper.git -b "v2.x.y" --recursive
+          cd zipper
+          make download-external-libs
+          make compile-external-libs
+          make -j`nproc --all`
+          make install
+
   non_regression_msys:
     name: Non regression on Msys2
     runs-on: windows-latest
