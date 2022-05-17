@@ -44,7 +44,7 @@ jobs:
           make download-external-libs
           make compile-external-libs
           make -j`nproc --all`
-          make install
+          sudo make install
 
   non_regression_macos:
     name: Non regression on MacOS X
@@ -57,4 +57,4 @@ jobs:
           make download-external-libs
           make compile-external-libs
           make -j`nproc --all`
-          make install
+          sudo make install
