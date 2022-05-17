@@ -18,11 +18,6 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3.0.2
-        with:
-          ref: v2.x.y
-          submodules: true
       - name: msys2
         uses: msys2/setup-msys2@v2
         with:
@@ -31,6 +26,8 @@ jobs:
           install: mingw-w64-x86_64-toolchain
       - name: CI-Build
         run: |
+          git clone https://github.com/sebastiandev/zipper.git -b "v2.x.y" --recursive
+          cd zipper
           make download-external-libs
           make compile-external-libs
           make -j`nproc --all`
@@ -40,13 +37,10 @@ jobs:
     name: Non regression on Linux
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3.0.2
-        with:
-          ref: v2.x.y
-          submodules: true
       - name: CI-Build
         run: |
+          git clone https://github.com/sebastiandev/zipper.git -b "v2.x.y" --recursive
+          cd zipper
           make download-external-libs
           make compile-external-libs
           make -j`nproc --all`
@@ -56,13 +50,10 @@ jobs:
     name: Non regression on MacOS X
     runs-on: macos-latest
     steps:
-      - name: Checkou
-        uses: actions/checkout@v3.0.2
-        with:
-          ref: v2.x.y
-          submodules: true
       - name: CI-Build
         run: |
+          git clone https://github.com/sebastiandev/zipper.git -b "v2.x.y" --recursive
+          cd zipper
           make download-external-libs
           make compile-external-libs
           make -j`nproc --all`
