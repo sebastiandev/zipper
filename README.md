@@ -27,7 +27,7 @@ It is vulnerable to ZipSlip attack and mitigations should be put in place by Zip
 Compilation is made with the following steps:
 
 ```shell
-git clone --recursive https://github.com/Lecrapouille/zipper.git  # to get .makefile submodule
+git clone https://github.com/sebastiandev/zipper.git -b "v2.x.y" --recursive
 cd zipper
 make download-external-libs
 make compile-external-libs
