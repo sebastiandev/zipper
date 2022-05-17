@@ -19,8 +19,9 @@ jobs:
         shell: msys2 {0}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3.0.2
         with:
+          ref: v2.x.y
           submodules: true
       - name: msys2
         uses: msys2/setup-msys2@v2
@@ -37,11 +38,12 @@ jobs:
 
   non_regression_linux:
     name: Non regression on Linux
-    runs-on: linux-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.0.2
         with:
+          ref: v2.x.y
           submodules: true
       - name: CI-Build
         run: |
@@ -55,8 +57,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkou
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.0.2
         with:
+          ref: v2.x.y
           submodules: true
       - name: CI-Build
         run: |
