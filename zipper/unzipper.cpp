@@ -36,6 +36,7 @@ struct unzipper_error_category : std::error_category
         case unzipper_error::NO_ERROR:
             return "There was no error";
         case unzipper_error::GENERIC_ERROR:
+            return "There was an error";
         case unzipper_error::NO_ENTRY:
             return "Error, couldn't get the current entry info";
         case unzipper_error::ERROR_LOAD_MEMORY:
