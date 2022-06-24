@@ -15,12 +15,10 @@ namespace zipper {
 class Zipper
 {
 public:
-
     // -------------------------------------------------------------------------
     //! \brief Compression options.
     // -------------------------------------------------------------------------
-    enum zipFlags
-    {
+    enum zipFlags {
         //! \brief Minizip options/params: -o  Overwrite existing file.zip
         Overwrite = 0x01,
         //! \brief Minizip options/params: -a  Append to existing file.zip
@@ -45,6 +43,7 @@ public:
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
     Zipper(const std::string& zipname, const std::string& password = std::string());
+    Zipper(std::error_code& ec, const std::string& zipname, const std::string& password = std::string());
 
     // -------------------------------------------------------------------------
     //! \brief In-memory zip compression (storage inside std::iostream).
@@ -54,6 +53,7 @@ public:
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
     Zipper(std::iostream& buffer, const std::string& password = std::string());
+    Zipper(std::error_code& ec, std::iostream& buffer, const std::string& password = std::string());
 
     // -------------------------------------------------------------------------
     //! \brief In-memory zip compression (storage inside std::vector).
@@ -62,8 +62,8 @@ public:
     //! \param[in] password: optional password (set empty for not using password).
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
-    Zipper(std::vector<unsigned char>& buffer,
-           const std::string& password = std::string());
+    Zipper(std::vector<unsigned char>& buffer, const std::string& password = std::string());
+    Zipper(std::error_code& ec, std::vector<unsigned char>& buffer, const std::string& password = std::string());
 
     // -------------------------------------------------------------------------
     //! \brief Call close().
@@ -82,6 +82,8 @@ public:
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
     bool add(std::istream& source, const std::tm& timestamp,
+             const std::string& nameInZip, std::error_code& ec, zipFlags flags = Better);
+    bool add(std::istream& source, const std::tm& timestamp,
              const std::string& nameInZip, zipFlags flags = Better);
 
     // -------------------------------------------------------------------------
@@ -94,6 +96,8 @@ public:
     //! \return true on success, else return false.
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
+    bool add(std::istream& source, const std::string& nameInZip, std::error_code& ec,
+             zipFlags flags = Better);
     bool add(std::istream& source, const std::string& nameInZip,
              zipFlags flags = Better);
 
@@ -105,6 +109,7 @@ public:
     //! \return true on success, else return false.
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
+    bool add(const std::string& fileOrFolderPath, std::error_code& ec, zipFlags flags = Better);
     bool add(const std::string& fileOrFolderPath, zipFlags flags = Better);
 
     // -------------------------------------------------------------------------
@@ -122,13 +127,12 @@ public:
     //! \note this method is not called by the constructor.
     // -------------------------------------------------------------------------
     void open();
+    void open(std::error_code& ec);
 
 private:
-
     void release();
 
 private:
-
     std::iostream& m_obuffer;
     std::vector<unsigned char>& m_vecbuffer;
     std::string m_zipname;

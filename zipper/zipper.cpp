@@ -8,6 +8,64 @@
 
 namespace zipper {
 
+enum class zipper_error {
+    NO_ERROR = 0,
+    GENERIC_ERROR = 1,
+    ERROR_OPENING_MEMORY = 2,
+    ERROR_OPENING_FILE = 3,
+    ERROR_CREATING_MEMORY = 4,
+    ERROR_CREATING_FILE = 5,
+    ERROR_ADDING = 6
+};
+struct zipper_error_category : std::error_category
+{
+    std::string custom_message {};
+    const char* name() const noexcept override
+    {
+        return "zipper";
+    };
+    std::string message(int ev) const override
+    {
+        if (!custom_message.empty())
+        {
+            return custom_message;
+        }
+        switch (static_cast<zipper_error>(ev))
+        {
+        case zipper_error::NO_ERROR:
+            return "There was no error";
+        case zipper_error::GENERIC_ERROR:
+            return "There was an error";
+        case zipper_error::ERROR_OPENING_MEMORY:
+            return "Error opening zip memory";
+        case zipper_error::ERROR_OPENING_FILE:
+            return "Error opening zip file";
+        case zipper_error::ERROR_CREATING_MEMORY:
+            return "Error creating zip in memory";
+        case zipper_error::ERROR_CREATING_FILE:
+            return "Error creating zip in file";
+        case zipper_error::ERROR_ADDING:
+            return "Error adding file to zip";
+        default:
+            return "This error is not handled";
+        }
+    };
+    zipper_error_category() {};
+    zipper_error_category(const std::string& message)
+        : custom_message(message) {};
+};
+
+
+std::error_code make_error_code(zipper_error e)
+{
+    return { static_cast<int>(e), zipper_error_category() };
+}
+
+std::error_code make_error_code(zipper_error e, const std::string& message)
+{
+    return { static_cast<int>(e), zipper_error_category(message) };
+}
+
 struct Zipper::Impl
 {
     Zipper& m_outer;
@@ -112,7 +170,7 @@ struct Zipper::Impl
     }
 
     bool add(std::istream& input_stream, const std::tm& timestamp,
-             const std::string& nameInZip, const std::string& password, int flags)
+             const std::string& nameInZip, const std::string& password, int flags, std::error_code& ec)
     {
         if (!m_zf)
             return false;
@@ -203,7 +261,8 @@ struct Zipper::Impl
         }
         else
         {
-            throw EXCEPTION_CLASS(("Error adding '" + nameInZip + "' to zip").c_str());
+            ec = make_error_code(zipper_error::ERROR_ADDING, "Error adding '" + nameInZip + "' to zip");
+            return false;
         }
 
         if (ZIP_OK == err)
@@ -212,6 +271,18 @@ struct Zipper::Impl
         }
 
         return ZIP_OK == err;
+    }
+
+    bool add(std::istream& input_stream, const std::tm& timestamp,
+             const std::string& nameInZip, const std::string& password, int flags)
+    {
+        std::error_code ec = make_error_code(zipper_error::NO_ERROR);
+        bool ret = add(input_stream, timestamp, nameInZip, password, flags, ec);
+        if (ec.value() != 0)
+        {
+            throw EXCEPTION_CLASS(ec.message().c_str());
+        }
+        return ret;
     }
 
     void close()
@@ -246,6 +317,24 @@ struct Zipper::Impl
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+Zipper::Zipper(std::error_code& ec, const std::string& zipname, const std::string& password)
+    : m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
+    , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
+    , m_zipname(zipname)
+    , m_password(password)
+    , m_usingMemoryVector(false)
+    , m_usingStream(false)
+    , m_impl(new Impl(*this))
+{
+    if (!m_impl->initFile(zipname))
+    {
+        release();
+        ec = make_error_code(zipper_error::ERROR_CREATING_FILE);
+        return;
+    }
+    m_open = true;
+}
+
 Zipper::Zipper(const std::string& zipname, const std::string& password)
     : m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
@@ -258,7 +347,25 @@ Zipper::Zipper(const std::string& zipname, const std::string& password)
     if (!m_impl->initFile(zipname))
     {
         release();
-        throw EXCEPTION_CLASS("Error creating zip in file!");
+        auto ec = make_error_code(zipper_error::ERROR_CREATING_FILE);
+        throw EXCEPTION_CLASS(ec.message().c_str());
+    }
+    m_open = true;
+}
+
+Zipper::Zipper(std::error_code& ec, std::iostream& buffer, const std::string& password)
+    : m_obuffer(buffer)
+    , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
+    , m_password(password)
+    , m_usingMemoryVector(false)
+    , m_usingStream(true)
+    , m_impl(new Impl(*this))
+{
+    if (!m_impl->initWithStream(m_obuffer))
+    {
+        release();
+        ec = make_error_code(zipper_error::ERROR_CREATING_MEMORY);
+        return;
     }
     m_open = true;
 }
@@ -274,7 +381,24 @@ Zipper::Zipper(std::iostream& buffer, const std::string& password)
     if (!m_impl->initWithStream(m_obuffer))
     {
         release();
-        throw EXCEPTION_CLASS("Error creating zip in memory!");
+        auto ec = make_error_code(zipper_error::ERROR_CREATING_MEMORY);
+        throw EXCEPTION_CLASS(ec.message().c_str());
+    }
+    m_open = true;
+}
+
+Zipper::Zipper(std::error_code& ec, std::vector<unsigned char>& buffer, const std::string& password)
+    : m_obuffer(*(new std::stringstream())) //not used but using local variable throws exception
+    , m_vecbuffer(buffer)
+    , m_password(password)
+    , m_usingMemoryVector(true)
+    , m_usingStream(false)
+    , m_impl(new Impl(*this))
+{
+    if (!m_impl->initWithVector(m_vecbuffer))
+    {
+        release();
+        ec = make_error_code(zipper_error::ERROR_CREATING_MEMORY);
     }
     m_open = true;
 }
@@ -290,7 +414,8 @@ Zipper::Zipper(std::vector<unsigned char>& buffer, const std::string& password)
     if (!m_impl->initWithVector(m_vecbuffer))
     {
         release();
-        throw EXCEPTION_CLASS("Error creating zip in memory!");
+        auto ec = make_error_code(zipper_error::ERROR_CREATING_MEMORY);
+        throw EXCEPTION_CLASS(ec.message().c_str());
     }
     m_open = true;
 }
@@ -314,9 +439,19 @@ void Zipper::release()
     delete m_impl;
 }
 
+bool Zipper::add(std::istream& source, const std::tm& timestamp, const std::string& nameInZip, std::error_code& ec, zipFlags flags)
+{
+    return m_impl->add(source, timestamp, nameInZip, m_password, flags, ec);
+}
+
 bool Zipper::add(std::istream& source, const std::tm& timestamp, const std::string& nameInZip, zipFlags flags)
 {
     return m_impl->add(source, timestamp, nameInZip, m_password, flags);
+}
+
+bool Zipper::add(std::istream& source, const std::string& nameInZip, std::error_code& ec, zipFlags flags)
+{
+    return m_impl->add(source, {}, nameInZip, m_password, flags, ec);
 }
 
 bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags flags)
@@ -324,7 +459,7 @@ bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags fl
     return m_impl->add(source, {}, nameInZip, m_password, flags);
 }
 
-bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
+bool Zipper::add(const std::string& fileOrFolderPath, std::error_code& ec, zipFlags flags)
 {
     if (isDirectory(fileOrFolderPath))
     {
@@ -335,7 +470,11 @@ bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
         {
             std::ifstream input(it->c_str(), std::ios::binary);
             std::string nameInZip = it->substr(it->rfind(folderName + CDirEntry::Separator), it->size());
-            add(input, nameInZip, flags);
+            add(input, nameInZip, ec, flags);
+            if (ec.value() != 0)
+            {
+                return false;
+            }
             input.close();
         }
     }
@@ -353,7 +492,11 @@ bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
             fullFileName = fileNameFromPath(fileOrFolderPath);
         }
 
-        add(input, fullFileName, flags);
+        add(input, fullFileName, ec, flags);
+        if (ec.value() != 0)
+        {
+            return false;
+        }
 
         input.close();
     }
@@ -361,6 +504,50 @@ bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
     return true;
 }
 
+bool Zipper::add(const std::string& fileOrFolderPath, zipFlags flags)
+{
+    auto ec = make_error_code(zipper_error::NO_ERROR);
+    auto ret = add(fileOrFolderPath, ec, flags);
+    if (ec.value() != 0)
+    {
+        throw EXCEPTION_CLASS(ec.message().c_str());
+    }
+    return ret;
+}
+
+
+void Zipper::open(std::error_code& ec)
+{
+    if (!m_open)
+    {
+        if (m_usingMemoryVector)
+        {
+            if (!m_impl->initWithVector(m_vecbuffer))
+            {
+                ec = make_error_code(zipper_error::ERROR_OPENING_MEMORY);
+                return;
+            }
+        }
+        else if (m_usingStream)
+        {
+            if (!m_impl->initWithStream(m_obuffer))
+            {
+                ec = make_error_code(zipper_error::ERROR_OPENING_MEMORY);
+                return;
+            }
+        }
+        else
+        {
+            if (!m_impl->initFile(m_zipname))
+            {
+                ec = make_error_code(zipper_error::ERROR_OPENING_FILE);
+                return;
+            }
+        }
+
+        m_open = true;
+    }
+}
 
 void Zipper::open()
 {
@@ -369,17 +556,26 @@ void Zipper::open()
         if (m_usingMemoryVector)
         {
             if (!m_impl->initWithVector(m_vecbuffer))
-                throw EXCEPTION_CLASS("Error opening zip memory!");
+            {
+                auto ec = make_error_code(zipper_error::ERROR_OPENING_MEMORY);
+                throw EXCEPTION_CLASS(ec.message().c_str());
+            }
         }
         else if (m_usingStream)
         {
             if (!m_impl->initWithStream(m_obuffer))
-                throw EXCEPTION_CLASS("Error opening zip memory!");
+            {
+                auto ec = make_error_code(zipper_error::ERROR_OPENING_MEMORY);
+                throw EXCEPTION_CLASS(ec.message().c_str());
+            }
         }
         else
         {
             if (!m_impl->initFile(m_zipname))
-                throw EXCEPTION_CLASS("Error opening zip file!");
+            {
+                auto ec = make_error_code(zipper_error::ERROR_OPENING_FILE);
+                throw EXCEPTION_CLASS(ec.message().c_str());
+            }
         }
 
         m_open = true;
