@@ -44,7 +44,7 @@ struct unzipper_error_category : std::error_category
         case unzipper_error::ERROR_LOAD_FILE:
             return "Error loading zip file";
         default:
-            return "This error is not handles";
+            return "Unkown Error";
         }
     };
     unzipper_error_category() {};
