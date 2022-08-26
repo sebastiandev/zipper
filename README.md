@@ -62,6 +62,7 @@ Following the previous section `Compiling`, still from the `build` folder, type:
 
 ```shell
 sudo make install
+sudo ldconfig
 ```
 
 You will see a message like:
