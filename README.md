@@ -293,6 +293,19 @@ target_link_libraries(
 )
 ```
 
+link zipper librairy(.so) to your own project with cmake
+```
+project(projZipper)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ZIPPER REQUIRED zipper)
+
+add_executable(projZipper main.cpp)
+
+target_link_libraries(projZipper ${ZIPPER_LIBRARIES})
+```
+
+
 ### For developpers
 
 ##### Git branches
