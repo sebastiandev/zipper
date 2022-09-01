@@ -255,6 +255,7 @@ public:
             std::string canon = Path::canonicalPath(folder);
             if (canon.rfind(folder, 0) != 0)
             {
+                /* Prevent Zip Slip attack (See ticket #33) */
                 std::stringstream str;
                 str << "Security error: entry '" << filename << "' would be outside your target directory";
 
@@ -270,7 +271,7 @@ public:
             }
         }
 
-        /* Avoid to replace the file */
+        /* Avoid to replace the file. Prevent Zip Slip attack (See ticket #33) */
         if (!replace && Path::exist(filename))
         {
             std::stringstream str;

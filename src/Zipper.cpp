@@ -174,9 +174,10 @@ struct Zipper::Impl
 
         if (nameInZip.empty())
             return false;
-        //TODO
-        //if (nameInZip.find_first_of("/\\*") != std::string::npos)
-        //    throw std::runtime_error("Security error: '" + nameInZip + "' has forbidden chars /\\*");
+
+        /* Prevent Zip Slip attack (See ticket #33) */
+        if (nameInZip.find_first_of("/\\*") != std::string::npos)
+            throw std::runtime_error("Security error: '" + nameInZip + "' has forbidden chars /\\*");
 
         flags = flags & ~int(Zipper::zipFlags::SaveHierarchy);
         if (flags == Zipper::zipFlags::Store)
