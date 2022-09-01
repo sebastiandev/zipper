@@ -1,20 +1,16 @@
 ###################################################
-# Project Information
+# Project definition
 #
 PROJECT = Zipper
 TARGET = $(PROJECT)
 DESCRIPTION = C++ wrapper around minizip compression library
+STANDARD = --std=c++14
+BUILD_TYPE = release
 
 ###################################################
 # Documentation
 #
 LOGO = logo.png
-
-###################################################
-# Compilation
-#
-STANDARD = --std=c++14
-BUILD_TYPE = release
 
 ###################################################
 # Location of the project directory and Makefiles
@@ -34,15 +30,24 @@ VPATH += $(P)/src $(P)/src/utils $(P)/external
 INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
 
 ###################################################
-# Compiled files
+# Compilation
 #
-LIB_OBJS += Timestamp.o Path.o Zipper.o Unzipper.o
+CXXFLAGS += -Wno-undef
 
 ###################################################
 # Project defines.
 #
-DEFINES += -UUSE_WINDOWS -DHAVE_AES
-CXXFLAGS += -Wno-undef
+DEFINES += -DHAVE_AES
+ifeq ($(ARCHI),Windows)
+DEFINES += -DUSE_WINDOWS
+else
+DEFINES += -UUSE_WINDOWS
+endif
+
+###################################################
+# Compiled files
+#
+LIB_OBJS += Timestamp.o Path.o Zipper.o Unzipper.o
 
 ###################################################
 # Libraries.
