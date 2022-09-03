@@ -1,7 +1,7 @@
 #include "Zipper/Unzipper.hpp"
-#include "minizip/zip.h"
-#include "minizip/unzip.h"
-#include "minizip/ioapi_mem.h"
+#include "external/minizip/zip.h"
+#include "external/minizip/unzip.h"
+#include "external/minizip/ioapi_mem.h"
 #include "utils/Path.hpp"
 
 #include <functional>

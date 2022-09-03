@@ -27,7 +27,7 @@ VPATH += $(P)/src $(P)/src/utils $(P)/external
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
+INCLUDES += -I. -I$(P)/include -I$(P)/src
 
 ###################################################
 # Compilation
@@ -38,6 +38,7 @@ CXXFLAGS += -Wno-undef
 # Project defines.
 #
 DEFINES += -DHAVE_AES
+DEFINES += -DZLIB_COMPAT
 ifeq ($(ARCHI),Windows)
 DEFINES += -DUSE_WINDOWS
 else
@@ -47,6 +48,9 @@ endif
 ###################################################
 # Compiled files
 #
+ifeq ($(ARCHI),Windows)
+LIB_OBJS += dirent.o
+endif
 LIB_OBJS += Timestamp.o Path.o Zipper.o Unzipper.o
 
 ###################################################
@@ -55,7 +59,7 @@ LIB_OBJS += Timestamp.o Path.o Zipper.o Unzipper.o
 PKG_LIBS +=
 LINKER_FLAGS +=
 THIRDPART_LIBS += \
-    $(abspath $(THIRDPART)/zlib-ng/build/libz.$(SO)) \
+    $(abspath $(THIRDPART)/zlib-ng/build/libz.a) \
     $(abspath $(THIRDPART)/minizip/build/libaes.a) \
     $(abspath $(THIRDPART)/minizip/build/libminizip.a)
 

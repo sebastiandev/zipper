@@ -184,7 +184,7 @@ private:
 
 public:
 
-    ZipEntry(const std::string& name,
+    ZipEntry(const std::string& name_,
              unsigned long long int compressed_size,
              unsigned long long int uncompressed_size,
              unsigned int year,
@@ -193,9 +193,9 @@ public:
              unsigned int hour,
              unsigned int minute,
              unsigned int second,
-             unsigned long dosdate)
-        : name(name), compressedSize(compressed_size),
-          uncompressedSize(uncompressed_size), dosdate(dosdate)
+             unsigned long dosdate_)
+        : name(name_), compressedSize(compressed_size),
+          uncompressedSize(uncompressed_size), dosdate(dosdate_)
     {
         // timestamp YYYY-MM-DD HH:MM:SS
         std::stringstream str;

@@ -1,6 +1,6 @@
 #include "Zipper/Zipper.hpp"
-#include "minizip/zip.h"
-#include "minizip/ioapi_mem.h"
+#include "external/minizip/zip.h"
+#include "external/minizip/ioapi_mem.h"
 #include "utils/Path.hpp"
 #include "utils/Timestamp.hpp"
 
@@ -176,8 +176,8 @@ struct Zipper::Impl
             return false;
 
         /* Prevent Zip Slip attack (See ticket #33) */
-        if (nameInZip.find_first_of("/\\*") != std::string::npos)
-            throw std::runtime_error("Security error: '" + nameInZip + "' has forbidden chars /\\*");
+        //if (nameInZip.find_first_of("/\\*") != std::string::npos)
+        //    throw std::runtime_error("Security error: '" + nameInZip + "' has forbidden chars /\\*");
 
         flags = flags & ~int(Zipper::zipFlags::SaveHierarchy);
         if (flags == Zipper::zipFlags::Store)

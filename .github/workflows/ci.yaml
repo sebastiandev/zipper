@@ -12,51 +12,22 @@ on:
       - v2.x.y
 
 jobs:
-  non_regression_windows:
-    name: Non regression on Windows
-    runs-on: windows-2022
-    steps:
-    - uses: ilammy/msvc-dev-cmd@v1
-    - name: CI-Build
-      shell: powershell
-      run: |
-          git clone https://github.com/sebastiandev/zipper.git -b "v2.x.y" --recursive
-          cd zipper
-          make download-external-libs
-          make compile-external-libs
-          make -j`nproc --all`
-          make install
-
-  non_regression_msys:
-    name: Non regression on Msys2
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - name: Install Msys2 packages
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-bc mingw-w64-x86_64-pkg-config
-      - name: Remove WSL's Bash
-        run: |
-          rm.exe "C:/WINDOWS/system32/bash.EXE"
-      - name: CI-Build
-        run: |
-          pacman -S git
-          git clone https://github.com/sebastiandev/zipper.git -b "v2.x.y" --recursive
-          cd zipper
-          make download-external-libs
-          make compile-external-libs
-          make -j`nproc --all`
-
   non_regression_linux:
     name: Non regression on Linux
     runs-on: ubuntu-latest
     steps:
-      - name: CI-Build
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install pkg-config lcov libdw-dev
+      - name: Download, configure and install Google test
+        run: |
+          wget https://github.com/google/googletest/archive/release-1.11.0.tar.gz
+          tar xf release-1.11.0.tar.gz
+          cd googletest-release-1.11.0
+          cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON .
+          sudo make install
+      - name: Build
         run: |
           git clone https://github.com/sebastiandev/zipper.git -b "v2.x.y" --recursive
           cd zipper
@@ -64,15 +35,8 @@ jobs:
           make compile-external-libs
           make -j`nproc --all`
           sudo make install
-
-  non_regression_macos:
-    name: Non regression on MacOS X
-    runs-on: macos-latest
-    steps:
-      - name: CI-Build
+      - name: Non regression
         run: |
-          git clone https://github.com/sebastiandev/zipper.git -b "v2.x.y" --recursive
-          cd zipper
-          make download-external-libs
-          make compile-external-libs
+          cd zipper/tests
           make -j`nproc --all`
+          ./build/Zipper-UnitTest

@@ -24,7 +24,7 @@ if [ -e zlib-ng ];
 then
     mkdir -p zlib-ng/build
     (cd zlib-ng/build
-     cmake -DZLIB_COMPAT=ON -DZLIB_ENABLE_TESTS=OFF ..
+     cmake -DZLIB_COMPAT=ON -DZLIB_ENABLE_TESTS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
      VERBOSE=1 make -j`nproc --all`
     )
 else
