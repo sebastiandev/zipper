@@ -252,7 +252,7 @@ void Path::removeDir(const std::string& foldername)
 {
     if (!Path::remove(foldername))
     {
-        std::vector<std::string> files = Path::filesFromDir(foldername);
+        std::vector<std::string> files = Path::filesFromDir(foldername, false);
         std::vector<std::string>::iterator it = files.begin();
         for (; it != files.end(); ++it)
         {
@@ -262,7 +262,7 @@ void Path::removeDir(const std::string& foldername)
             }
             else
             {
-                std::remove(it->c_str());
+                Path::remove(it->c_str());
             }
         }
 
@@ -271,7 +271,8 @@ void Path::removeDir(const std::string& foldername)
 }
 
 // -----------------------------------------------------------------------------
-std::vector<std::string> Path::filesFromDir(const std::string& path)
+std::vector<std::string> Path::filesFromDir(const std::string& path,
+                                            const bool recurse)
 {
     std::vector<std::string> files;
     DIR* dir;
@@ -286,17 +287,20 @@ std::vector<std::string> Path::filesFromDir(const std::string& path)
     {
         std::string filename(entry->d_name);
 
-        if (filename == "." || filename == "..") continue;
-
-        if (Path::isDir(path + Path::Separator + filename))
-        {
-            std::vector<std::string> moreFiles =
-                    Path::filesFromDir(path + Path::Separator + filename);
-            std::copy(moreFiles.begin(), moreFiles.end(),
-                      std::back_inserter(files));
+        if (filename == "." || filename == "..")
             continue;
-        }
 
+        if (recurse)
+        {
+            if (Path::isDir(path + Path::Separator + filename))
+            {
+                std::vector<std::string> moreFiles =
+                        Path::filesFromDir(path + Path::Separator + filename, recurse);
+                std::copy(moreFiles.begin(), moreFiles.end(),
+                          std::back_inserter(files));
+                continue;
+            }
+        }
         files.push_back(path + Path::Separator + filename);
     }
 
@@ -382,14 +386,10 @@ bool Path::move(const std::string& from, const std::string& to)
 bool Path::remove(const std::string& path)
 {
     if (isDir(path))
-        return (rmdir(path.c_str()) == 0);
+        return ::rmdir(path.c_str()) == 0;
 
-    else if (isFile(path))
-#if defined(USE_WINDOWS)
-        return (::remove(path.c_str()) == 0);
-#else
-    return (::remove(path.c_str()) == 0);
-#endif
+    if (isFile(path))
+        return ::unlink(path.c_str()) == 0;
 
     return false;
 }

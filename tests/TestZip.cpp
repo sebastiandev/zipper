@@ -97,7 +97,6 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs)
     ASSERT_EQ(unzipper2.extract(true), true); // replace the "test1.txt"
     unzipper2.close();
 
-#if 0
     ASSERT_EQ(Path::exist("TestFolder/test2.dat"), true);
     std::ifstream testfile2("TestFolder/test2.dat");
     ASSERT_EQ(testfile2.good(), true);
@@ -108,35 +107,37 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs)
 
     // And when adding a folder to the zip, creates one entry for each file
     // inside the folder with the name in zip as 'Folder/...'
-    Path::createDir(currentPath() + "/TestFiles/subfolder");
-    std::ofstream test("TestFiles/test1.txt");
-    test << "test file compression";
-    test.flush();
-    test.close();
+    Path::createDir(Path::currentPath() + "/TestFiles/subfolder");
+    std::ofstream test4("TestFiles/test1.txt");
+    test4 << "test file compression";
+    test4.flush();
+    test4.close();
 
-    std::ofstream test1("TestFiles/test2.pdf");
-    test1 << "test file compression";
-    test1.flush();
-    test1.close();
+    std::ofstream test5("TestFiles/test2.pdf");
+    test5 << "test file compression";
+    test5.flush();
+    test5.close();
 
-    std::ofstream test2("TestFiles/subfolder/test-sub.txt");
-    test2 << "test file compression";
-    test2.flush();
-    test2.close();
+    std::ofstream test6("TestFiles/subfolder/test-sub.txt");
+    test6 << "test file compression";
+    test6.flush();
+    test6.close();
 
     zipper.open();
-    zipper.add("TestFiles");
+    ASSERT_EQ(zipper.add("TestFiles"), true);
     zipper.close();
 
     zipper::Unzipper unzipper3("ziptest.zip");
     ASSERT_EQ(unzipper3.entries().size(), 5u);
 
-    // And then extracting to a new folder 'NewDestination' creates the file structure from zip in the new destination folder
-    makedir(currentPath() + "/NewDestination");
+    // And then extracting to a new folder 'NewDestination' creates the file
+    // structure from zip in the new destination folder
+    Path::createDir(Path::currentPath() + "/NewDestination");
 
-    unzipper3.extract(currentPath() + "/NewDestination");
+    ASSERT_EQ(unzipper3.extract(Path::currentPath() + "/NewDestination"), true);
 
-    std::vector<std::string> files = zipper::filesFromDirectory(currentPath() + "/NewDestination");
+    std::vector<std::string> files = Path::filesFromDir(
+        Path::currentPath() + "/NewDestination", true);
 
     ASSERT_EQ(Path::exist("NewDestination/TestFiles/test1.txt"), true);
     ASSERT_EQ(Path::exist("NewDestination/TestFiles/test2.pdf"), true);
@@ -145,13 +146,12 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs)
     unzipper3.close();
 
     // Clean up
-    removeFolder("TestFolder");
-    removeFolder("TestFiles");
-    removeFolder("NewDestination");
+    Path::removeDir("TestFolder");
+    Path::removeDir("TestFiles");
+    Path::removeDir("NewDestination");
     std::remove("test1.txt");
     std::remove("ziptest.zip");
 
-#endif
 #if 0
 
         WHEN("a stringstream containing 'test string data compression' is added and named 'strdata'")

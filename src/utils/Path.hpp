@@ -27,7 +27,7 @@ public:
     static const std::string Separator;
 
     //! \brief
-    std::string currentPath();
+    static std::string currentPath();
 
     //! \brief Check whether the directory entry specified by 'path' is
     //! a file.
@@ -90,8 +90,10 @@ public:
 
     static void removeDir(const std::string& foldername);
 
-    //! \brief
-    static std::vector<std::string> filesFromDir(const std::string& path);
+    //! \brief Return the list of the folder. If recurse == false then stay
+    //! inside the first depth.
+    static std::vector<std::string> filesFromDir(const std::string& path,
+                                                 const bool recurse);
 
     //! \brief Create a name for a temporary directory entry. The directory entry
     //! will be located in the directory given
