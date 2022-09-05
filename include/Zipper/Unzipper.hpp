@@ -96,10 +96,7 @@ public:
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
     bool extract(const std::string& destination, bool replace = false);
-    bool extract(bool replace = false)
-    {
-       return extract(std::string(), replace);
-    }
+    bool extract(bool replace = false);
 
     // -------------------------------------------------------------------------
     //! \brief Extract a single entry from the archive.

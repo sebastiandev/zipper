@@ -294,6 +294,7 @@ public:
             memcpy(&timeaux, &info.unixdate, sizeof(timeaux));
 
             changeFileDate(filename, info.dosdate, timeaux);
+            err = UNZ_OK;
         }
         else
         {
@@ -597,6 +598,10 @@ bool Unzipper::extractEntryToMemory(const std::string& name, std::vector<unsigne
     return m_impl->extractEntryToMemory(name, vec);
 }
 
+bool Unzipper::extract(bool replace)
+{
+    return extract(std::string(), replace);
+}
 
 bool Unzipper::extract(const std::string& destination, const std::map<std::string, std::string>& alternativeNames, bool const replace)
 {

@@ -63,7 +63,6 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs)
     testfile1.close();
     ASSERT_STREQ(test.c_str(), "test file compression");
 
-
     // Zip a second file named 'test2.dat' containing 'other data to compression
     // test' inside a folder 'TestFolder'
     std::ofstream test2("test2.dat");
@@ -84,13 +83,21 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs)
     ASSERT_STREQ(unzipper2.entries()[0].name.c_str(), "test1.txt");
     ASSERT_STREQ(unzipper2.entries()[1].name.c_str(), "TestFolder/test2.dat");
 
-#if 0
+    // Failed extracting since test1.txt is already present.
+    try
+    {
+        ASSERT_EQ(unzipper2.extract(), false);
+    }
+    catch (std::runtime_error const& /*e*/)
+    {}
+
     // Extract the zip. Check the test2.dat entry creates a folder 'TestFolder'
     // with a file named 'test2.dat' with the text 'other data to compression
     // test'
     ASSERT_EQ(unzipper2.extract(true), true); // replace the "test1.txt"
     unzipper2.close();
 
+#if 0
     ASSERT_EQ(Path::exist("TestFolder/test2.dat"), true);
     std::ifstream testfile2("TestFolder/test2.dat");
     ASSERT_EQ(testfile2.good(), true);

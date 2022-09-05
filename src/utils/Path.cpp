@@ -772,6 +772,9 @@ std::string Path::canonicalPath(const std::string& path)
         // Handle both Unix and Windows style separators
         next = path.find_first_of("/\\", current);
 
+        if (next == std::string::npos)
+            return path;
+
         std::string segment(path.substr(current, next - current));
         size_t size = segment.length();
 
