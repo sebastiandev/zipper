@@ -22,7 +22,7 @@ include $(M)/Makefile.header
 ###################################################
 # Inform Makefile where to find *.cpp and *.o files
 #
-VPATH += $(P)/src $(P)/src/utils $(P)/external
+VPATH += $(P)/src $(P)/src/utils $(THIRDPART)
 
 ###################################################
 # Inform Makefile where to find header files
@@ -38,7 +38,6 @@ CXXFLAGS += -Wno-undef
 # Project defines.
 #
 DEFINES += -DHAVE_AES
-DEFINES += -DZLIB_COMPAT
 ifeq ($(ARCHI),Windows)
 DEFINES += -DUSE_WINDOWS
 else
@@ -59,9 +58,9 @@ LIB_OBJS += Timestamp.o Path.o Zipper.o Unzipper.o
 PKG_LIBS +=
 LINKER_FLAGS +=
 THIRDPART_LIBS += \
-    $(abspath $(THIRDPART)/zlib-ng/build/libz.a) \
+    $(abspath $(THIRDPART)/minizip/build/libminizip.a) \
     $(abspath $(THIRDPART)/minizip/build/libaes.a) \
-    $(abspath $(THIRDPART)/minizip/build/libminizip.a)
+    $(abspath $(THIRDPART)/zlib-ng/build/libz.a)
 
 ###################################################
 # Compile static and shared libraries

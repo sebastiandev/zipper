@@ -19,7 +19,8 @@
 
 using namespace zipper;
 
-TEST(FileZipTests, ZipfileFeedWithDifferentInputs)
+// -----------------------------------------------------------------------------
+TEST(FileZipTests, ZipfileFeedWithDifferentInputs1)
 {
     // Clean up
     if (Path::exist("ziptest.zip"))
@@ -35,7 +36,7 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs)
     std::ifstream test1stream("test1.txt");
     ASSERT_EQ(zipper.add(test1stream, "test1.txt"), true);
     test1stream.close();
-    std::remove("test1.txt");
+    Path::remove("test1.txt");
 
     zipper.close();
 
@@ -43,7 +44,7 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs)
     zipper::Unzipper unzipper1("ziptest.zip");
     std::vector<zipper::ZipEntry> entries = unzipper1.entries();
     ASSERT_EQ(entries.size(), 1u);
-    ASSERT_STREQ(entries.front().name.c_str(), "test1.txt");
+    ASSERT_STREQ(entries[0].name.c_str(), "test1.txt");
 
     // And then extracting the test1.txt entry creates a file named 'test1.txt'
     // with the text 'test file compression'
@@ -74,7 +75,7 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs)
     std::ifstream test2stream("test2.dat");
     ASSERT_EQ(zipper.add(test2stream, "TestFolder/test2.dat"), true);
     test2stream.close();
-    std::remove("test2.dat");
+    Path::remove("test2.dat");
     zipper.close();
 
     // Check the zip has two entries named 'test1.txt' and 'TestFolder/test2.dat'
@@ -146,73 +147,335 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs)
     unzipper3.close();
 
     // Clean up
-    Path::removeDir("TestFolder");
-    Path::removeDir("TestFiles");
-    Path::removeDir("NewDestination");
-    std::remove("test1.txt");
-    std::remove("ziptest.zip");
+    Path::remove("TestFolder");
+    Path::remove("TestFiles");
+    Path::remove("NewDestination");
+    Path::remove("test1.txt");
+    Path::remove("ziptest.zip");
+}
+
+// -----------------------------------------------------------------------------
+TEST(FileZipTests, ZipfileFeedWithDifferentInputs2)
+{
+    if (Path::exist("ziptest.zip"))
+        Path::remove("ziptest.zip");
+    Zipper zipper("ziptest.zip");
+
+    // Add a stringstream named 'strdata' containing 'test string data
+    // compression' is added.
+    std::stringstream strdata;
+    strdata << "test string data compression";
+
+    ASSERT_EQ(zipper.add(strdata, "strdata"), true);
+    zipper.close();
+
+    // Check the zip file has one entry named 'strdata'
+    zipper::Unzipper unzipper("ziptest.zip");
+    ASSERT_EQ(unzipper.entries().size(), 1u);
+    ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "strdata");
+
+    // Extracting the strdata entry creates a file named 'strdata' with the text
+    // 'test string data compression'"
+    unzipper.extract();
+    ASSERT_EQ(Path::exist("strdata"), true);
+    ASSERT_EQ(Path::isFile("strdata"), true);
+
+    std::ifstream testfile3("strdata");
+    ASSERT_EQ(testfile3.good(), true);
+
+    std::string test7((std::istreambuf_iterator<char>(testfile3)),
+                      std::istreambuf_iterator<char>());
+    testfile3.close();
+    ASSERT_STREQ(test7.c_str(), "test string data compression");
+
+    // Extracting with an alternative name 'alternative_strdata.dat' crates a
+    // file with that name instead of the one inside de zip".
+    std::map<std::string, std::string> alt_names;
+    alt_names["strdata"] = "alternative_strdata.dat";
+
+    ASSERT_EQ(unzipper.extract("", alt_names), true);
+    ASSERT_EQ(Path::exist("alternative_strdata.dat"), true);
+
+    std::ifstream testfile4("alternative_strdata.dat");
+    ASSERT_EQ(testfile4.good(), true);
+
+    std::string test8((std::istreambuf_iterator<char>(testfile4)),
+                      std::istreambuf_iterator<char>());
+    testfile4.close();
+    ASSERT_STREQ(test8.c_str(), "test string data compression");
+
+    // Trying to extract a file 'fake.dat' that doesn't exists, returns false
+    ASSERT_EQ(unzipper.extractEntry("fake.dat"), false);
+
+    unzipper.close();
+    Path::remove("strdata");
+    Path::remove("alternative_strdata.dat");
+    Path::remove("ziptest.zip");
+}
+
+// -----------------------------------------------------------------------------
+TEST(MemoryZipTests, ZipVectorFeedWithDifferentInputs1)
+{
+    // A Zip outputed to a vector
+    std::vector<unsigned char> zipvec;
+    zipper::Zipper zipper(zipvec);
+
+    // A file containing 'test file compression' is added and named 'test1'
+    std::ofstream test1("test1.txt");
+    test1 << "test file compression";
+    test1.flush();
+    test1.close();
+
+    std::ifstream test1stream("test1.txt");
+    zipper.add(test1stream, "test1.txt");
+    test1stream.close();
+    zipper.close();
+    Path::remove("test1.txt");
+
+    zipper::Unzipper unzipper(zipvec);
+
+    // Check if the zip vector has one entry named 'test1.txt'
+    ASSERT_EQ(unzipper.entries().size(), 1u);
+    ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "test1.txt");
+
+    // Extracting the test1.txt entry creates a file named 'test1.txt' with the
+    // text 'test file compression'
+    ASSERT_EQ(unzipper.extractEntry("test1.txt"), true);
+    // due to sections forking or creating different stacks we need to make sure the local instance is closed to
+    // prevent mixing the closing when both instances are freed at the end of the scope
+    unzipper.close();
+
+    ASSERT_EQ(Path::exist("test1.txt"), true);
+
+    std::ifstream testfile("test1.txt");
+    ASSERT_EQ(testfile.good(), true);
+
+    std::string test((std::istreambuf_iterator<char>(testfile)),
+                     std::istreambuf_iterator<char>());
+    testfile.close();
+    ASSERT_STREQ(test.c_str(), "test file compression");
+
+    // Another file containing 'other data to compression test' and named
+    // 'test2.dat' is added inside a folder 'TestFolder'
+    std::ofstream test2("test2.dat");
+    test2 << "other data to compression test";
+    test2.flush();
+    test2.close();
+
+    std::ifstream test2stream("test2.dat");
+
+    zipper.open();
+    zipper.add(test2stream, "TestFolder/test2.dat");
+    zipper.close();
+
+    test2stream.close();
+    Path::remove("test2.dat");
+
+    zipper::Unzipper unzipper2(zipvec);
+
+    // The zip vector has two entries named 'test1.txt' and
+    // 'TestFolder/test2.dat'
+    ASSERT_EQ(unzipper2.entries().size(), 2u);
+    ASSERT_STREQ(unzipper2.entries()[0].name.c_str(), "test1.txt");
+    ASSERT_STREQ(unzipper2.entries()[1].name.c_str(), "TestFolder/test2.dat");
+
+    // Failed extracting since test1.txt is already present.
+    try
+    {
+        ASSERT_EQ(unzipper2.extract(), false);
+    }
+    catch (std::runtime_error const& /*e*/)
+    {}
+
+    // Extracting the test2.dat entry creates a folder 'TestFolder' with a file
+    // named 'test2.dat' with the text 'other data to compression test'
+    ASSERT_EQ(unzipper2.extract(true), true);
+    ASSERT_EQ(Path::exist("TestFolder/test2.dat"), true);
+
+    std::ifstream testfile2("TestFolder/test2.dat");
+    ASSERT_EQ(testfile2.good(), true);
+
+    std::string test3((std::istreambuf_iterator<char>(testfile2)),
+                      std::istreambuf_iterator<char>());
+    testfile2.close();
+    ASSERT_STREQ(test3.c_str(), "other data to compression test");
+
+    // Extracting the test2.dat entry to memory fills a vector with 'other data
+    // to compression test'
+    std::vector<unsigned char> resvec;
+    unzipper2.extractEntryToMemory("TestFolder/test2.dat", resvec);
+    unzipper2.close();
+
+    std::string test4(resvec.begin(), resvec.end());
+
+    ASSERT_STREQ(test4.c_str(), "other data to compression test");
+    unzipper2.close();
+
+    Path::remove("test1.txt");
+    Path::remove("TestFolder");
+
+    zipvec.clear();
+    Path::remove("TestFolder");
+}
+
+// -----------------------------------------------------------------------------
+TEST(MemoryZipTests, ZipVectorFeedWithDifferentInputs2)
+{
+    // A Zip outputed to a vector
+    std::vector<unsigned char> zipvec;
+    zipper::Zipper zipper(zipvec);
+
+    // A stringstream containing 'test string data compression' is added and
+    // named 'strdata'
+    std::stringstream strdata;
+    strdata << "test string data compression";
+
+    zipper.add(strdata, "strdata");
+    zipper.close();
+
+    // The zip vector has one entry named 'strdata'
+    zipper::Unzipper unzipper(zipvec);
+    ASSERT_EQ(unzipper.entries().size(), 1u);
+    ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "strdata");
+
+    // Extracting the strdata entry creates a file named 'strdata' with the txt
+    // 'test string data compression'
+    ASSERT_EQ(unzipper.extract(true), true);
+    ASSERT_EQ(Path::exist("strdata"), true);
+
+    std::ifstream testfile3("strdata");
+    ASSERT_EQ(testfile3.good(), true);
+
+    std::string test5((std::istreambuf_iterator<char>(testfile3)),
+                      std::istreambuf_iterator<char>());
+    testfile3.close();
+    ASSERT_STREQ(test5.c_str(), "test string data compression");
+
+    // Extracting the strdata entry to memory, fills a vector with the txt 'test
+    // string data compression'
+    std::vector<unsigned char> resvec1;
+    ASSERT_EQ(unzipper.extractEntryToMemory("strdata", resvec1), true);
+    unzipper.close();
+
+    std::string test6(resvec1.begin(), resvec1.end());
+    ASSERT_STREQ(test6.c_str(), "test string data compression");
+
+    Path::remove("strdata");
+    zipvec.clear();
+
+    // A file containing 'test file compression' is added and named 'test1' in
+    // subdirectory 'subdirectory'
+    bool fileWasCreated = Path::createDir("subdirectory");
+    ASSERT_EQ(fileWasCreated, true);
+
+    std::ofstream test7("./subdirectory/test1.txt");
+    test7 << "test file compression";
+    test7.flush();
+    test7.close();
+
+    auto flags = Zipper::zipFlags::Better | Zipper::zipFlags::SaveHierarchy;
+    zipper.add("./subdirectory/test1.txt", static_cast<Zipper::zipFlags>(flags));
+
+    zipper.close();
+
+    Path::remove("./subdirectory/test1.txt");
 
 #if 0
+    // A Zip outputed to a vector;
+    zipper::Unzipper unzipper2(zipvec);
 
-        WHEN("a stringstream containing 'test string data compression' is added and named 'strdata'")
-        {
-            std::stringstream strdata;
-            strdata << "test string data compression";
+    // The zip vector has entry named './subdirectory/test1.txt'
+    ASSERT_EQ(unzipper2.entries().size(), 1u);
+    ASSERT_STREQ(unzipper2.entries()[0].name.c_str(), "./subdirectory/test1.txt");
 
-            zipper.add(strdata, "strdata");
-            zipper.close();
+    // Extracting the test1.txt entry creates a file named 'test1.txt' with the
+    // text 'test file compression'
+    ASSERT_EQ(unzipper2.extractEntry("./subdirectory/test1.txt"), true);
+    // due to sections forking or creating different stacks we need to make sure
+    // the local instance is closed to prevent mixing the closing when both
+    // instances are freed at the end of the scope
+    unzipper2.close();
 
-            zipper::Unzipper unzipper("ziptest.zip");
+    ASSERT_EQ(Path::exist("./subdirectory/test1.txt"), true);
+    std::ifstream testfile1("./subdirectory/test1.txt");
+    ASSERT_EQ(testfile1.good(), true);
 
-            THEN("the zip file has one entry named 'strdata'")
-            {
-                ASSERT_EQ(unzipper.entries().size() == 1);
-                ASSERT_EQ(unzipper.entries().front().name == "strdata");
+    std::string test8((std::istreambuf_iterator<char>(testfile1)),
+                      std::istreambuf_iterator<char>());
+    testfile1.close();
+    ASSERT_STREQ(test8.c_str(), "test file compression");
 
-                AND_THEN("extracting the strdata entry creates a file named 'strdata' with the txt 'test string data compression'")
-                {
-                    unzipper.extract();
-
-                    ASSERT_EQ(checkFileExists("strdata"));
-
-                    std::ifstream testfile("strdata");
-                    ASSERT_EQ(testfile.good());
-
-                    std::string test((std::istreambuf_iterator<char>(testfile)), std::istreambuf_iterator<char>());
-                    testfile.close();
-                    ASSERT_EQ(test == "test string data compression");
-
-                    AND_THEN("extracting with an alternative name 'alternative_strdata.dat' crates a file with that name instead of the one inside de zip")
-                    {
-                        std::map<std::string, std::string> alt_names;
-                        alt_names["strdata"] = "alternative_strdata.dat";
-
-                        unzipper.extract("", alt_names);
-
-                        ASSERT_EQ(checkFileExists("alternative_strdata.dat"));
-
-                        std::ifstream testfile2("alternative_strdata.dat");
-                        ASSERT_EQ(testfile2.good());
-
-                        std::string test2((std::istreambuf_iterator<char>(testfile2)), std::istreambuf_iterator<char>());
-                        testfile2.close();
-                        ASSERT_EQ(test2 == "test string data compression");
-
-                        AND_THEN("trying to extract a file 'fake.dat' that doesn't exists, returns false")
-                        {
-                            ASSERT_EQ(false == unzipper.extractEntry("fake.dat"));
-                        }
-                    }
-
-                    unzipper.close();
-                }
-            }
-
-            std::remove("strdata");
-            std::remove("alternative_strdata.dat");
-            std::remove("ziptest.zip");
-        }
-    }
-
+    Path::remove("subdirectory");
+    zipvec.clear();
 #endif
+
+    Path::remove("TestFolder");
+    Path::remove("subdirectory");
+}
+
+// -----------------------------------------------------------------------------
+TEST(MemoryZipTests, DummyVectorTest)
+{
+    std::vector<unsigned char> zipvec;
+    try
+    {
+        zipper::Unzipper unzipper(zipvec);
+        FAIL() << "An exception shall have thrown";
+    }
+    catch (std::runtime_error const& /*e*/)
+    {}
+}
+
+// -----------------------------------------------------------------------------
+TEST(ZipTests, PasswordTest)
+{
+    std::ofstream test1("test1.txt");
+    test1 << "test file1 compression";
+    test1.flush();
+    test1.close();
+
+    std::ofstream test2("test2.txt");
+    test2 << "test file2 compression";
+    test2.flush();
+    test2.close();
+
+    std::ifstream input1("test1.txt");
+    std::ifstream input2("test2.txt");
+
+    Zipper zipper("ziptest.zip", "123456");
+    ASSERT_EQ(zipper.add(input1, "Test1"), true);
+    ASSERT_EQ(zipper.add(input2, "Test2"), true);
+    Path::remove("test1.txt");
+    Path::remove("test2.txt");
+    zipper.close();
+
+    zipper::Unzipper unzipper("ziptest.zip", "123456");
+    ASSERT_EQ(unzipper.entries().size(), 2u);
+    ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "Test1");
+    ASSERT_STREQ(unzipper.entries()[1].name.c_str(), "Test2");
+
+    ASSERT_EQ(unzipper.extract(), true);
+    ASSERT_EQ(Path::exist("Test1"), true);
+    ASSERT_EQ(Path::isFile("Test1"), true);
+    ASSERT_EQ(Path::exist("Test2"), true);
+    ASSERT_EQ(Path::isFile("Test2"), true);
+
+    std::ifstream testfile1("Test1");
+    ASSERT_EQ(testfile1.good(), true);
+    std::string test3((std::istreambuf_iterator<char>(testfile1)),
+                      std::istreambuf_iterator<char>());
+    testfile1.close();
+    ASSERT_STREQ(test3.c_str(), "test file1 compression");
+
+    std::ifstream testfile2("Test2");
+    ASSERT_EQ(testfile2.good(), true);
+    std::string test4((std::istreambuf_iterator<char>(testfile2)),
+                      std::istreambuf_iterator<char>());
+    testfile2.close();
+    ASSERT_STREQ(test4.c_str(), "test file2 compression");
+
+    Path::remove("ziptest.zip");
+    Path::remove("Test1");
+    Path::remove("Test2");
+
 }

@@ -248,9 +248,98 @@ bool Path::createDir(const std::string& dir, const std::string& parent)
 }
 
 // -----------------------------------------------------------------------------
+bool Path::removeFiles(const std::string& pattern,
+                       const std::string& path)
+{
+    bool success = true;
+    std::vector<std::string> PatternList;
+
+    PatternList = compilePattern(pattern);
+
+#if defined(USE_WINDOWS)
+
+    // We want the same pattern matching behaviour for all platforms.
+    // Therefore, we do not use the MS provided one and list all files instead.
+    std::string FilePattern = path + "\\*";
+
+    // Open directory stream and try read info about first entry
+    struct _finddata_t Entry;
+    intptr_t hList = _findfirst(FilePattern.c_str(), &Entry);
+
+    if (hList == -1)
+        return success;
+
+    do
+    {
+        std::string Utf8 = Entry.name;
+
+        if (match(Utf8, PatternList))
+        {
+            if (Entry.attrib | _A_NORMAL)
+            {
+                if (::remove((path + Separator + Utf8).c_str()) != 0)
+                    success = false;
+            }
+            else
+            {
+                if (rmdir((path + Separator + Utf8).c_str()) != 0)
+                    success = false;
+            }
+        }
+    } while (_findnext(hList, &Entry) == 0);
+
+    _findclose(hList);
+
+#else //! USE_WINDOWS
+
+    DIR* pDir = opendir(path.c_str());
+
+    if (!pDir) return false;
+
+    struct dirent* pEntry;
+
+    while ((pEntry = readdir(pDir)) != nullptr)
+    {
+        std::string Utf8 = pEntry->d_name;
+
+        if (match(Utf8, PatternList))
+        {
+            if (isDir(Utf8))
+            {
+                if (::rmdir((path + Separator + Utf8).c_str()) != 0)
+                    success = false;
+            }
+            else
+            {
+                if (::remove((path + Separator + Utf8).c_str()) != 0)
+                    success = false;
+            }
+        }
+    }
+
+    closedir(pDir);
+
+#endif // USE_WINDOWS
+
+    return success;
+}
+
+// -----------------------------------------------------------------------------
+static bool _remove(const std::string& path)
+{
+    if (Path::isDir(path))
+        return ::rmdir(path.c_str()) == 0;
+
+    if (Path::isFile(path))
+        return ::unlink(path.c_str()) == 0;
+
+    return false;
+}
+
+// -----------------------------------------------------------------------------
 void Path::removeDir(const std::string& foldername)
 {
-    if (!Path::remove(foldername))
+    if (!_remove(foldername))
     {
         std::vector<std::string> files = Path::filesFromDir(foldername, false);
         std::vector<std::string>::iterator it = files.begin();
@@ -262,12 +351,27 @@ void Path::removeDir(const std::string& foldername)
             }
             else
             {
-                Path::remove(it->c_str());
+                _remove(it->c_str());
             }
         }
 
-        Path::remove(foldername);
+        _remove(foldername);
     }
+}
+
+// -----------------------------------------------------------------------------
+bool Path::remove(const std::string& path)
+{
+    if (Path::isDir(path))
+    {
+        Path::removeDir(path.c_str());
+        return true;
+    }
+
+    if (Path::isFile(path))
+        return ::unlink(path.c_str()) == 0;
+
+    return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -378,95 +482,6 @@ bool Path::move(const std::string& from, const std::string& to)
 
         remove(from);
     }
-
-    return success;
-}
-
-// -----------------------------------------------------------------------------
-bool Path::remove(const std::string& path)
-{
-    if (isDir(path))
-        return ::rmdir(path.c_str()) == 0;
-
-    if (isFile(path))
-        return ::unlink(path.c_str()) == 0;
-
-    return false;
-}
-
-// -----------------------------------------------------------------------------
-bool Path::removeFiles(const std::string& pattern,
-                       const std::string& path)
-{
-    bool success = true;
-    std::vector<std::string> PatternList;
-
-    PatternList = compilePattern(pattern);
-
-#if defined(USE_WINDOWS)
-
-    // We want the same pattern matching behaviour for all platforms.
-    // Therefore, we do not use the MS provided one and list all files instead.
-    std::string FilePattern = path + "\\*";
-
-    // Open directory stream and try read info about first entry
-    struct _finddata_t Entry;
-    intptr_t hList = _findfirst(FilePattern.c_str(), &Entry);
-
-    if (hList == -1)
-        return success;
-
-    do
-    {
-        std::string Utf8 = Entry.name;
-
-        if (match(Utf8, PatternList))
-        {
-            if (Entry.attrib | _A_NORMAL)
-            {
-                if (::remove((path + Separator + Utf8).c_str()) != 0)
-                    success = false;
-            }
-            else
-            {
-                if (rmdir((path + Separator + Utf8).c_str()) != 0)
-                    success = false;
-            }
-        }
-    } while (_findnext(hList, &Entry) == 0);
-
-    _findclose(hList);
-
-#else //! USE_WINDOWS
-
-    DIR* pDir = opendir(path.c_str());
-
-    if (!pDir) return false;
-
-    struct dirent* pEntry;
-
-    while ((pEntry = readdir(pDir)) != nullptr)
-    {
-        std::string Utf8 = pEntry->d_name;
-
-        if (match(Utf8, PatternList))
-        {
-            if (isDir(Utf8))
-            {
-                if (::rmdir((path + Separator + Utf8).c_str()) != 0)
-                    success = false;
-            }
-            else
-            {
-                if (::remove((path + Separator + Utf8).c_str()) != 0)
-                    success = false;
-            }
-        }
-    }
-
-    closedir(pDir);
-
-#endif // USE_WINDOWS
 
     return success;
 }

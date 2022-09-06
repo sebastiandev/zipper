@@ -36,15 +36,30 @@ DEFINES += -UUSE_WINDOWS
 endif
 
 ###################################################
-# Compiled files
+# Compiled files. Note: cannot use libzipper.a as
+# THIRDPART_LIBS becasue else lcov is not showing
+# c++ code.
 #
-OBJS += TestPath.o TestZip.o main.o
+ifeq ($(ARCHI),Windows)
+OBJS += dirent.o
+endif
+OBJS += Timestamp.o Path.o Zipper.o Unzipper.o
+OBJS += TestPath.o TestZip.o
+OBJS += main.o
+
+###################################################
+# Library to test.
+#
+# THIRDPART_LIBS += $(abspath $(P)/build/libzipper.a.$(shell cat $(P)/VERSION.txt))
+THIRDPART_LIBS += \
+    $(abspath $(THIRDPART)/minizip/build/libminizip.a) \
+    $(abspath $(THIRDPART)/minizip/build/libaes.a) \
+    $(abspath $(THIRDPART)/zlib-ng/build/libz.a)
 
 ###################################################
 # Libraries.
 #
 PKG_LIBS += gtest gmock
-THIRDPART_LIBS += $(abspath $(P)/build/libzipper.a.$(shell cat $(P)/VERSION.txt))
 
 ###################################################
 # Compile unit tests

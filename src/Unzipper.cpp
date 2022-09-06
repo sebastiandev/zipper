@@ -442,7 +442,6 @@ public:
             memcpy(m_zipmem.base, reinterpret_cast<char*>(buffer.data()), buffer.size());
             m_zipmem.size = static_cast<uLong>(buffer.size());
         }
-
         fill_memory_filefunc(&m_filefunc, &m_zipmem);
 
         return initMemory(m_filefunc);
@@ -546,6 +545,11 @@ Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer, const std::string& 
     , m_usingStream(false)
     , m_impl(new Impl(*this))
 {
+    //if (zippedBuffer.empty())
+    //{
+    //    release();
+    //    throw std::runtime_error("std::vector shall not be empty");
+    //}
     if (!m_impl->initWithVector(m_vecbuffer))
     {
         release();
