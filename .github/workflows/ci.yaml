@@ -40,3 +40,30 @@ jobs:
           cd zipper/tests
           make -j`nproc --all`
           ./build/Zipper-UnitTest
+
+  non_regression_macos:
+    name: Non regression on MacOS X
+    runs-on: macos-latest
+    steps:
+      - name: Install packages
+        run: |
+          brew install pkg-config
+      - name: Download, configure and install Google test
+        run: |
+          wget https://github.com/google/googletest/archive/release-1.11.0.tar.gz
+          tar xf release-1.11.0.tar.gz
+          cd googletest-release-1.11.0
+          cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON .
+          sudo make install
+      - name: Build
+        run: |
+          git clone https://github.com/sebastiandev/zipper.git -b "v2.x.y" --recursive
+          cd zipper
+          make download-external-libs
+          make compile-external-libs
+          make -j`nproc --all`
+      - name: Non regression
+        run: |
+          cd zipper/tests
+          make -j`nproc --all`
+          ./build/Zipper-UnitTest
