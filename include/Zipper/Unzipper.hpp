@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <system_error>
 
 namespace zipper {
 
@@ -76,8 +77,7 @@ public:
     //! \param[in] replace if set false (set by default) throw an exeception
     //!   when a file already exist.
     //!
-    //! \return true on success, else return false.
-    //! \throw std::runtime_error if something odd happened.
+    //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
     bool extract(const std::string& destination,
                  const std::map<std::string, std::string>& alternativeNames,
@@ -93,8 +93,7 @@ public:
     //! \param[in] replace if set false (set by default) throw an exeception
     //!   when a file already exist.
     //!
-    //! \return true on success, else return false.
-    //! \throw std::runtime_error if something odd happened.
+    //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
     bool extract(const std::string& destination, bool replace = false);
 
@@ -104,8 +103,7 @@ public:
     //! \param[in] replace if set false (set by default) throw an exeception
     //!   when a file already exist.
     //!
-    //! \return true on success, else return false.
-    //! \throw std::runtime_error if something odd happened.
+    //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
     bool extract(bool replace = false);
 
@@ -119,8 +117,7 @@ public:
     //! \param[in] replace if set false (set by default) throw an exeception
     //!   when a file already exist.
     //!
-    //! \return true on success, else return false.
-    //! \throw std::runtime_error if something odd happened.
+    //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
     bool extractEntry(const std::string& name, const std::string& destination,
                       bool replace = false);
@@ -133,8 +130,7 @@ public:
     //! \param[in] replace if set false (set by default) throw an exeception
     //!   when a file already exist.
     //!
-    //! \return true on success, else return false.
-    //! \throw std::runtime_error if something odd happened.
+    //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
     bool extractEntry(const std::string& name, bool replace = false)
     {
@@ -146,8 +142,7 @@ public:
     //!
     //! \param[in] name: the entry path inside the zip archive.
     //! \param[out] stream: the stream that will hold the extracted entry.
-    //! \return true on success, else return false.
-    //! \throw std::runtime_error if something odd happened.
+    //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
     bool extractEntryToStream(const std::string& name, std::ostream& stream);
 
@@ -156,8 +151,7 @@ public:
     //!
     //! \param[in] name: the entry path inside the zip archive.
     //! \param[out] vec: the vector that will hold the extracted entry.
-    //! \return true on success, else return false.
-    //! \throw std::runtime_error if something odd happened.
+    //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
     bool extractEntryToMemory(const std::string& name,
                               std::vector<unsigned char>& vec);
@@ -166,6 +160,11 @@ public:
     //! \brief Relese memory. Called by the destructor.
     // -------------------------------------------------------------------------
     void close();
+
+    // -------------------------------------------------------------------------
+    //! \brief Get the error information when a method returned false.
+    // -------------------------------------------------------------------------
+    std::error_code error() const;
 
 private:
 
