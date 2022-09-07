@@ -80,7 +80,8 @@ public:
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
     bool extract(const std::string& destination,
-                 const std::map<std::string, std::string>& alternativeNames, bool replace = false);
+                 const std::map<std::string, std::string>& alternativeNames,
+                 bool replace = false);
 
     // -------------------------------------------------------------------------
     //! \brief Extract the whole archive to the desired disk destination. If no
@@ -96,6 +97,16 @@ public:
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
     bool extract(const std::string& destination, bool replace = false);
+
+    // -------------------------------------------------------------------------
+    //! \brief Extract the whole archive to the same folder than the zip file.
+    //!
+    //! \param[in] replace if set false (set by default) throw an exeception
+    //!   when a file already exist.
+    //!
+    //! \return true on success, else return false.
+    //! \throw std::runtime_error if something odd happened.
+    // -------------------------------------------------------------------------
     bool extract(bool replace = false);
 
     // -------------------------------------------------------------------------
@@ -111,7 +122,20 @@ public:
     //! \return true on success, else return false.
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
-    bool extractEntry(const std::string& name, const std::string& destination, bool replace = false);
+    bool extractEntry(const std::string& name, const std::string& destination,
+                      bool replace = false);
+
+    // -------------------------------------------------------------------------
+    //! \brief Extract a single entry from the archive in the same folder than
+    //! the zip file.
+    //!
+    //! \param[in] name: the entry path inside the zip archive.
+    //! \param[in] replace if set false (set by default) throw an exeception
+    //!   when a file already exist.
+    //!
+    //! \return true on success, else return false.
+    //! \throw std::runtime_error if something odd happened.
+    // -------------------------------------------------------------------------
     bool extractEntry(const std::string& name, bool replace = false)
     {
        return extractEntry(name, std::string(), replace);

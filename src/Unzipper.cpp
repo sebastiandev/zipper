@@ -68,8 +68,9 @@ private:
                     err = unzGoToNextFile(m_zf);
                 }
                 else
+                {
                     err = UNZ_ERRNO;
-
+                }
             } while (UNZ_OK == err);
 
             if (UNZ_END_OF_LIST_OF_FILE != err && UNZ_OK != err)
@@ -93,12 +94,15 @@ private:
                     err = unzGoToNextFile(m_zf);
                 }
                 else
+                {
                     err = UNZ_ERRNO;
-
+                }
             } while (UNZ_OK == err);
 
             if (UNZ_END_OF_LIST_OF_FILE != err && UNZ_OK != err)
+            {
                 return;
+            }
         }
     }
 
@@ -117,8 +121,12 @@ public:
         {
             err = unzCloseCurrentFile(m_zf);
             if (UNZ_OK != err)
-                throw std::runtime_error(("Error " + std::to_string(err) + " closing internal file '" + entryinfo.name +
-                                       "' in zip").c_str());
+            {
+                throw std::runtime_error(("Error " + std::to_string(err) +
+                                          " closing internal file '" +
+                                          entryinfo.name +
+                                          "' in zip").c_str());
+            }
         }
 
         return UNZ_OK == err;
@@ -181,7 +189,8 @@ public:
         return UNZ_OK == err;
     }
 
-    bool extractCurrentEntryToMemory(ZipEntry& entryinfo, std::vector<unsigned char>& outvec)
+    bool extractCurrentEntryToMemory(ZipEntry& entryinfo,
+                                     std::vector<unsigned char>& outvec)
     {
         int err = UNZ_OK;
 
@@ -206,12 +215,14 @@ public:
     }
 
 #if defined(USE_WINDOWS)
-    void changeFileDate(const std::string& filename, uLong dosdate, tm_unz /*tmu_date*/)
+    void changeFileDate(const std::string& filename, uLong dosdate,
+                        tm_unz /*tmu_date*/)
     {
         HANDLE hFile;
         FILETIME ftm, ftLocal, ftCreate, ftLastAcc, ftLastWrite;
 
-        hFile = CreateFileA(filename.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+        hFile = CreateFileA(filename.c_str(), GENERIC_READ | GENERIC_WRITE,
+                            0, nullptr, OPEN_EXISTING, 0, nullptr);
         if (hFile != INVALID_HANDLE_VALUE)
         {
             GetFileTime(hFile, &ftCreate, &ftLastAcc, &ftLastWrite);
@@ -223,7 +234,8 @@ public:
     }
 
 #else // !USE_WINDOWS
-    void changeFileDate(const std::string& filename, uLong /*dosdate*/, tm_unz tmu_date)
+    void changeFileDate(const std::string& filename, uLong /*dosdate*/,
+                        tm_unz tmu_date)
     {
         struct utimbuf ut;
         struct tm newdate;
@@ -257,7 +269,8 @@ public:
             {
                 /* Prevent Zip Slip attack (See ticket #33) */
                 std::stringstream str;
-                str << "Security error: entry '" << filename << "' would be outside your target directory";
+                str << "Security error: entry '" << filename
+                    << "' would be outside your target directory";
 
                 throw std::runtime_error(str.str().c_str());
             }
@@ -275,7 +288,8 @@ public:
         if (!replace && Path::exist(filename))
         {
             std::stringstream str;
-            str << "Security Error: '" << filename << "' already exists and will be replaced";
+            str << "Security Error: '" << filename
+                << "' already exists and will be replaced";
 
             throw std::runtime_error(str.str().c_str());
         }
@@ -321,7 +335,8 @@ public:
 
         do
         {
-            err = unzReadCurrentFile(m_zf, buffer.data(), static_cast<unsigned int>(buffer.size()));
+            err = unzReadCurrentFile(m_zf, buffer.data(),
+                                     static_cast<unsigned int>(buffer.size()));
             if (err < 0 || err == 0)
                 break;
 
@@ -360,7 +375,8 @@ public:
 
         do
         {
-            err = unzReadCurrentFile(m_zf, buffer.data(), static_cast<unsigned int>(buffer.size()));
+            err = unzReadCurrentFile(m_zf, buffer.data(),
+                                     static_cast<unsigned int>(buffer.size()));
             if (err < 0 || err == 0)
                 break;
 
@@ -455,7 +471,8 @@ public:
     }
 
 
-    bool extractAll(const std::string& destination, const std::map<std::string, std::string>& alternativeNames, bool const replace)
+    bool extractAll(const std::string& destination, const std::map<std::string,
+                    std::string>& alternativeNames, bool const replace)
     {
         std::vector<ZipEntry> entries;
         getEntries(entries);
@@ -465,7 +482,8 @@ public:
             if (!locateEntry(it->name))
                 continue;
 
-            std::string alternativeName = destination.empty() ? "" : destination + Path::Separator;
+            std::string alternativeName = destination.empty()
+                                          ? "" : destination + Path::Separator;
 
             if (alternativeNames.find(it->name) != alternativeNames.end())
                 alternativeName += alternativeNames.at(it->name);
@@ -479,9 +497,11 @@ public:
         return true;
     }
 
-    bool extractEntry(const std::string& name, const std::string& destination, bool const replace)
+    bool extractEntry(const std::string& name, const std::string& destination,
+                      bool const replace)
     {
-        std::string outputFile = destination.empty() ? name : destination + Path::Separator + name;
+        std::string outputFile = destination.empty()
+                                 ? name : destination + Path::Separator + name;
 
         if (locateEntry(name))
         {
