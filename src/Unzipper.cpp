@@ -37,18 +37,23 @@ private:
         return UNZ_OK == unzLocateFile(m_zf, name.c_str(), nullptr);
     }
 
-    ZipEntry currentEntryInfo()
+    bool currentEntryInfo(ZipEntry &entry)
     {
         unz_file_info64 file_info;
         char filename_inzip[256] = { 0 };
 
-        int err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip, sizeof(filename_inzip), nullptr, 0, nullptr, 0);
+        int err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip,
+                                          sizeof(filename_inzip), nullptr, 0,
+                                          nullptr, 0);
         if (UNZ_OK != err)
             throw std::runtime_error("Error, couln't get the current entry info");
 
-        return ZipEntry(std::string(filename_inzip), file_info.compressed_size, file_info.uncompressed_size,
-                        file_info.tmu_date.tm_year, file_info.tmu_date.tm_mon, file_info.tmu_date.tm_mday,
-                        file_info.tmu_date.tm_hour, file_info.tmu_date.tm_min, file_info.tmu_date.tm_sec, file_info.dosDate);
+        entry = ZipEntry(std::string(filename_inzip), file_info.compressed_size,
+                         file_info.uncompressed_size, file_info.tmu_date.tm_year,
+                         file_info.tmu_date.tm_mon, file_info.tmu_date.tm_mday,
+                         file_info.tmu_date.tm_hour, file_info.tmu_date.tm_min,
+                         file_info.tmu_date.tm_sec, file_info.dosDate);
+        return true;
     }
 
 #if 0
@@ -60,9 +65,8 @@ private:
         {
             do
             {
-                ZipEntry entryinfo = currentEntryInfo();
-
-                if (entryinfo.valid())
+                ZipEntry entryinfo;
+                if (currentEntryInfo(entryinfo) && entryinfo.valid())
                 {
                     callback(entryinfo);
                     err = unzGoToNextFile(m_zf);
@@ -86,9 +90,8 @@ private:
         {
             do
             {
-                ZipEntry entryinfo = currentEntryInfo();
-
-                if (entryinfo.valid())
+                ZipEntry entryinfo;
+                if (currentEntryInfo(entryinfo) && entryinfo.valid())
                 {
                     entries.push_back(entryinfo);
                     err = unzGoToNextFile(m_zf);
@@ -505,7 +508,9 @@ public:
 
         if (locateEntry(name))
         {
-            ZipEntry entry = currentEntryInfo();
+            ZipEntry entry;
+            if (!currentEntryInfo(entry))
+                return false;
             return extractCurrentEntryToFile(entry, outputFile, replace);
         }
         else
@@ -518,7 +523,9 @@ public:
     {
         if (locateEntry(name))
         {
-            ZipEntry entry = currentEntryInfo();
+            ZipEntry entry;
+            if (!currentEntryInfo(entry))
+                return false;
             return extractCurrentEntryToStream(entry, stream);
         }
         else
@@ -531,7 +538,9 @@ public:
     {
         if (locateEntry(name))
         {
-            ZipEntry entry = currentEntryInfo();
+            ZipEntry entry;
+            if (!currentEntryInfo(entry))
+                return false;
             return extractCurrentEntryToMemory(entry, vec);
         }
         else

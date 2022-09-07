@@ -191,20 +191,9 @@ private:
 // *************************************************************************
 class ZipEntry
 {
-private:
-
-    typedef struct
-    {
-        unsigned int tm_sec;
-        unsigned int tm_min;
-        unsigned int tm_hour;
-        unsigned int tm_mday;
-        unsigned int tm_mon;
-        unsigned int tm_year;
-    } tm_s;
-
 public:
 
+    ZipEntry() = default;
     ZipEntry(const std::string& name_,
              unsigned long long int compressed_size,
              unsigned long long int uncompressed_size,
@@ -220,7 +209,8 @@ public:
     {
         // timestamp YYYY-MM-DD HH:MM:SS
         std::stringstream str;
-        str << year << "-" << month << "-" << day << " " << hour << ":" << minute << ":" << second;
+        str << year << "-" << month << "-" << day << " "
+            << hour << ":" << minute << ":" << second;
         timestamp = str.str();
 
         unixdate.tm_year = year;
@@ -231,10 +221,50 @@ public:
         unixdate.tm_sec = second;
     }
 
-    bool valid() { return !name.empty(); }
+    ZipEntry(ZipEntry const& other)
+        : ZipEntry(other.name,
+                   other.compressedSize,
+                   other.uncompressedSize,
+                   other.unixdate.tm_year,
+                   other.unixdate.tm_mon,
+                   other.unixdate.tm_mday,
+                   other.unixdate.tm_hour,
+                   other.unixdate.tm_min,
+                   other.unixdate.tm_sec,
+                   other.dosdate)
+    {}
+
+    ZipEntry& operator=(ZipEntry const& other)
+    {
+        this->~ZipEntry(); // destroy
+        new (this) ZipEntry(other); // copy construct in place
+        return *this;
+    }
+
+    ZipEntry& operator=(ZipEntry && other)
+    {
+        this->~ZipEntry(); // destroy
+        new (this) ZipEntry(other); // copy construct in place
+        return *this;
+    }
+
+    inline bool valid() const { return !name.empty(); }
+
+public:
+
+    typedef struct
+    {
+        unsigned int tm_sec;
+        unsigned int tm_min;
+        unsigned int tm_hour;
+        unsigned int tm_mday;
+        unsigned int tm_mon;
+        unsigned int tm_year;
+    } tm_s;
 
     std::string name, timestamp;
-    unsigned long long int compressedSize, uncompressedSize;
+    unsigned long long int compressedSize;
+    unsigned long long int uncompressedSize;
     unsigned long dosdate;
     tm_s unixdate;
 };
