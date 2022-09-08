@@ -518,3 +518,36 @@ TEST(ZipTests, Issue21)
     Path::remove("ziptest.zip");
     Path::remove("data");
 }
+
+// -----------------------------------------------------------------------------
+TEST(ZipTests, UnzipDummyTarball)
+{
+    // Clean up
+    Path::remove("ziptest.zip");
+    Path::remove("data");
+
+    // Create folder
+    Path::createDir("data/somefolder/");
+
+    // Test with the '/'
+    {
+        Zipper zipper("ziptest.zip");
+        ASSERT_EQ(zipper.add("data/somefolder/"), true); // With the '/'
+        zipper.close();
+        zipper::Unzipper unzipper("ziptest.zip");
+        ASSERT_EQ(unzipper.entries().size(), 0u);
+        Path::remove("ziptest.zip");
+    }
+
+    // Test without the '/'
+    {
+        Zipper zipper("ziptest.zip");
+        ASSERT_EQ(zipper.add("data/somefolder"), true); // Without the '/'
+        zipper.close();
+        zipper::Unzipper unzipper("ziptest.zip");
+        ASSERT_EQ(unzipper.entries().size(), 0u);
+    }
+
+    Path::remove("ziptest.zip");
+    Path::remove("data");
+}

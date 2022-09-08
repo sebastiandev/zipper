@@ -600,7 +600,14 @@ Unzipper::Unzipper(const std::string& zipname, const std::string& password)
     if (!m_impl->initFile(zipname))
     {
         release();
-        throw std::runtime_error("Error loading zip file!");
+        if (!Path::exist(zipname))
+        {
+            throw std::runtime_error("Non existent zip file!");
+        }
+        else
+        {
+            // Other error (like dummy zip). Let it dummy
+        }
     }
     m_open = true;
 }
