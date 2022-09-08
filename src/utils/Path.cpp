@@ -506,7 +506,7 @@ std::vector<std::string> Path::compilePattern(const std::string& pattern)
         start = pos;
         pos = pattern.find_first_of("*?", pos);
 
-        end = (std::min)(pos, pattern.length());
+        end = std::min(pos, pattern.length());
 
         if (start != end)
         {
@@ -582,7 +582,7 @@ bool Path::makePathRelative(std::string& absolutePath, const std::string& relati
 
     absolutePath = normalize(absolutePath);
 
-    size_t i, imax = (std::min)(absolutePath.length(), RelativeTo.length());
+    size_t i, imax = std::min(absolutePath.length(), RelativeTo.length());
 
     for (i = 0; i < imax; i++)
     {
