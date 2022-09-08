@@ -477,5 +477,44 @@ TEST(ZipTests, PasswordTest)
     Path::remove("ziptest.zip");
     Path::remove("Test1");
     Path::remove("Test2");
+}
 
+// -----------------------------------------------------------------------------
+// https://github.com/sebastiandev/zipper/issues/21
+TEST(ZipTests, Issue21)
+{
+    // Clean up
+    Path::remove("ziptest.zip");
+    Path::remove("data");
+
+    // Create folder
+    Path::createDir("data/somefolder/");
+    std::ofstream test("data/somefolder/test.txt");
+    test << "test file2 compression";
+    test.flush();
+    test.close();
+
+    // Test with the '/'
+    {
+        Zipper zipper("ziptest.zip");
+        ASSERT_EQ(zipper.add("data/somefolder/"), true); // With the '/'
+        zipper.close();
+        zipper::Unzipper unzipper("ziptest.zip");
+        ASSERT_EQ(unzipper.entries().size(), 1u);
+        ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "data/somefolder/test.txt");
+        Path::remove("ziptest.zip");
+    }
+
+    // Test without the '/'
+    {
+        Zipper zipper("ziptest.zip");
+        ASSERT_EQ(zipper.add("data/somefolder"), true); // Without the '/'
+        zipper.close();
+        zipper::Unzipper unzipper("ziptest.zip");
+        ASSERT_EQ(unzipper.entries().size(), 1u);
+        ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "data/somefolder/test.txt");
+    }
+
+    Path::remove("ziptest.zip");
+    Path::remove("data");
 }

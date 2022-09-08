@@ -367,17 +367,24 @@ bool Zipper::add(std::istream& source, const std::string& nameInZip, zipFlags fl
 
 bool Zipper::add(const std::string& fileOrFolderPath, Zipper::zipFlags flags)
 {
+    bool res = true;
+
     if (Path::isDir(fileOrFolderPath))
     {
-        std::string folderName = Path::fileName(fileOrFolderPath);
-        std::vector<std::string> files = Path::filesFromDir(fileOrFolderPath, true);
-        std::vector<std::string>::iterator it = files.begin();
-        for (; it != files.end(); ++it)
+        // Do not use dirName()
+        // https://github.com/sebastiandev/zipper/issues/21
+        char c = fileOrFolderPath.back();
+        bool end_by_slash = (c == '/') || (c == '\\');
+        std::string folderName(end_by_slash ? std::string(fileOrFolderPath.begin(), --fileOrFolderPath.end())
+                                            : fileOrFolderPath);
+
+        std::vector<std::string> files = Path::filesFromDir(folderName, true);
+        for (auto& it: files)
         {
-            Timestamp time(*it);
-            std::ifstream input(it->c_str(), std::ios::binary);
-            std::string nameInZip = it->substr(it->rfind(folderName + Path::Separator), it->size());
-            add(input, time.timestamp, nameInZip, flags);
+            Timestamp time(it);
+            std::ifstream input(it.c_str(), std::ios::binary);
+            std::string nameInZip = it.substr(it.rfind(folderName + Path::Separator), it.size());
+            res &= add(input, time.timestamp, nameInZip, flags);
             input.close();
         }
     }
@@ -396,12 +403,12 @@ bool Zipper::add(const std::string& fileOrFolderPath, Zipper::zipFlags flags)
             fullFileName = Path::fileName(fileOrFolderPath);
         }
 
-        add(input, time.timestamp, fullFileName, flags);
+        res &= add(input, time.timestamp, fullFileName, flags);
 
         input.close();
     }
 
-    return true;
+    return res;
 }
 
 
