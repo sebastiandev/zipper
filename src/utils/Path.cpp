@@ -19,14 +19,15 @@
 #include <fstream>
 #include <iterator>
 #include <sstream>
+#include <numeric>
 
 #if defined(USE_WINDOWS)
-#    include "utils/dirent.h"
-#    include "utils/dirent.c"
+#  include "utils/dirent.h"
+#  include "utils/dirent.c"
 #else
-#    include <sys/types.h>
-#    include <dirent.h>
-#    include <unistd.h>
+#  include <sys/types.h>
+#  include <dirent.h>
+#  include <unistd.h>
 #endif /* WINDOWS */
 
 using namespace zipper;
@@ -98,37 +99,6 @@ bool Path::isWritable(const std::string& path)
 }
 
 // -----------------------------------------------------------------------------
-std::string Path::baseName(const std::string& path)
-{
-    std::string::size_type start = path.find_last_of(Separator);
-
-#if defined(USE_WINDOWS) // WIN32 also understands '/' as the separator.
-    if (start == std::string::npos)
-    {
-        start = path.find_last_of("/");
-    }
-#endif
-
-    if (start == std::string::npos)
-    {
-        start = 0;
-    }
-    else
-    {
-        start++; // We do not want the separator.
-    }
-
-    std::string::size_type end = path.find_last_of(".");
-
-    if (end == std::string::npos || end < start)
-    {
-        end = path.length();
-    }
-
-    return path.substr(start, end - start);
-}
-
-// -----------------------------------------------------------------------------
 std::string Path::fileName(const std::string& path)
 {
     std::string::size_type start = path.find_last_of(Separator);
@@ -136,7 +106,7 @@ std::string Path::fileName(const std::string& path)
 #if defined(USE_WINDOWS) // WIN32 also understands '/' as the separator.
     if (start == std::string::npos)
     {
-        start = path.find_last_of("/");
+        start = path.find_last_of(DIRECTORY_SEPARATOR);
     }
 #endif
 
@@ -153,31 +123,68 @@ std::string Path::fileName(const std::string& path)
 }
 
 // -----------------------------------------------------------------------------
-// WIN32 also understands '/' as the separator.
+bool Path::isRoot(const std::string& path)
+{
+#ifdef _WIN32
+    // / on Windows is root on current drive
+    if (path.length() == 1 && path[0] == '/')
+        return true;
+
+    // X:/ is root including drive letter
+    return path.length() == 3 && path[1] == ':';
+#else
+    return path.length() == 1 && path[0] == '/';
+#endif
+}
+
+// -----------------------------------------------------------------------------
+std::string Path::root()
+{
+#ifdef _WIN32
+    // Check if we have an absolute path with drive,
+    // otherwise return the root for the current drive.
+    if (path[1] == ':') // Colon is on Windows only allowed here to denote a
+                        // preceeding drive letter => absolute path
+        return path.substr(0, 3);
+    else
+        return DIRECTORY_SEPARATOR;
+#else
+    return DIRECTORY_SEPARATOR;
+#endif
+}
+
+// -----------------------------------------------------------------------------
 std::string Path::dirName(const std::string& path)
 {
-    if (path.empty())
+    if (path == ".")
+        return "";
+
+    if (path == "..")
+        return "";
+
+    if (path == "//")
+        return "//";
+
+    if (Path::isRoot(path))
         return path;
 
-#if defined(USE_WINDOWS)
-    std::string::size_type end = path.find_last_of(Separator + "/");
-#else
-    std::string::size_type end = path.find_last_of(Separator);
-#endif
-
-    if (end == path.length() - 1)
+    size_t pos = 0;
+    if ((pos = path.rfind(DIRECTORY_SEPARATOR)) != std::string::npos)
     {
-#if defined(USE_WINDOWS)
-        end = path.find_last_of(Separator + "/", end - 1);
-#else
-        end = path.find_last_of(Separator, end - 1);
+        // Single = intended
+        if (pos == 0) // /usr
+            return root();
+
+#ifdef _WIN32
+        if ((pos == 1) && path[1] == ':') // X:/foo
+            return root();
 #endif
+        // regular/path or /regular/path
+        return path.substr(0, pos);
     }
 
-    if (end == std::string::npos)
-        return {};
-
-    return path.substr(0, end);
+    // single relative directory
+    return "";
 }
 
 // -----------------------------------------------------------------------------
@@ -189,7 +196,7 @@ std::string Path::suffix(const std::string& path)
 #if defined(USE_WINDOWS)
     if (start == std::string::npos)
     {
-        start = path.find_last_of("/");
+        start = path.find_last_of(DIRECTORY_SEPARATOR);
     }
 #endif
 
@@ -642,7 +649,7 @@ bool Path::makePathAbsolute(std::string& relativePath, const std::string& absolu
         relativePath = relativePath.substr(3);
     }
 
-    relativePath = AbsoluteTo + "/" + relativePath;
+    relativePath = AbsoluteTo + DIRECTORY_SEPARATOR + relativePath;
 
     return true;
 }
@@ -699,24 +706,24 @@ bool Path::matchInternal(const std::string& name,
 // -----------------------------------------------------------------------------
 std::string Path::normalize(const std::string& path)
 {
-    std::string Normalized = path;
+    std::string clean_path = path;
 
 #if defined(USE_WINDOWS)
     // converts all '\' to '/' (only on WIN32)
     size_t i, imax;
 
-    for (i = 0, imax = Normalized.length(); i < imax; i++)
+    for (i = 0, imax = clean_path.length(); i < imax; i++)
     {
-        if (Normalized[i] == '\\')
-            Normalized[i] = '/';
+        if (clean_path[i] == '\\')
+            clean_path[i] = '/';
     }
 
 #endif
 
     // Remove leading './'
-    while (!Normalized.compare(0, 2, "./"))
+    while (!clean_path.compare(0, 2, "./"))
     {
-        Normalized = Normalized.substr(2);
+        clean_path = clean_path.substr(2);
     }
 
     // Collapse '//' to '/'
@@ -724,11 +731,11 @@ std::string Path::normalize(const std::string& path)
 
     while (true)
     {
-        pos = Normalized.find("//", pos);
+        pos = clean_path.find("//", pos);
         if (pos == std::string::npos)
             break;
 
-        Normalized.erase(pos, 1);
+        clean_path.erase(pos, 1);
     }
 
     // Collapse '/./' to '/'
@@ -736,84 +743,89 @@ std::string Path::normalize(const std::string& path)
 
     while (true)
     {
-        pos = Normalized.find("/./", pos);
+        pos = clean_path.find("/./", pos);
         if (pos == std::string::npos)
             break;
 
-        Normalized.erase(pos, 2);
+        clean_path.erase(pos, 2);
     }
 
     // Collapse '[^/]+/../' to '/'
-    std::string::size_type start = Normalized.length();
+    std::string::size_type start = clean_path.length();
 
     while (true)
     {
-        pos = Normalized.rfind("/../", start);
+        pos = clean_path.rfind("/../", start);
         if (pos == std::string::npos)
             break;
 
-        start = Normalized.rfind('/', pos - 1);
+        start = clean_path.rfind('/', pos - 1);
         if (start == std::string::npos)
             break;
 
-        if (!Normalized.compare(start, 4, "/../"))
+        if (!clean_path.compare(start, 4, "/../"))
             continue;
 
-        Normalized.erase(start, pos - start + 3);
-        start = Normalized.length();
+        clean_path.erase(start, pos - start + 3);
+        start = clean_path.length();
     }
 
-    return Normalized;
+    if (clean_path.empty())
+        return {};
+    if (clean_path.back() == DIRECTORY_SEPARATOR_CHAR)
+        clean_path.pop_back();
+    return clean_path;
 }
 
+// -----------------------------------------------------------------------------
 std::string Path::canonicalPath(const std::string& path)
 {
     if (path.empty())
         return {};
 
-    std::vector<std::string> segments;
-
     // If the path starts with a / we must preserve it
-    bool starts_with_slash = path.front() == DIRECTORY_SEPARATOR_CHAR;
+    bool starts_with_slash = (path[0] == DIRECTORY_SEPARATOR_CHAR);
+
     // If the path does not end with a / we need to remove the
     // extra / added by the join process
-    bool ends_with_slash = path.back() == DIRECTORY_SEPARATOR_CHAR;
+    //bool ends_with_slash = (path.back() == DIRECTORY_SEPARATOR_CHAR);
+
+    // Store each element of the path
+    std::vector<std::string> segments;
 
     size_t current;
-    size_t next;
+    size_t next = size_t(-1);
 
     do {
-        current = size_t(next + 1);
-        // Handle both Unix and Windows style separators
+        // Extract the element of the path
+        current = size_t(next + 1u);
         next = path.find_first_of("/\\", current);
-
-        if (next == std::string::npos)
-            return path;
-
         std::string segment(path.substr(current, next - current));
         size_t size = segment.length();
 
-        // skip empty (keedp initial)
-        if (size == 0 && segments.size() > 0)
+        // Skip empty string: keep initial (i.e. ///)
+        if (size == 0u)
         {
             continue;
         }
 
-        // skip . (keep initial)
-        if (segment == "." && segments.size() > 0)
+        // skip "." string: keep initial
+        else if ((segment == ".") && (segments.size() > 0u))
         {
             continue;
         }
 
-        // remove ..
-        if (segment == ".." && segments.size() > 0)
+        // Remove "..": replace "foo/../bar" by "bar"
+        else if (segment == "..")
         {
-            if (segments.back().empty())
+            // Ignore if .. follows initial '/'
+            if (starts_with_slash && (segments.size() == 0u))
             {
-                // ignore if .. follows initial /
                 continue;
             }
-            if (segments.back() != "..")
+
+            // Segments [ ..., "foo", "bar" ] becomes [ ..., "foo" ]
+            if ((segments.size() > 0u) && (segments.back() != ".."))
             {
                 segments.pop_back();
                 continue;
@@ -823,26 +835,38 @@ std::string Path::canonicalPath(const std::string& path)
         segments.push_back(segment);
     } while (next != std::string::npos);
 
-    // Join the vector as a single string, every element is separated by a
-    // '/'. This process adds an extra / at the end that might need to be
-    // removed
-    std::stringstream clean_path;
-    std::copy(segments.begin(), segments.end(),
-              std::ostream_iterator<std::string>(clean_path,
-                                                 DIRECTORY_SEPARATOR));
-    std::string new_path = clean_path.str();
-
-    if (starts_with_slash && new_path.empty())
+    // Manage the case where the path starts with '/'
+    std::string clean_path;
+    if (starts_with_slash)
     {
-        new_path = DIRECTORY_SEPARATOR;
+        if (segments.empty() || (segments[0] != "."))
+        {
+            clean_path += DIRECTORY_SEPARATOR;
+        }
     }
 
-    if (!ends_with_slash && new_path.length() > 1)
+    // Join the vector as a single string, every element is separated by the
+    // folder separator.
+    for (auto const& it: segments)
     {
-        new_path.pop_back();
+        clean_path += it;
+        clean_path += DIRECTORY_SEPARATOR;
     }
 
-    return new_path;
+    // Manage the case "./" where the '/' was adding during the join.
+    if ((clean_path.size() == 2u) && (clean_path[0] == '.') &&
+        (clean_path[1] == DIRECTORY_SEPARATOR_CHAR))
+    {
+        return Path::Separator;
+    }
+
+    // Remove the last '/'
+    if (/*!ends_with_slash &&*/ (clean_path.length() > 1u))
+    {
+        clean_path.pop_back();
+    }
+
+    return clean_path;
 }
 
 // -----------------------------------------------------------------------------

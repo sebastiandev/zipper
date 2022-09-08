@@ -27,6 +27,10 @@ public:
     static const std::string Separator;
 
     //! \brief
+    static std::string root();
+    static bool isRoot(const std::string& path);
+
+    //! \brief
     static std::string currentPath();
 
     //! \brief Check whether the directory entry specified by 'path' is

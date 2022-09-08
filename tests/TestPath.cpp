@@ -51,24 +51,6 @@ TEST(TestDir, isWritable)
    ASSERT_EQ(Path::isWritable("/usr/bin"), false);
 }
 
-TEST(TestDir, baseName)
-{
-   ASSERT_STREQ(Path::baseName("/foo/bar/file.txt").c_str(), "file");
-   ASSERT_STREQ(Path::baseName("/foo/bar/file.foo.txt").c_str(), "file.foo");
-   ASSERT_STREQ(Path::baseName("/foo/bar").c_str(), "bar");
-   ASSERT_STREQ(Path::baseName("/foo/bar/").c_str(), "");
-   ASSERT_STREQ(Path::baseName("./foo/../bar/file.txt").c_str(), "file");
-   ASSERT_STREQ(Path::baseName("./foo/../bar/../file.txt").c_str(), "file");
-   ASSERT_STREQ(Path::baseName("").c_str(), "");
-   //KO ASSERT_STREQ(Path::baseName("..").c_str(), "..");
-   //KO ASSERT_STREQ(Path::baseName("../..").c_str(), "..");
-   ASSERT_STREQ(Path::baseName("../../").c_str(), "");
-   //KO ASSERT_STREQ(Path::baseName(".").c_str(), ".");
-   ASSERT_STREQ(Path::baseName("/").c_str(), "");
-   ASSERT_STREQ(Path::baseName("//").c_str(), "");
-   ASSERT_STREQ(Path::baseName("//.").c_str(), "");
-}
-
 TEST(TestDir, fileName)
 {
    ASSERT_STREQ(Path::fileName("/foo/bar/file.txt").c_str(), "file.txt");
@@ -82,6 +64,16 @@ TEST(TestDir, fileName)
    ASSERT_STREQ(Path::fileName("/").c_str(), "");
    ASSERT_STREQ(Path::fileName("//").c_str(), "");
    ASSERT_STREQ(Path::fileName("//.").c_str(), ".");
+
+   ASSERT_STREQ(Path::fileName("/foo/bar.txt").c_str(), "bar.txt");
+   ASSERT_STREQ(Path::fileName("/foo/.bar").c_str(), ".bar");
+   ASSERT_STREQ(Path::fileName("/foo/bar/").c_str(), "");
+   ASSERT_STREQ(Path::fileName("/foo/.").c_str(), ".");
+   ASSERT_STREQ(Path::fileName("/foo/..").c_str(), "..");
+   ASSERT_STREQ(Path::fileName(".").c_str(), ".");
+   ASSERT_STREQ(Path::fileName("..").c_str(), "..");
+   ASSERT_STREQ(Path::fileName("/").c_str(), "");
+   ASSERT_STREQ(Path::fileName("//host").c_str(), "host");
 }
 
 TEST(TestDir, dirName)
@@ -89,14 +81,19 @@ TEST(TestDir, dirName)
    ASSERT_STREQ(Path::dirName("/foo/bar/file.txt").c_str(), "/foo/bar");
    ASSERT_STREQ(Path::dirName("/foo/bar/file.foo.txt").c_str(), "/foo/bar");
    ASSERT_STREQ(Path::dirName("/foo/bar").c_str(), "/foo");
-   //KO ASSERT_STREQ(Path::dirName("/foo/bar/").c_str(), "/foo/bar");
+   ASSERT_STREQ(Path::dirName("/foo/bar/").c_str(), "/foo/bar");
    ASSERT_STREQ(Path::dirName("./foo/../bar/file.txt").c_str(), "./foo/../bar");
    ASSERT_STREQ(Path::dirName("./foo/../bar/../file.txt").c_str(), "./foo/../bar/..");
-   ASSERT_STREQ(Path::dirName("").c_str(), "");
+   ASSERT_STREQ(Path::dirName("/var/tmp/.").c_str(), "/var/tmp");;
+   ASSERT_STREQ(Path::dirName("/usr/lib").c_str(), "/usr");
+   ASSERT_STREQ(Path::dirName("/usr/").c_str(), "/usr");
+   ASSERT_STREQ(Path::dirName("/usr").c_str(), "/");
+   ASSERT_STREQ(Path::dirName("usr").c_str(), "");
+   ASSERT_STREQ(Path::dirName("/").c_str(), "/");
+   ASSERT_STREQ(Path::dirName(".").c_str(), "");
    ASSERT_STREQ(Path::dirName("..").c_str(), "");
-   //KO ASSERT_STREQ(Path::dirName("/").c_str(), "/");
-   //KO ASSERT_STREQ(Path::dirName("//").c_str(), "//");
-   //KO ASSERT_STREQ(Path::dirName("//.").c_str(), "//");
+   ASSERT_STREQ(Path::dirName("//").c_str(), "//");
+   ASSERT_STREQ(Path::dirName("//.").c_str(), "/");
 }
 
 TEST(TestDir, suffix)
@@ -153,7 +150,7 @@ TEST(TestDir, createTmpName)
 }
 
 TEST(TestDir, canonicalPath)
-{/*
+{
    ASSERT_STREQ(Path::canonicalPath("/foo/bar/file.txt").c_str(), "/foo/bar/file.txt");
    ASSERT_STREQ(Path::canonicalPath("./foo/bar/file.txt").c_str(), "./foo/bar/file.txt");
    ASSERT_STREQ(Path::canonicalPath("/foo/../bar/file.txt").c_str(), "/bar/file.txt");
@@ -175,15 +172,15 @@ TEST(TestDir, canonicalPath)
    ASSERT_STREQ(Path::canonicalPath("../../bin").c_str(), "../../bin");
    ASSERT_STREQ(Path::canonicalPath("../..//bin").c_str(), "../../bin");
    ASSERT_STREQ(Path::canonicalPath("../.././bin").c_str(), "../../bin");
-   ASSERT_STREQ(Path::canonicalPath("/../out/../in").c_str(), "/in");*/
+   ASSERT_STREQ(Path::canonicalPath("/../out/../in").c_str(), "/in");
+   ASSERT_STREQ(Path::canonicalPath("/../out/../in/").c_str(), "/in");
 }
 
 TEST(TestDir, normalize)
 {
    ASSERT_STREQ(Path::normalize("A//B").c_str(), "A/B");
-   //KO ASSERT_STREQ(Path::normalize("A/B/").c_str(), "A/B");
-   //KO ASSERT_STREQ(Path::normalize("A/B//").c_str(), "A/B");
+   ASSERT_STREQ(Path::normalize("A/B/").c_str(), "A/B");
+   ASSERT_STREQ(Path::normalize("A/B//").c_str(), "A/B");
    ASSERT_STREQ(Path::normalize("A/./B").c_str(), "A/B");
    ASSERT_STREQ(Path::normalize("A/foo/../B").c_str(), "A/B");
 }
-
