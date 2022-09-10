@@ -117,7 +117,7 @@ private:
     bool currentEntryInfo(ZipEntry &entry)
     {
         unz_file_info64 file_info;
-        char filename_inzip[256] = { 0 };
+        char filename_inzip[1024] = { 0 };
 
         int err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip,
                                           sizeof(filename_inzip), nullptr, 0,
@@ -191,8 +191,10 @@ private:
 
 
 public:
+
 #if 0
-    bool extractCurrentEntry(ZipEntry& entryinfo, int (extractStrategy)(ZipEntry&) )
+    bool extractCurrentEntry(ZipEntry& entryinfo,
+                             int (extractStrategy)(ZipEntry&))
     {
         int err = UNZ_OK;
 
@@ -219,7 +221,9 @@ public:
     }
 #endif
 
-    bool extractCurrentEntryToFile(ZipEntry& entryinfo, const std::string& fileName, bool const replace)
+    bool extractCurrentEntryToFile(ZipEntry& entryinfo,
+                                   std::string const& fileName,
+                                   bool const replace)
     {
         int err = UNZ_OK;
 
@@ -310,7 +314,7 @@ public:
     }
 
 #if defined(USE_WINDOWS)
-    void changeFileDate(const std::string& filename, uLong dosdate,
+    void changeFileDate(std::string const& filename, uLong dosdate,
                         tm_unz /*tmu_date*/)
     {
         HANDLE hFile;
@@ -329,7 +333,7 @@ public:
     }
 
 #else // !USE_WINDOWS
-    void changeFileDate(const std::string& filename, uLong /*dosdate*/,
+    void changeFileDate(std::string const& filename, uLong /*dosdate*/,
                         tm_unz tmu_date)
     {
         struct utimbuf ut;
@@ -351,7 +355,7 @@ public:
     }
 #endif // USE_WINDOWS
 
-    int extractToFile(const std::string& filename, ZipEntry& info, bool const replace)
+    int extractToFile(std::string const& filename, ZipEntry& info, bool const replace)
     {
         int err = UNZ_ERRNO;
 
@@ -360,6 +364,8 @@ public:
         if (!folder.empty())
         {
             std::string canon = Path::canonicalPath(folder);
+            std::cout << "CANNN: " << canon << std::endl;
+            std::cout << "FOLDER: " << folder << std::endl;
             if (canon.rfind(folder, 0) != 0)
             {
                 /* Prevent Zip Slip attack (See ticket #33) */
@@ -518,7 +524,7 @@ public:
         }
     }
 
-    bool initFile(const std::string& filename)
+    bool initFile(std::string const& filename)
     {
 #ifdef USEWIN32IOAPI
         zlib_filefunc64_def ffunc;
@@ -573,7 +579,7 @@ public:
         return entrylist;
     }
 
-    bool extractAll(const std::string& destination, const std::map<std::string,
+    bool extractAll(std::string const& destination, const std::map<std::string,
                     std::string>& alternativeNames, bool const replace)
     {
         std::vector<ZipEntry> entries;
@@ -599,18 +605,20 @@ public:
         return true;
     }
 
-    bool extractEntry(const std::string& name, const std::string& destination,
+    bool extractEntry(std::string const& name, std::string const& destination,
                       bool const replace)
     {
+        std::cout << "extractEntry: " << name << " to '" << destination << "'\n";
         std::string outputFile = destination.empty()
                                  ? name : destination + Path::Separator + name;
+        std::string canonOutputFile = Path::canonicalPath(outputFile);
 
         if (locateEntry(name))
         {
             ZipEntry entry;
             if (!currentEntryInfo(entry))
                 return false;
-            return extractCurrentEntryToFile(entry, outputFile, replace);
+            return extractCurrentEntryToFile(entry, canonOutputFile, replace);
         }
         else
         {
@@ -619,7 +627,7 @@ public:
         }
     }
 
-    bool extractEntryToStream(const std::string& name, std::ostream& stream)
+    bool extractEntryToStream(std::string const& name, std::ostream& stream)
     {
         if (locateEntry(name))
         {
@@ -635,7 +643,7 @@ public:
         }
     }
 
-    bool extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec)
+    bool extractEntryToMemory(std::string const& name, std::vector<unsigned char>& vec)
     {
         if (locateEntry(name))
         {
@@ -652,7 +660,7 @@ public:
     }
 };
 
-Unzipper::Unzipper(std::istream& zippedBuffer, const std::string& password)
+Unzipper::Unzipper(std::istream& zippedBuffer, std::string const& password)
     : m_ibuffer(zippedBuffer)
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
     , m_password(password)
@@ -668,7 +676,7 @@ Unzipper::Unzipper(std::istream& zippedBuffer, const std::string& password)
     m_open = true;
 }
 
-Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer, const std::string& password)
+Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer, std::string const& password)
     : m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(zippedBuffer)
     , m_password(password)
@@ -693,7 +701,7 @@ Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer, const std::string& 
     }
 }
 
-Unzipper::Unzipper(const std::string& zipname, const std::string& password)
+Unzipper::Unzipper(std::string const& zipname, std::string const& password)
     : m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
     , m_zipname(zipname)
@@ -737,34 +745,52 @@ std::vector<ZipEntry> Unzipper::entries()
     return m_impl->entries();
 }
 
-bool Unzipper::extractEntry(const std::string& name, const std::string& destination, bool const replace)
+bool Unzipper::extractEntry(std::string const& name,
+                            std::string const& destination,
+                            bool const replace)
 {
     return m_impl->extractEntry(name, destination, replace);
 }
 
-bool Unzipper::extractEntryToStream(const std::string& name, std::ostream& stream)
+bool Unzipper::extractEntry(std::string const& name,
+                            bool const replace)
+{
+    return m_impl->extractEntry(name, std::string(), replace);
+}
+
+bool Unzipper::extractEntryToStream(std::string const& name,
+                                    std::ostream& stream)
 {
     return m_impl->extractEntryToStream(name, stream);
 }
 
-bool Unzipper::extractEntryToMemory(const std::string& name, std::vector<unsigned char>& vec)
+bool Unzipper::extractEntryToMemory(std::string const& name,
+                                    std::vector<unsigned char>& vec)
 {
     return m_impl->extractEntryToMemory(name, vec);
 }
 
-bool Unzipper::extract(bool replace)
+bool Unzipper::extractAll(std::string const& destination,
+                          const std::map<std::string, std::string>& alternativeNames,
+                          bool const replace)
 {
-    return extract(std::string(), replace);
+    return m_impl->extractAll(Path::canonicalPath(destination),
+                              alternativeNames,
+                              replace);
 }
 
-bool Unzipper::extract(const std::string& destination, const std::map<std::string, std::string>& alternativeNames, bool const replace)
+bool Unzipper::extractAll(bool replace)
 {
-    return m_impl->extractAll(destination, alternativeNames, replace);
+    return m_impl->extractAll(std::string(),
+                              std::map<std::string, std::string>(),
+                              replace);
 }
 
-bool Unzipper::extract(const std::string& destination, bool const replace)
+bool Unzipper::extractAll(std::string const& destination, bool const replace)
 {
-    return m_impl->extractAll(destination, std::map<std::string, std::string>(), replace);
+    return m_impl->extractAll(Path::canonicalPath(destination),
+                              std::map<std::string, std::string>(),
+                              replace);
 }
 
 void Unzipper::release()

@@ -174,6 +174,8 @@ TEST(TestDir, canonicalPath)
    ASSERT_STREQ(Path::canonicalPath("../.././bin").c_str(), "../../bin");
    ASSERT_STREQ(Path::canonicalPath("/../out/../in").c_str(), "/in");
    ASSERT_STREQ(Path::canonicalPath("/../out/../in/").c_str(), "/in");
+   ASSERT_STREQ(Path::canonicalPath("/does/not/exist//data/somefolder").c_str(),
+                "/does/not/exist/data/somefolder");
 }
 
 TEST(TestDir, normalize)

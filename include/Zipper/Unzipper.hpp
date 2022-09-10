@@ -29,8 +29,8 @@ public:
     //!   if no password is needed).
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
-    Unzipper(const std::string& zipname,
-             const std::string& password = std::string());
+    Unzipper(std::string const& zipname,
+             std::string const& password = std::string());
 
     // -------------------------------------------------------------------------
     //! \brief In-memory zip decompressor (from std::iostream).
@@ -41,7 +41,7 @@ public:
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
     Unzipper(std::istream& buffer,
-             const std::string& password = std::string());
+             std::string const& password = std::string());
 
     // -------------------------------------------------------------------------
     //! \brief In-memory zip decompressor (from std::vector).
@@ -52,7 +52,7 @@ public:
     //! \throw std::runtime_error if something odd happened.
     // -------------------------------------------------------------------------
     Unzipper(std::vector<unsigned char>& buffer,
-             const std::string& password = std::string());
+             std::string const& password = std::string());
 
     // -------------------------------------------------------------------------
     //! \brief Call release() and close().
@@ -79,9 +79,16 @@ public:
     //!
     //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
-    bool extract(const std::string& destination,
-                 const std::map<std::string, std::string>& alternativeNames,
-                 bool replace = false);
+    inline bool extractAll(const char* destination,
+                           const std::map<std::string, std::string>& alternativeNames,
+                           bool const replace = false)
+    {
+        return extractAll(std::string(destination), alternativeNames, replace);
+    }
+
+    bool extractAll(std::string const& destination,
+                    const std::map<std::string, std::string>& alternativeNames,
+                    bool const replace = false);
 
     // -------------------------------------------------------------------------
     //! \brief Extract the whole archive to the desired disk destination. If no
@@ -95,7 +102,11 @@ public:
     //!
     //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
-    bool extract(const std::string& destination, bool replace = false);
+    bool extractAll(std::string const& destination, bool const replace = false);
+    inline bool extractAll(const char* destination, bool const replace = false)
+    {
+        return extractAll(std::string(destination), replace);
+    }
 
     // -------------------------------------------------------------------------
     //! \brief Extract the whole archive to the same folder than the zip file.
@@ -105,7 +116,7 @@ public:
     //!
     //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
-    bool extract(bool replace = false);
+    bool extractAll(bool const replace = false);
 
     // -------------------------------------------------------------------------
     //! \brief Extract a single entry from the archive.
@@ -119,8 +130,14 @@ public:
     //!
     //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
-    bool extractEntry(const std::string& name, const std::string& destination,
-                      bool replace = false);
+    bool extractEntry(std::string const& name,
+                      std::string const& destination,
+                      bool const replace = false);
+    inline bool extractEntry(const char* name, const char* destination,
+                             bool const replace = false)
+    {
+        return extractEntry(std::string(name), std::string(destination), replace);
+    }
 
     // -------------------------------------------------------------------------
     //! \brief Extract a single entry from the archive in the same folder than
@@ -132,9 +149,10 @@ public:
     //!
     //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
-    bool extractEntry(const std::string& name, bool replace = false)
+    bool extractEntry(std::string const& name, bool const replace = false);
+    inline bool extractEntry(const char* name, bool const replace = false)
     {
-       return extractEntry(name, std::string(), replace);
+        return extractEntry(std::string(name), replace);
     }
 
     // -------------------------------------------------------------------------
@@ -144,7 +162,11 @@ public:
     //! \param[out] stream: the stream that will hold the extracted entry.
     //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
-    bool extractEntryToStream(const std::string& name, std::ostream& stream);
+    bool extractEntryToStream(std::string const& name, std::ostream& stream);
+    inline bool extractEntryToStream(const char* name, std::ostream& stream)
+    {
+        return extractEntryToStream(std::string(name), stream);
+    }
 
     // -------------------------------------------------------------------------
     //! \brief Extract a single entry from zip to memory (vector).
@@ -153,8 +175,13 @@ public:
     //! \param[out] vec: the vector that will hold the extracted entry.
     //! \return true on success, else return false. Call error() for more info.
     // -------------------------------------------------------------------------
-    bool extractEntryToMemory(const std::string& name,
+    bool extractEntryToMemory(std::string const& name,
                               std::vector<unsigned char>& vec);
+
+    inline bool extractEntryToMemory(const char* name, std::vector<unsigned char>& vec)
+    {
+        return extractEntryToMemory(std::string(name), vec);
+    }
 
     // -------------------------------------------------------------------------
     //! \brief Relese memory. Called by the destructor.
@@ -194,7 +221,7 @@ class ZipEntry
 public:
 
     ZipEntry() = default;
-    ZipEntry(const std::string& name_,
+    ZipEntry(std::string const& name_,
              unsigned long long int compressed_size,
              unsigned long long int uncompressed_size,
              unsigned int year,

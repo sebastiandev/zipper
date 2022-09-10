@@ -87,7 +87,7 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs1)
     // Failed extracting since test1.txt is already present.
     try
     {
-        ASSERT_EQ(unzipper2.extract(), false);
+        ASSERT_EQ(unzipper2.extractAll(), false);
     }
     catch (std::runtime_error const& /*e*/)
     {}
@@ -95,7 +95,7 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs1)
     // Extract the zip. Check the test2.dat entry creates a folder 'TestFolder'
     // with a file named 'test2.dat' with the text 'other data to compression
     // test'
-    ASSERT_EQ(unzipper2.extract(true), true); // replace the "test1.txt"
+    ASSERT_EQ(unzipper2.extractAll(true), true); // replace the "test1.txt"
     unzipper2.close();
 
     ASSERT_EQ(Path::exist("TestFolder/test2.dat"), true);
@@ -135,7 +135,7 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs1)
     // structure from zip in the new destination folder
     Path::createDir(Path::currentPath() + "/NewDestination");
 
-    ASSERT_EQ(unzipper3.extract(Path::currentPath() + "/NewDestination"), true);
+    ASSERT_EQ(unzipper3.extractAll(Path::currentPath() + "/NewDestination"), true);
 
     std::vector<std::string> files = Path::filesFromDir(
         Path::currentPath() + "/NewDestination", true);
@@ -176,7 +176,7 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs2)
 
     // Extracting the strdata entry creates a file named 'strdata' with the text
     // 'test string data compression'"
-    unzipper.extract();
+    unzipper.extractAll();
     ASSERT_EQ(Path::exist("strdata"), true);
     ASSERT_EQ(Path::isFile("strdata"), true);
 
@@ -193,7 +193,7 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs2)
     std::map<std::string, std::string> alt_names;
     alt_names["strdata"] = "alternative_strdata.dat";
 
-    ASSERT_EQ(unzipper.extract("", alt_names), true);
+    ASSERT_EQ(unzipper.extractAll("", alt_names), true);
     ASSERT_EQ(Path::exist("alternative_strdata.dat"), true);
 
     std::ifstream testfile4("alternative_strdata.dat");
@@ -282,14 +282,14 @@ TEST(MemoryZipTests, ZipVectorFeedWithDifferentInputs1)
     // Failed extracting since test1.txt is already present.
     try
     {
-        ASSERT_EQ(unzipper2.extract(), false);
+        ASSERT_EQ(unzipper2.extractAll(), false);
     }
     catch (std::runtime_error const& /*e*/)
     {}
 
     // Extracting the test2.dat entry creates a folder 'TestFolder' with a file
     // named 'test2.dat' with the text 'other data to compression test'
-    ASSERT_EQ(unzipper2.extract(true), true);
+    ASSERT_EQ(unzipper2.extractAll(true), true);
     ASSERT_EQ(Path::exist("TestFolder/test2.dat"), true);
 
     std::ifstream testfile2("TestFolder/test2.dat");
@@ -340,7 +340,7 @@ TEST(MemoryZipTests, ZipVectorFeedWithDifferentInputs2)
 
     // Extracting the strdata entry creates a file named 'strdata' with the txt
     // 'test string data compression'
-    ASSERT_EQ(unzipper.extract(true), true);
+    ASSERT_EQ(unzipper.extractAll(true), true);
     ASSERT_EQ(Path::exist("strdata"), true);
 
     std::ifstream testfile3("strdata");
@@ -454,7 +454,7 @@ TEST(ZipTests, PasswordTest)
     ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "Test1");
     ASSERT_STREQ(unzipper.entries()[1].name.c_str(), "Test2");
 
-    ASSERT_EQ(unzipper.extract(), true);
+    ASSERT_EQ(unzipper.extractAll(), true);
     ASSERT_EQ(Path::exist("Test1"), true);
     ASSERT_EQ(Path::isFile("Test1"), true);
     ASSERT_EQ(Path::exist("Test2"), true);
@@ -547,6 +547,52 @@ TEST(ZipTests, UnzipDummyTarball)
         zipper::Unzipper unzipper("ziptest.zip");
         ASSERT_EQ(unzipper.entries().size(), 0u);
     }
+
+    Path::remove("ziptest.zip");
+    Path::remove("data");
+}
+
+// -----------------------------------------------------------------------------
+// https://github.com/sebastiandev/zipper/issues/83
+TEST(MemoryZipTests, Issue83)
+{
+    // Clean up
+    Path::remove("ziptest.zip");
+    Path::remove("data");
+
+    // Create folder
+    Path::createDir("data/somefolder/");
+    std::ofstream test("data/somefolder/test.txt");
+    test << "test file2 compression";
+    test.flush();
+    test.close();
+
+    // Zip
+    Zipper zipper("ziptest.zip");
+    ASSERT_EQ(zipper.add("data/somefolder/"), true);
+    zipper.close();
+
+    // Unzip
+    zipper::Unzipper unzipper("ziptest.zip");
+    ASSERT_EQ(unzipper.extractEntry("data/somefolder/test.txt",
+                                    "/does/not/exist"),
+              false);
+    ASSERT_STREQ(unzipper.error().message().c_str(),
+                 "Error: cannot create the folder '/does/not/exist/data/somefolder'");
+
+    ASSERT_EQ(unzipper.extractEntry("data/somefolder/test.txt",
+                                    "/usr/bin"),
+              false);
+    ASSERT_STREQ(unzipper.error().message().c_str(),
+                 "Error: cannot create the folder '/usr/bin/data/somefolder'");
+
+    ASSERT_EQ(unzipper.extractAll("/does/not/exist/"), false);
+    ASSERT_STREQ(unzipper.error().message().c_str(),
+                 "Error: cannot create the folder '/does/not/exist/data/somefolder'");
+
+    ASSERT_EQ(unzipper.extractAll("/usr/bin"), false);
+    ASSERT_STREQ(unzipper.error().message().c_str(),
+                 "Error: cannot create the folder '/usr/bin/data/somefolder'");
 
     Path::remove("ziptest.zip");
     Path::remove("data");
