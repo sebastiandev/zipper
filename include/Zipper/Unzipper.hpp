@@ -164,7 +164,7 @@ public:
     // -------------------------------------------------------------------------
     //! \brief Get the error information when a method returned false.
     // -------------------------------------------------------------------------
-    std::error_code error() const;
+    std::error_code const& error() const;
 
 private:
 
@@ -180,6 +180,7 @@ private:
     bool m_usingMemoryVector;
     bool m_usingStream;
     bool m_open;
+    std::error_code m_error_code;
 
     struct Impl;
     Impl* m_impl;
