@@ -18,7 +18,7 @@ By flexibility I mean supporting all kinds of inputs and outputs, but specifical
 
 - [x] Protection against [Zip Slip](https://github.com/sebastiandev/zipper/issues/33) has been added in this v2.x.y branch but
 not fully tested by unit tests.
-- [] Write non-regression tests and improve the GitHub workflow (CI).
+- [x] Write non-regression tests and improve the GitHub workflow (CI).
 - [] Use C++17 for using filesystem. This branch needs to be merged with the dev-modernize branch.
 
 ### :warning: Security Notice
@@ -79,6 +79,32 @@ There are two classes available Zipper and Unzipper. They behave in the same man
 using namespace zipper;
 ```
 
+- Adding a password. You can protect your file by adding a password as a `std::string` as second parameter to any of `Zipper` constructors. Do not forget to call close else the zip will not well formed (`Unzipper` will fail opening it for example).
+
+For example:
+
+```c++
+Zipper zipper("ziptest.zip", "mypassword");
+...
+zipper.close();
+```
+
+Throw `std::run_time` in case of failure.
+
+- No password. Do not forget to call close else the zip will not well formed (`Unzipper` will fail opening it for example).
+
+```c++
+Zipper zipper("ziptest.zip");
+...
+zipper.close();
+```
+
+Throw `std::run_time` in case of failure.
+
+- Appending files inside the archive.
+
+By default the constructor `Zipper` for zip file uses an implicit flag `Zipper::Overwrite` you can change it by `Zipper::Append`.
+
 - Creating a zip file with 2 files:
 
 ```c++
@@ -97,7 +123,7 @@ zipper.close();
 ```c++
 Zipper zipper("ziptest.zip");
 zipper.add("somefile.txt");
-zipper.add("myFolder");
+zipper.add("myFolder/");
 zipper.close();
 ```
 
@@ -146,17 +172,6 @@ which compress the best but can takes some time to perform the compression. You 
 zipper.add(input1, "Test1", Zipper::Medium);
 ```
 
-- Adding a password. You can protect your file by adding a password as a `std::string` as second parameter to any of `Zipper` constructors. For example:
-
-```c++
-Zipper zipper("ziptest.zip", "mypassword");
-```
-
-- Appending files inside the archive.
-
-By default the constructor `Zipper` for zip file uses an implicit flag `Zipper::Overwrite` you can
-change it by `Zipper::Append`. Note: in previous versions of Zipper the `Zipper::Append` flag was the one by default but now replaced by `Zipper::Overwrite`.
-
 ##### Unzipping
 
 - Header:
@@ -166,30 +181,75 @@ change it by `Zipper::Append`. Note: in previous versions of Zipper the `Zipper:
 using namespace zipper;
 ```
 
-- Getting all entries in zip:
+- Extraction using a password: pass your password as a `std::string` as second parameter to any of constructors:
+
+```c++
+Zipper unzipper("ziptest.zip", "mypassword");
+...
+zipper.close();
+```
+
+Throw `std::run_time` in case of failure.
+
+- Extraction not using a password.
+
+```c++
+Zipper unzipper("ziptest.zip");
+...
+zipper.close();
+```
+
+Throw `std::run_time` in case of failure.
+
+- Getting all entries in the zip:
 
 ```c++
 Unzipper unzipper("zipfile.zip");
 std::vector<ZipEntry> entries = unzipper.entries();
+for (auto& it: unzipper.entries())
+{
+    std::cout << it.name << ": "
+              << it.timestamp
+              << std::endl;
+}
 unzipper.close();
 ```
 
-- Extracting all entries from zip:
+- Extracting all entries from the zip:
 
 ```c++
 Unzipper unzipper("zipfile.zip");
-unzipper.extract();
+unzipper.extractAll(); // Fail if a file exists (false argument is implicit)
+unzipper.extractAll(true);  // Replace existing files
 unzipper.close();
 ```
+
+Return `true` in case of success or `false` in case of failure.
+In case of failure, use `unzipper.error();` to get the `std::error_code`.
+
+- Extracting all entries from zip to desired destination:
+
+```c++
+Unzipper unzipper("zipfile.zip");
+unzipper.extractAll("/the/destination/path");        // Fail if a file exists (false argument is implicit)
+unzipper.extractAll("/the/destination/path", true);  // Replace existing files
+unzipper.close();
+```
+
+Return `true` in case of success or `false` in case of failure.
+In case of failure, use `unzipper.error();` to get the `std::error_code`.
 
 - Extracting all entries from zip using alternative names for existing files on disk:
 
 ```c++
 std::map<std::string, std::string> alternativeNames = { {"Test1", "alternative_name_test1"} };
 Unzipper unzipper("zipfile.zip");
-unzipper.extract(".", alternativeNames);
+unzipper.extractAll(".", alternativeNames);
 unzipper.close();
 ```
+
+Return `true` in case of success or `false` in case of failure.
+In case of failure, use `unzipper.error();` to get the `std::error_code`.
 
 - Extracting a single entry from zip:
 
@@ -198,6 +258,21 @@ Unzipper unzipper("zipfile.zip");
 unzipper.extractEntry("entry name");
 unzipper.close();
 ```
+
+Return `true` in case of success or `false` in case of failure.
+In case of failure, use `unzipper.error();` to get the `std::error_code`.
+
+- Extracting a single entry from zip to destination:
+
+```c++
+Unzipper unzipper("zipfile.zip");
+unzipper.extractEntry("entry name", "/the/destination/path"); // Fail if a file exists (false argument is implicit)
+unzipper.extractEntry("entry name", "/the/destination/path", true); // Replace existing file
+unzipper.close();
+```
+
+Return `true` in case of success or `false` in case of failure.
+In case of failure, use `unzipper.error();` to get the `std::error_code`.
 
 - Extracting a single entry from zip to memory:
 
@@ -208,6 +283,9 @@ unzipper.extractEntryToMemory("entry name", unzipped_entry);
 unzipper.close();
 ```
 
+Return `true` in case of success or `false` in case of failure.
+In case of failure, use `unzipper.error();` to get the `std::error_code`.
+
 - Extracting from a vector:
 
 ```c++
@@ -215,15 +293,7 @@ unzipper.close();
 std::vector<unsigned char> zip_vect; // Populated with Zipper zipper(zip_vect);
 
 Unzipper unzipper(zip_vect);
-unzipper.extractEntry("Test1")
-```
-
-**Note:** Methods `extract`, `extractEntry`, `extractEntryToMemory` return a boolean indicating the success (`true`) or the failure (`false`).
-
-- Extraction using a password. You can pass your password as a `std::string` as second parameter to any of constructors:
-
-```c++
-Zipper unzipper("ziptest.zip", "mypassword");
+unzipper.extractEntry("Test1");
 ```
 
 ##### Linking Zipper to your project
