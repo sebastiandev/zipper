@@ -1,3 +1,5 @@
+:warning: **This branch is no longer maintained. The maintained branch is:** https://github.com/sebastiandev/zipper/tree/v2.x.y
+
 ![Zipper](https://github.com/sebastiandev/zipper/blob/master/logo.png)
 
 C++ wrapper around minizip compression library
@@ -101,6 +103,8 @@ There are two classes available Zipper and Unzipper. They behave in the same man
 
 #### Zipping
 
+:warning: **This branch is no longer maintained. The maintained branch is:** https://github.com/sebastiandev/zipper/tree/v2.x.y
+
 - Header:
 
 ```c++
@@ -187,6 +191,8 @@ By default the constructor `Zipper` for zip file uses an implicit flag `Zipper::
 change it by `Zipper::Append`. Note: in previous versions of Zipper the `Zipper::Append` flag was the one by default but now replaced by `Zipper::Overwrite`.
 
 ##### Unzipping
+
+:warning: **This branch is no longer maintained. The maintained branch is:** https://github.com/sebastiandev/zipper/tree/v2.x.y
 
 - Header:
 
