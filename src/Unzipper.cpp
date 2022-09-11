@@ -419,6 +419,18 @@ public:
             return UNZ_ERRNO;
         }
 
+        std::string canon = Path::canonicalPath(filename);
+        if (/*(!replace) &&*/ (canon.size() >= 2u) &&
+            (canon[0] == '.') && (canon[1] == '.'))
+        {
+            std::stringstream str;
+            str << "Security error: entry '" << filename
+                << "' would be outside your target directory";
+
+            m_error_code = make_error_code(unzipper_error::SECURITY_ERROR, str.str());
+            return UNZ_ERRNO;
+        }
+
         /* Create the file on disk so we can unzip to it */
         std::ofstream output_file(filename.c_str(), std::ofstream::binary);
         if (output_file.good())

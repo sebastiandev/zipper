@@ -20,6 +20,33 @@
 using namespace zipper;
 
 // -----------------------------------------------------------------------------
+static std::string readFileContent(const char* file)
+{
+    std::ifstream ifs(file);
+    std::string str((std::istreambuf_iterator<char>(ifs)),
+                    std::istreambuf_iterator<char>());
+    return str.c_str();
+}
+
+// -----------------------------------------------------------------------------
+static bool zipEntry(Zipper& zipper, const char* filepath, const char* content,
+                     const char* entrypath)
+{
+    std::ofstream ofs(filepath);
+    ofs << content;
+    ofs.flush();
+    ofs.close();
+
+    std::ifstream ifs(filepath);
+    bool res = zipper.add(ifs, entrypath);
+    ifs.close();
+
+    Path::remove(filepath);
+
+    return res;
+}
+
+// -----------------------------------------------------------------------------
 TEST(FileZipTests, ZipfileFeedWithDifferentInputs1)
 {
     // Clean up
@@ -553,12 +580,70 @@ TEST(ZipTests, Issue21)
 }
 
 // -----------------------------------------------------------------------------
-std::string readContentOf(const char* file)
+// https://github.com/sebastiandev/zipper/issues/33
+TEST(ZipTests, Issue33_zipping)
 {
-    std::ifstream ifs(file);
-    std::string str((std::istreambuf_iterator<char>(ifs)),
-                    std::istreambuf_iterator<char>());
-    return str.c_str();
+    {
+        Path::remove("ziptest.zip");
+        Zipper zipper("ziptest.zip");
+        ASSERT_EQ(zipEntry(zipper, "Test1.txt", "hello", "../Test1"), false);
+        ASSERT_STREQ(zipper.error().message().c_str(),
+                     "Security error: forbidden insertion of ../Test1 "
+                     "(canonic: ../Test1) to prevent possible Zip Slip attack");
+        zipper.close();
+
+        Unzipper unzipper("ziptest.zip");
+        ASSERT_EQ(unzipper.entries().size(), 0u);
+        unzipper.close();
+    }
+
+    {
+        Path::remove("ziptest.zip");
+        Zipper zipper("ziptest.zip");
+        ASSERT_EQ(zipEntry(zipper, "Test1.txt", "world", "foo/../Test1"), true);
+        zipper.close();
+
+        Unzipper unzipper("ziptest.zip");
+        ASSERT_EQ(unzipper.entries().size(), 1u);
+        ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "Test1");
+        unzipper.close();
+    }
+
+    Path::remove("ziptest.zip");
+}
+
+// -----------------------------------------------------------------------------
+// https://github.com/sebastiandev/zipper/issues/33
+TEST(ZipTests, Issue33_unzipping)
+{
+    {
+        ASSERT_EQ(Path::exist("../Test1"), false);
+
+        Unzipper unzipper("issues/issue33_1.zip");
+        ASSERT_EQ(unzipper.entries().size(), 1u);
+        ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "../Test1");
+        ASSERT_EQ(unzipper.extractEntry("../Test1"), false);
+        ASSERT_STREQ(unzipper.error().message().c_str(),
+                     "Security error: entry '../Test1' would be outside your "
+                     "target directory");
+        unzipper.close();
+        ASSERT_EQ(Path::exist("../Test1"), false);
+    }
+
+    {
+        Path::remove("Test1");
+
+        Unzipper unzipper("issues/issue33_2.zip");
+        ASSERT_EQ(unzipper.entries().size(), 1u);
+        ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "foo/../Test1");
+        ASSERT_EQ(unzipper.extractEntry("foo/../Test1"), true);
+        unzipper.close();
+        ASSERT_EQ(Path::exist("Test1"), true);
+        ASSERT_EQ(Path::isFile("Test1"), true);
+        ASSERT_STREQ(readFileContent("Test1").c_str(), "hello");
+
+        Path::remove("Test1");
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -566,8 +651,6 @@ std::string readContentOf(const char* file)
 TEST(ZipTests, Issue34)
 {
     zipper::Unzipper unzipper("issues/issue34.zip");
-    for (auto& it: unzipper.entries())
-        std::cout << it.name << ": " << it.timestamp << std::endl;
     ASSERT_EQ(unzipper.entries().size(), 13u);
     ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "issue34/");
     ASSERT_STREQ(unzipper.entries()[1].name.c_str(), "issue34/1/");
@@ -614,9 +697,9 @@ TEST(ZipTests, Issue34)
     ASSERT_EQ(Path::isDir("/tmp/issue34/11/foo/bar/"), true);
     //FIXME ASSERT_EQ(Path::isFile("/tmp/issue34/11/foo/bar/here.txt"), true);
 
-    ASSERT_STREQ(readContentOf("/tmp/issue34/1/2/3_1/3.1.txt").c_str(), "3.1\n");
-    ASSERT_STREQ(readContentOf("/tmp/issue34/1/2/foobar.txt").c_str(), "foobar.txt\n");
-    //FIXME ASSERT_STREQ(readContentOf("/tmp/issue34/11/foo/bar/here.txt").c_str(), "");
+    ASSERT_STREQ(readFileContent("/tmp/issue34/1/2/3_1/3.1.txt").c_str(), "3.1\n");
+    ASSERT_STREQ(readFileContent("/tmp/issue34/1/2/foobar.txt").c_str(), "foobar.txt\n");
+    //FIXME ASSERT_STREQ(readFileContent("/tmp/issue34/11/foo/bar/here.txt").c_str(), "");
 }
 
 // -----------------------------------------------------------------------------

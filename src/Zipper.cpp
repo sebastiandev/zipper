@@ -261,9 +261,18 @@ struct Zipper::Impl
             return false;
         }
 
+        std::string canonNameInZip = Path::canonicalPath(nameInZip);
+
         /* Prevent Zip Slip attack (See ticket #33) */
-        //if (nameInZip.find_first_of("/\\*") != std::string::npos)
-        //    throw std::runtime_error("Security error: '" + nameInZip + "' has forbidden chars /\\*");
+        if (canonNameInZip.find_first_of("..") == 0u)
+        {
+            std::stringstream str;
+            str << "Security error: forbidden insertion of "
+                << nameInZip << " (canonic: " << canonNameInZip
+                << ") to prevent possible Zip Slip attack";
+            m_error_code = make_error_code(zipper_error::SECURITY_ERROR, str.str());
+            return false;
+        }
 
         flags = flags & ~int(Zipper::zipFlags::SaveHierarchy);
         if (flags == Zipper::zipFlags::Store)
@@ -285,7 +294,7 @@ struct Zipper::Impl
         {
             err = zipOpenNewFileInZip64(
                 m_zf,
-                nameInZip.c_str(),
+                canonNameInZip.c_str(),
                 &zi,
                 nullptr,
                 0,
@@ -301,7 +310,7 @@ struct Zipper::Impl
             getFileCrc(input_stream, buff, crcFile);
             err = zipOpenNewFileInZip3_64(
                 m_zf,
-                nameInZip.c_str(),
+                canonNameInZip.c_str(),
                 &zi,
                 nullptr,
                 0,
