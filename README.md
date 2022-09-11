@@ -19,12 +19,10 @@ By flexibility I mean supporting all kinds of inputs and outputs, but specifical
 - [x] Protection against [Zip Slip](https://github.com/sebastiandev/zipper/issues/33) has been added in this v2.x.y branch but
 not fully tested by unit tests.
 - [x] Write non-regression tests and improve the GitHub workflow (CI).
-- [] Use C++17 for using filesystem. This branch needs to be merged with the dev-modernize branch.
 
 ### :warning: Security Notice
 
-- Zipper is no longer actively maintained.
-- Zipper currently follows an outdated (and probably vulnerable) version of the minizip library.
+- Zipper currently follows an outdated (and probably vulnerable) version of the https://github.com/Lecrapouille/minizip library.
 - While some fixes have been added this lib may be still vulnerable to ZipSlip attack and mitigations
 should be put in place by Zipper's users.
 
