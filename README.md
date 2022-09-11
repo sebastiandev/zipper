@@ -64,6 +64,31 @@ You will see a message like:
 *** Installing: Zipper => /usr/include/Zipper-2.0.0
 ```
 
+#### Non regression tests
+
+Depends on:
+- [googletest](https://github.com/google/googletest) framework
+- lcov for code coverage:
+
+Two ways of running them:
+- From the root folder:
+```shell
+make check -j`nproc --all`
+```
+
+- From the tests/ folder:
+```shell
+cd tests
+make coverage -j`nproc --all`
+```
+
+A coverage report is created an opened. If you do not desire generating the report.
+```shell
+cd tests
+make -j`nproc --all`
+./build/Zipper-UnitTest
+```
+
 ### Usage
 
 There are two classes available Zipper and Unzipper. They behave in the same manner regarding constructors and storage parameters. (for a complete example take a look at the [zip file tests](test/file_zip_test.cpp) and [zip memory tests](test/memory_zip_test.cpp) using the awesome BDD's from Catch library )
