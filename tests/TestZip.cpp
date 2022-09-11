@@ -480,6 +480,39 @@ TEST(ZipTests, PasswordTest)
 }
 
 // -----------------------------------------------------------------------------
+TEST(ZipTests, UnzipDummyTarball)
+{
+    // Clean up
+    Path::remove("ziptest.zip");
+    Path::remove("data");
+
+    // Create folder
+    Path::createDir("data/somefolder/");
+
+    // Test with the '/'
+    {
+        Zipper zipper("ziptest.zip");
+        ASSERT_EQ(zipper.add("data/somefolder/"), true); // With the '/'
+        zipper.close();
+        zipper::Unzipper unzipper("ziptest.zip");
+        ASSERT_EQ(unzipper.entries().size(), 0u);
+        Path::remove("ziptest.zip");
+    }
+
+    // Test without the '/'
+    {
+        Zipper zipper("ziptest.zip");
+        ASSERT_EQ(zipper.add("data/somefolder"), true); // Without the '/'
+        zipper.close();
+        zipper::Unzipper unzipper("ziptest.zip");
+        ASSERT_EQ(unzipper.entries().size(), 0u);
+    }
+
+    Path::remove("ziptest.zip");
+    Path::remove("data");
+}
+
+// -----------------------------------------------------------------------------
 // https://github.com/sebastiandev/zipper/issues/21
 TEST(ZipTests, Issue21)
 {
@@ -520,36 +553,70 @@ TEST(ZipTests, Issue21)
 }
 
 // -----------------------------------------------------------------------------
-TEST(ZipTests, UnzipDummyTarball)
+std::string readContentOf(const char* file)
 {
-    // Clean up
-    Path::remove("ziptest.zip");
-    Path::remove("data");
+    std::ifstream ifs(file);
+    std::string str((std::istreambuf_iterator<char>(ifs)),
+                    std::istreambuf_iterator<char>());
+    return str.c_str();
+}
 
-    // Create folder
-    Path::createDir("data/somefolder/");
+// -----------------------------------------------------------------------------
+// https://github.com/sebastiandev/zipper/issues/34
+TEST(ZipTests, Issue34)
+{
+    zipper::Unzipper unzipper("issues/issue34.zip");
+    for (auto& it: unzipper.entries())
+        std::cout << it.name << ": " << it.timestamp << std::endl;
+    ASSERT_EQ(unzipper.entries().size(), 13u);
+    ASSERT_STREQ(unzipper.entries()[0].name.c_str(), "issue34/");
+    ASSERT_STREQ(unzipper.entries()[1].name.c_str(), "issue34/1/");
+    ASSERT_STREQ(unzipper.entries()[2].name.c_str(), "issue34/1/.dummy");
+    ASSERT_STREQ(unzipper.entries()[3].name.c_str(), "issue34/1/2/");
+    ASSERT_STREQ(unzipper.entries()[4].name.c_str(), "issue34/1/2/3/");
+    ASSERT_STREQ(unzipper.entries()[5].name.c_str(), "issue34/1/2/3/4/");
+    ASSERT_STREQ(unzipper.entries()[6].name.c_str(), "issue34/1/2/3_1/");
+    ASSERT_STREQ(unzipper.entries()[7].name.c_str(), "issue34/1/2/3_1/3.1.txt");
+    ASSERT_STREQ(unzipper.entries()[8].name.c_str(), "issue34/1/2/foobar.txt");
+    ASSERT_STREQ(unzipper.entries()[9].name.c_str(), "issue34/11/");
+    ASSERT_STREQ(unzipper.entries()[10].name.c_str(), "issue34/11/foo/");
+    ASSERT_STREQ(unzipper.entries()[11].name.c_str(), "issue34/11/foo/bar/");
+    ASSERT_STREQ(unzipper.entries()[12].name.c_str(), "issue34/11/foo/bar/here.txt");
 
-    // Test with the '/'
-    {
-        Zipper zipper("ziptest.zip");
-        ASSERT_EQ(zipper.add("data/somefolder/"), true); // With the '/'
-        zipper.close();
-        zipper::Unzipper unzipper("ziptest.zip");
-        ASSERT_EQ(unzipper.entries().size(), 0u);
-        Path::remove("ziptest.zip");
-    }
+    Path::remove("/tmp/issue34");
+    ASSERT_EQ(unzipper.extractAll("/tmp"), true);
 
-    // Test without the '/'
-    {
-        Zipper zipper("ziptest.zip");
-        ASSERT_EQ(zipper.add("data/somefolder"), true); // Without the '/'
-        zipper.close();
-        zipper::Unzipper unzipper("ziptest.zip");
-        ASSERT_EQ(unzipper.entries().size(), 0u);
-    }
+    ASSERT_EQ(Path::exist("/tmp/issue34/"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/1/"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/1/.dummy"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/1/2/"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/1/2/3/"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/1/2/3/4/"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/1/2/3_1/"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/1/2/3_1/3.1.txt"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/1/2/foobar.txt"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/11/"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/11/foo/"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/11/foo/bar/"), true);
+    ASSERT_EQ(Path::exist("/tmp/issue34/11/foo/bar/here.txt"), true);
 
-    Path::remove("ziptest.zip");
-    Path::remove("data");
+    ASSERT_EQ(Path::isDir("/tmp/issue34/"), true);
+    ASSERT_EQ(Path::isDir("/tmp/issue34/1/"), true);
+    ASSERT_EQ(Path::isDir("/tmp/issue34/1/.dummy"), true);
+    ASSERT_EQ(Path::isDir("/tmp/issue34/1/2/"), true);
+    ASSERT_EQ(Path::isDir("/tmp/issue34/1/2/3/"), true);
+    ASSERT_EQ(Path::isDir("/tmp/issue34/1/2/3/4/"), true);
+    ASSERT_EQ(Path::isDir("/tmp/issue34/1/2/3_1/"), true);
+    ASSERT_EQ(Path::isFile("/tmp/issue34/1/2/3_1/3.1.txt"), true);
+    ASSERT_EQ(Path::isFile("/tmp/issue34/1/2/foobar.txt"), true);
+    ASSERT_EQ(Path::isDir("/tmp/issue34/11/"), true);
+    ASSERT_EQ(Path::isDir("/tmp/issue34/11/foo/"), true);
+    ASSERT_EQ(Path::isDir("/tmp/issue34/11/foo/bar/"), true);
+    //FIXME ASSERT_EQ(Path::isFile("/tmp/issue34/11/foo/bar/here.txt"), true);
+
+    ASSERT_STREQ(readContentOf("/tmp/issue34/1/2/3_1/3.1.txt").c_str(), "3.1\n");
+    ASSERT_STREQ(readContentOf("/tmp/issue34/1/2/foobar.txt").c_str(), "foobar.txt\n");
+    //FIXME ASSERT_STREQ(readContentOf("/tmp/issue34/11/foo/bar/here.txt").c_str(), "");
 }
 
 // -----------------------------------------------------------------------------

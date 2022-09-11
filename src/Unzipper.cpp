@@ -364,8 +364,6 @@ public:
         if (!folder.empty())
         {
             std::string canon = Path::canonicalPath(folder);
-            std::cout << "CANNN: " << canon << std::endl;
-            std::cout << "FOLDER: " << folder << std::endl;
             if (canon.rfind(folder, 0) != 0)
             {
                 /* Prevent Zip Slip attack (See ticket #33) */
@@ -608,7 +606,6 @@ public:
     bool extractEntry(std::string const& name, std::string const& destination,
                       bool const replace)
     {
-        std::cout << "extractEntry: " << name << " to '" << destination << "'\n";
         std::string outputFile = destination.empty()
                                  ? name : destination + Path::Separator + name;
         std::string canonOutputFile = Path::canonicalPath(outputFile);
@@ -710,18 +707,18 @@ Unzipper::Unzipper(std::string const& zipname, std::string const& password)
     , m_usingStream(false)
     , m_impl(new Impl(*this, m_error_code))
 {
-    if (m_impl->initFile(zipname))
-    {
-        // success
-        m_open = true;
-    }
-    else if (!Path::exist(zipname))
+    if (!Path::exist(zipname))
     {
         std::runtime_error exception("Non existent zip file!");
         release();
         throw exception;
     }
-    else if ((m_impl != nullptr) && m_impl->m_error_code)
+    else if (m_impl->initFile(zipname))
+    {
+        // success
+        m_open = true;
+    }
+    else if (m_impl->m_error_code)
     {
         std::runtime_error exception(m_impl->m_error_code.message());
         release();
