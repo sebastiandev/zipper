@@ -12,7 +12,7 @@
 #include <utime.h>
 
 #ifndef ZIPPER_WRITE_BUFFER_SIZE
-#  define ZIPPER_WRITE_BUFFER_SIZE (8192)
+#  define ZIPPER_WRITE_BUFFER_SIZE (8192u)
 #endif
 
 namespace zipper {
@@ -28,6 +28,9 @@ enum class unzipper_error
     SECURITY_ERROR,
 };
 
+// *************************************************************************
+//! \brief std::error_code instead of throw() or errno.
+// *************************************************************************
 struct UnzipperErrorCategory : std::error_category
 {
     virtual const char* name() const noexcept override
@@ -66,20 +69,26 @@ struct UnzipperErrorCategory : std::error_category
     std::string custom_message;
 };
 
-UnzipperErrorCategory theUnzipperErrorCategory;
+// -----------------------------------------------------------------------------
+static UnzipperErrorCategory theUnzipperErrorCategory;
 
-std::error_code make_error_code(unzipper_error e)
+// -----------------------------------------------------------------------------
+static std::error_code make_error_code(unzipper_error e)
 {
     return { static_cast<int>(e), theUnzipperErrorCategory };
 }
 
-std::error_code make_error_code(unzipper_error e, std::string const& message)
+// -----------------------------------------------------------------------------
+static std::error_code make_error_code(unzipper_error e, std::string const& message)
 {
     std::cerr << message << std::endl;
     theUnzipperErrorCategory.custom_message = message;
     return { static_cast<int>(e), theUnzipperErrorCategory };
 }
 
+// *************************************************************************
+//! \brief PIMPL implementation
+// *************************************************************************
 struct Unzipper::Impl
 {
     Unzipper& m_outer;
@@ -90,17 +99,20 @@ struct Unzipper::Impl
 
 private:
 
+    // -------------------------------------------------------------------------
     bool initMemory(zlib_filefunc_def& filefunc)
     {
         m_zf = unzOpen2("__notused__", &filefunc);
         return m_zf != nullptr;
     }
 
+    // -------------------------------------------------------------------------
     bool locateEntry(std::string const& name)
     {
         return UNZ_OK == unzLocateFile(m_zf, name.c_str(), nullptr);
     }
 
+    // -------------------------------------------------------------------------
     bool failIfInvalidEntry(ZipEntry const& entryinfo)
     {
         if (!entryinfo.valid())
@@ -114,6 +126,7 @@ private:
         return true;
     }
 
+    // -------------------------------------------------------------------------
     bool currentEntryInfo(ZipEntry &entry)
     {
         unz_file_info64 file_info;
@@ -136,7 +149,9 @@ private:
         return true;
     }
 
+
 #if 0
+    // -------------------------------------------------------------------------
     // lambda as a parameter https://en.wikipedia.org/wiki/C%2B%2B11#Polymorphic_wrappers_for_function_objects
     void iterEntries(std::function<void(ZipEntry&)> callback)
     {
@@ -163,6 +178,7 @@ private:
     }
 #endif
 
+    // -------------------------------------------------------------------------
     void getEntries(std::vector<ZipEntry>& entries)
     {
         int err = unzGoToFirstFile(m_zf);
@@ -193,6 +209,7 @@ private:
 public:
 
 #if 0
+    // -------------------------------------------------------------------------
     bool extractCurrentEntry(ZipEntry& entryinfo,
                              int (extractStrategy)(ZipEntry&))
     {
@@ -221,6 +238,7 @@ public:
     }
 #endif
 
+    // -------------------------------------------------------------------------
     bool extractCurrentEntryToFile(ZipEntry& entryinfo,
                                    std::string const& fileName,
                                    bool const replace)
@@ -263,6 +281,7 @@ public:
         return UNZ_OK == err;
     }
 
+    // -------------------------------------------------------------------------
     bool extractCurrentEntryToStream(ZipEntry& entryinfo, std::ostream& stream)
     {
         int err = UNZ_OK;
@@ -288,6 +307,7 @@ public:
         return UNZ_OK == err;
     }
 
+    // -------------------------------------------------------------------------
     bool extractCurrentEntryToMemory(ZipEntry& entryinfo,
                                      std::vector<unsigned char>& outvec)
     {
@@ -314,6 +334,7 @@ public:
     }
 
 #if defined(USE_WINDOWS)
+    // -------------------------------------------------------------------------
     void changeFileDate(std::string const& filename, uLong dosdate,
                         tm_unz /*tmu_date*/)
     {
@@ -333,6 +354,7 @@ public:
     }
 
 #else // !USE_WINDOWS
+    // -------------------------------------------------------------------------
     void changeFileDate(std::string const& filename, uLong /*dosdate*/,
                         tm_unz tmu_date)
     {
@@ -355,6 +377,7 @@ public:
     }
 #endif // USE_WINDOWS
 
+    // -------------------------------------------------------------------------
     int extractToFile(std::string const& filename, ZipEntry& info, bool const replace)
     {
         int err = UNZ_ERRNO;
@@ -420,6 +443,7 @@ public:
         return err;
     }
 
+    // -------------------------------------------------------------------------
     int extractToStream(std::ostream& stream, ZipEntry& info)
     {
         int err = unzOpenCurrentFilePassword(m_zf, m_outer.m_password.c_str());
@@ -458,6 +482,7 @@ public:
         return err;
     }
 
+    // -------------------------------------------------------------------------
     int extractToMemory(std::vector<unsigned char>& outvec, ZipEntry& info)
     {
         int err = UNZ_ERRNO;
@@ -494,6 +519,7 @@ public:
 
 public:
 
+    // -------------------------------------------------------------------------
     Impl(Unzipper& outer, std::error_code& error_code)
         : m_outer(outer), m_zipmem(), m_filefunc(),
           m_error_code(error_code)
@@ -502,11 +528,13 @@ public:
         m_zf = nullptr;
     }
 
+    // -------------------------------------------------------------------------
     ~Impl()
     {
         close();
     }
 
+    // -------------------------------------------------------------------------
     void close()
     {
         if (m_zf != nullptr)
@@ -522,6 +550,7 @@ public:
         }
     }
 
+    // -------------------------------------------------------------------------
     bool initFile(std::string const& filename)
     {
 #ifdef USEWIN32IOAPI
@@ -534,6 +563,7 @@ public:
         return m_zf != nullptr;
     }
 
+    // -------------------------------------------------------------------------
     bool initWithStream(std::istream& stream)
     {
         stream.seekg(0, std::ios::end);
@@ -557,6 +587,7 @@ public:
         return initMemory(m_filefunc);
     }
 
+    // -------------------------------------------------------------------------
     bool initWithVector(std::vector<unsigned char>& buffer)
     {
         if (!buffer.empty())
@@ -570,6 +601,7 @@ public:
         return initMemory(m_filefunc);
     }
 
+    // -------------------------------------------------------------------------
     std::vector<ZipEntry> entries()
     {
         std::vector<ZipEntry> entrylist;
@@ -577,6 +609,7 @@ public:
         return entrylist;
     }
 
+    // -------------------------------------------------------------------------
     bool extractAll(std::string const& destination, const std::map<std::string,
                     std::string>& alternativeNames, bool const replace)
     {
@@ -603,6 +636,7 @@ public:
         return true;
     }
 
+    // -------------------------------------------------------------------------
     bool extractEntry(std::string const& name, std::string const& destination,
                       bool const replace)
     {
@@ -624,6 +658,7 @@ public:
         }
     }
 
+    // -------------------------------------------------------------------------
     bool extractEntryToStream(std::string const& name, std::ostream& stream)
     {
         if (locateEntry(name))
@@ -640,6 +675,7 @@ public:
         }
     }
 
+    // -------------------------------------------------------------------------
     bool extractEntryToMemory(std::string const& name, std::vector<unsigned char>& vec)
     {
         if (locateEntry(name))
@@ -657,6 +693,7 @@ public:
     }
 };
 
+// -----------------------------------------------------------------------------
 Unzipper::Unzipper(std::istream& zippedBuffer, std::string const& password)
     : m_ibuffer(zippedBuffer)
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
@@ -673,6 +710,7 @@ Unzipper::Unzipper(std::istream& zippedBuffer, std::string const& password)
     m_open = true;
 }
 
+// -----------------------------------------------------------------------------
 Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer, std::string const& password)
     : m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(zippedBuffer)
@@ -698,6 +736,7 @@ Unzipper::Unzipper(std::vector<unsigned char>& zippedBuffer, std::string const& 
     }
 }
 
+// -----------------------------------------------------------------------------
 Unzipper::Unzipper(std::string const& zipname, std::string const& password)
     : m_ibuffer(*(new std::stringstream())) //not used but using local variable throws exception
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
@@ -731,17 +770,20 @@ Unzipper::Unzipper(std::string const& zipname, std::string const& password)
     }
 }
 
+// -----------------------------------------------------------------------------
 Unzipper::~Unzipper()
 {
     close();
     release();
 }
 
+// -----------------------------------------------------------------------------
 std::vector<ZipEntry> Unzipper::entries()
 {
     return m_impl->entries();
 }
 
+// -----------------------------------------------------------------------------
 bool Unzipper::extractEntry(std::string const& name,
                             std::string const& destination,
                             bool const replace)
@@ -749,24 +791,28 @@ bool Unzipper::extractEntry(std::string const& name,
     return m_impl->extractEntry(name, destination, replace);
 }
 
+// -----------------------------------------------------------------------------
 bool Unzipper::extractEntry(std::string const& name,
                             bool const replace)
 {
     return m_impl->extractEntry(name, std::string(), replace);
 }
 
+// -----------------------------------------------------------------------------
 bool Unzipper::extractEntryToStream(std::string const& name,
                                     std::ostream& stream)
 {
     return m_impl->extractEntryToStream(name, stream);
 }
 
+// -----------------------------------------------------------------------------
 bool Unzipper::extractEntryToMemory(std::string const& name,
                                     std::vector<unsigned char>& vec)
 {
     return m_impl->extractEntryToMemory(name, vec);
 }
 
+// -----------------------------------------------------------------------------
 bool Unzipper::extractAll(std::string const& destination,
                           const std::map<std::string, std::string>& alternativeNames,
                           bool const replace)
@@ -776,6 +822,7 @@ bool Unzipper::extractAll(std::string const& destination,
                               replace);
 }
 
+// -----------------------------------------------------------------------------
 bool Unzipper::extractAll(bool replace)
 {
     return m_impl->extractAll(std::string(),
@@ -783,6 +830,7 @@ bool Unzipper::extractAll(bool replace)
                               replace);
 }
 
+// -----------------------------------------------------------------------------
 bool Unzipper::extractAll(std::string const& destination, bool const replace)
 {
     return m_impl->extractAll(Path::canonicalPath(destination),
@@ -790,6 +838,7 @@ bool Unzipper::extractAll(std::string const& destination, bool const replace)
                               replace);
 }
 
+// -----------------------------------------------------------------------------
 void Unzipper::release()
 {
     if (!m_usingMemoryVector)
@@ -806,6 +855,7 @@ void Unzipper::release()
     }
 }
 
+// -----------------------------------------------------------------------------
 void Unzipper::close()
 {
     if (m_open && (m_impl != nullptr))
@@ -815,6 +865,7 @@ void Unzipper::close()
     m_open = false;
 }
 
+// -----------------------------------------------------------------------------
 std::error_code const& Unzipper::error() const
 {
     return m_error_code;
