@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <ctime>
+#include <system_error>
 
 namespace zipper {
 
@@ -148,7 +149,12 @@ public:
     //! \param[in] flags: Overwrite or append (default) existing zip file (zipname).
     //! \note this method is not called by the constructor.
     // -------------------------------------------------------------------------
-    void open(Zipper::openFlags flags = Zipper::openFlags::Append);
+    bool open(Zipper::openFlags flags = Zipper::openFlags::Append);
+
+    // -------------------------------------------------------------------------
+    //! \brief Get the error information when a method returned false.
+    // -------------------------------------------------------------------------
+    std::error_code const& error() const;
 
 private:
 
@@ -163,6 +169,7 @@ private:
     bool m_usingMemoryVector;
     bool m_usingStream;
     bool m_open;
+    std::error_code m_error_code;
 
     struct Impl;
     Impl* m_impl;

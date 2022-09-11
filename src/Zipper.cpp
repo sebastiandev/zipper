@@ -13,6 +13,69 @@
 
 namespace zipper {
 
+enum class zipper_error
+{
+    NO_ERROR = 0,
+    OPENING_ERROR,
+    INTERNAL_ERROR,
+    NO_ENTRY,
+    SECURITY_ERROR
+};
+
+// *************************************************************************
+//! \brief std::error_code instead of throw() or errno.
+// *************************************************************************
+struct ZipperErrorCategory : std::error_category
+{
+    virtual const char* name() const noexcept override
+    {
+        return "zipper";
+    }
+
+    virtual std::string message(int ev) const override
+    {
+        if (!custom_message.empty())
+        {
+            return custom_message;
+        }
+
+        switch (static_cast<zipper_error>(ev))
+        {
+        case zipper_error::NO_ERROR:
+            return "There was no error";
+        case zipper_error::OPENING_ERROR:
+            return "Opening error";
+        case zipper_error::INTERNAL_ERROR:
+            return "Internal error";
+        case zipper_error::NO_ENTRY:
+            return "Error, couldn't get the current entry info";
+        case zipper_error::SECURITY_ERROR:
+            return "ZipSlip security";
+        default:
+            return "Unkown Error";
+        }
+    }
+
+    std::string custom_message;
+};
+
+// -----------------------------------------------------------------------------
+static ZipperErrorCategory theZipperErrorCategory;
+
+// -----------------------------------------------------------------------------
+static std::error_code make_error_code(zipper_error e)
+{
+    return { static_cast<int>(e), theZipperErrorCategory };
+}
+
+// -----------------------------------------------------------------------------
+static std::error_code make_error_code(zipper_error e, std::string const& message)
+{
+    std::cerr << message << std::endl;
+    theZipperErrorCategory.custom_message = message;
+    return { static_cast<int>(e), theZipperErrorCategory };
+}
+
 // -----------------------------------------------------------------------------
 // Calculate the CRC32 of a file because to encrypt a file, we need known the
 // CRC32 of the file before.
@@ -48,9 +111,12 @@ struct Zipper::Impl
     zipFile m_zf;
     ourmemory_t m_zipmem;
     zlib_filefunc_def m_filefunc;
+    std::error_code& m_error_code;
 
-    Impl(Zipper& outer)
-        : m_outer(outer), m_zipmem(), m_filefunc()
+    // -------------------------------------------------------------------------
+    Impl(Zipper& outer, std::error_code& error_code)
+        : m_outer(outer), m_zipmem(), m_filefunc(),
+          m_error_code(error_code)
     {
         m_zf = nullptr;
         m_zipmem.base = nullptr;
@@ -90,7 +156,10 @@ struct Zipper::Impl
         m_zf = zipOpen64(filename.c_str(), mode);
 #endif
 
-        return nullptr != m_zf;
+        if (m_zf != nullptr)
+            return true;
+        m_error_code = make_error_code(zipper_error::INTERNAL_ERROR);
+        return false;
     }
 
     // -------------------------------------------------------------------------
@@ -102,6 +171,7 @@ struct Zipper::Impl
         std::streampos s = stream.tellg();
         if (s < 0)
         {
+            m_error_code = make_error_code(zipper_error::INTERNAL_ERROR);
             return false;
         }
         size_t size = static_cast<size_t>(s);
@@ -147,7 +217,10 @@ struct Zipper::Impl
     bool initMemory(int mode, zlib_filefunc_def& filefunc)
     {
         m_zf = zipOpen3("__notused__", mode, 0, 0, &filefunc);
-        return m_zf != nullptr;
+        if (m_zf != nullptr)
+            return true;
+        m_error_code = make_error_code(zipper_error::INTERNAL_ERROR);
+        return false;
     }
 
     // -------------------------------------------------------------------------
@@ -155,7 +228,10 @@ struct Zipper::Impl
              const std::string& nameInZip, const std::string& password, int flags)
     {
         if (!m_zf)
+        {
+            m_error_code = make_error_code(zipper_error::INTERNAL_ERROR);
             return false;
+        }
 
         int compressLevel = 5; // Zipper::zipFlags::Medium
         bool zip64;
@@ -180,7 +256,10 @@ struct Zipper::Impl
         buff.resize(size_buf);
 
         if (nameInZip.empty())
+        {
+            m_error_code = make_error_code(zipper_error::NO_ENTRY);
             return false;
+        }
 
         /* Prevent Zip Slip attack (See ticket #33) */
         //if (nameInZip.find_first_of("/\\*") != std::string::npos)
@@ -193,6 +272,13 @@ struct Zipper::Impl
             compressLevel = 1;
         else if (flags == Zipper::zipFlags::Better)
             compressLevel = 9;
+        else
+        {
+            std::stringstream str;
+            str << "Unknown compression level: " << flags;
+            m_error_code = make_error_code(zipper_error::INTERNAL_ERROR, str.str());
+            return false;
+        }
 
         zip64 = Path::isLargeFile(input_stream);
         if (password.empty())
@@ -253,12 +339,21 @@ struct Zipper::Impl
         }
         else
         {
-            throw std::runtime_error(("Error adding '" + nameInZip + "' to zip").c_str());
+            std::stringstream str;
+            str << "Error when adding " << nameInZip << " to zip";
+            m_error_code = make_error_code(zipper_error::INTERNAL_ERROR, str.str());
+            return false;
         }
 
         if (ZIP_OK == err)
         {
             err = zipCloseFileInZip(this->m_zf);
+            if (ZIP_OK != err)
+            {
+                std::stringstream str;
+                str << "Error when closing zip";
+                m_error_code = make_error_code(zipper_error::INTERNAL_ERROR, str.str());
+            }
         }
 
         return ZIP_OK == err;
@@ -302,28 +397,40 @@ Zipper::Zipper(const std::string& zipname, const std::string& password, Zipper::
     , m_password(password)
     , m_usingMemoryVector(false)
     , m_usingStream(false)
-    , m_impl(new Impl(*this))
+    , m_impl(new Impl(*this, m_error_code))
 {
-    if (!m_impl->initFile(zipname, flags))
+    if (m_impl->initFile(zipname, flags))
     {
-        release();
-        throw std::runtime_error("Error creating zip in file!");
+        // success
+        m_open = true;
     }
-    m_open = true;
+    else if (m_impl->m_error_code)
+    {
+        std::runtime_error exception(m_impl->m_error_code.message());
+        release();
+        throw exception;
+    }
+    else
+    {
+        // Other error (like dummy zip). Let it dummy
+        m_open = true;
+    }
 }
 
+// -------------------------------------------------------------------------
 Zipper::Zipper(std::iostream& buffer, const std::string& password)
     : m_obuffer(buffer)
     , m_vecbuffer(*(new std::vector<unsigned char>())) //not used but using local variable throws exception
     , m_password(password)
     , m_usingMemoryVector(false)
     , m_usingStream(true)
-    , m_impl(new Impl(*this))
+    , m_impl(new Impl(*this, m_error_code))
 {
     if (!m_impl->initWithStream(m_obuffer))
     {
+        std::runtime_error exception(m_impl->m_error_code.message());
         release();
-        throw std::runtime_error("Error creating zip in memory!");
+        throw exception;
     }
     m_open = true;
 }
@@ -335,12 +442,13 @@ Zipper::Zipper(std::vector<unsigned char>& buffer, const std::string& password)
     , m_password(password)
     , m_usingMemoryVector(true)
     , m_usingStream(false)
-    , m_impl(new Impl(*this))
+    , m_impl(new Impl(*this, m_error_code))
 {
     if (!m_impl->initWithVector(m_vecbuffer))
     {
+        std::runtime_error exception(m_impl->m_error_code.message());
         release();
-        throw std::runtime_error("Error creating zip in memory!");
+        throw exception;
     }
     m_open = true;
 }
@@ -350,6 +458,16 @@ Zipper::~Zipper()
 {
     close();
     release();
+}
+
+// -------------------------------------------------------------------------
+void Zipper::close()
+{
+    if (m_open && (m_impl != nullptr))
+    {
+        m_impl->close();
+    }
+    m_open = false;
 }
 
 // -------------------------------------------------------------------------
@@ -363,7 +481,10 @@ void Zipper::release()
     {
         delete &m_obuffer;
     }
-    delete m_impl;
+    if (m_impl != nullptr)
+    {
+        delete m_impl;
+    }
 }
 
 // -------------------------------------------------------------------------
@@ -391,7 +512,7 @@ bool Zipper::add(const std::string& fileOrFolderPath, Zipper::zipFlags flags)
         char c = fileOrFolderPath.back();
         bool end_by_slash = (c == '/') || (c == '\\');
         std::string folderName(end_by_slash ? std::string(fileOrFolderPath.begin(), --fileOrFolderPath.end())
-                                            : fileOrFolderPath);
+                               : fileOrFolderPath);
 
         std::vector<std::string> files = Path::filesFromDir(folderName, true);
         for (auto& it: files)
@@ -427,38 +548,42 @@ bool Zipper::add(const std::string& fileOrFolderPath, Zipper::zipFlags flags)
 }
 
 // -------------------------------------------------------------------------
-void Zipper::open(Zipper::openFlags flags)
+bool Zipper::open(Zipper::openFlags flags)
 {
-    if (!m_open)
+    if (m_impl == nullptr)
     {
-        if (m_usingMemoryVector)
-        {
-            if (!m_impl->initWithVector(m_vecbuffer))
-                throw std::runtime_error("Error opening zip memory!");
-        }
-        else if (m_usingStream)
-        {
-            if (!m_impl->initWithStream(m_obuffer))
-                throw std::runtime_error("Error opening zip memory!");
-        }
-        else
-        {
-            if (!m_impl->initFile(m_zipname, flags))
-                throw std::runtime_error("Error opening zip file!");
-        }
-
-        m_open = true;
+        m_error_code = make_error_code(
+            zipper_error::INTERNAL_ERROR, "Malloc error");
+        return false;
     }
+
+    if (m_open)
+        return true;
+
+    if (m_usingMemoryVector)
+    {
+        if (!m_impl->initWithVector(m_vecbuffer))
+            return false;
+    }
+    else if (m_usingStream)
+    {
+        if (!m_impl->initWithStream(m_obuffer))
+            return false;
+    }
+    else
+    {
+        if (!m_impl->initFile(m_zipname, flags))
+            return false;
+    }
+
+    m_open = true;
+    return true;
 }
 
-// -------------------------------------------------------------------------
-void Zipper::close()
+// -----------------------------------------------------------------------------
+std::error_code const& Zipper::error() const
 {
-    if (m_open)
-    {
-        m_impl->close();
-        m_open = false;
-    }
+    return m_error_code;
 }
 
 } // namespace zipper
