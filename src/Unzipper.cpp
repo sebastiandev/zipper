@@ -333,11 +333,11 @@ public:
         return UNZ_OK == err;
     }
 
-#if defined(USE_WINDOWS)
     // -------------------------------------------------------------------------
-    void changeFileDate(std::string const& filename, uLong dosdate,
-                        tm_unz /*tmu_date*/)
+    void changeFileDate(std::string const& filename, uLong dosdate, tm_unz tmu_date)
     {
+#if defined(USE_WINDOWS)
+        (void) tmu_date;
         HANDLE hFile;
         FILETIME ftm, ftLocal, ftCreate, ftLastAcc, ftLastWrite;
 
@@ -351,13 +351,8 @@ public:
             SetFileTime(hFile, &ftm, &ftLastAcc, &ftm);
             CloseHandle(hFile);
         }
-    }
-
 #else // !USE_WINDOWS
-    // -------------------------------------------------------------------------
-    void changeFileDate(std::string const& filename, uLong /*dosdate*/,
-                        tm_unz tmu_date)
-    {
+        (void) dosdate;
         struct utimbuf ut;
         struct tm newdate;
 
@@ -374,8 +369,8 @@ public:
 
         ut.actime = ut.modtime = mktime(&newdate);
         utime(filename.c_str(), &ut);
-    }
 #endif // USE_WINDOWS
+    }
 
     // -------------------------------------------------------------------------
     int extractToFile(std::string const& filename, ZipEntry& info, bool const replace)
@@ -565,7 +560,7 @@ public:
     // -------------------------------------------------------------------------
     bool initFile(std::string const& filename)
     {
-#ifdef USEWIN32IOAPI
+#if defined(USE_WINDOWS)
         zlib_filefunc64_def ffunc;
         fill_win32_filefunc64A(&ffunc);
         m_zf = unzOpen2_64(filename.c_str(), &ffunc);
