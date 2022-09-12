@@ -149,6 +149,90 @@ TEST(FileZipTests, ZipperNominalOpenings)
 }
 
 // -----------------------------------------------------------------------------
+TEST(FileZipTests, ZipperPathologicalOpenings)
+{
+    // Opening a folder
+    ASSERT_EQ(Path::exist("/usr/bin"), true);
+    ASSERT_EQ(Path::isDir("/usr/bin"), true);
+    try
+    {
+        Zipper zipper("/usr/bin");
+    }
+    catch (std::runtime_error const& e)
+    {
+        ASSERT_STREQ(e.what(), "Is a directory");
+    }
+
+    // Permission denied
+    ASSERT_EQ(Path::exist("/usr/bin/ziptest.zip"), false);
+    try
+    {
+        Zipper zipper("/usr/bin/ziptest.zip");
+    }
+    catch (std::runtime_error const& e)
+    {
+#if defined(__APPLE__)
+        ASSERT_STREQ(e.what(), "Operation not permitted");
+#else
+        ASSERT_STREQ(e.what(), "Permission denied");
+#endif
+    }
+}
+
+// -----------------------------------------------------------------------------
+TEST(FileUnzipTests, UnzipperPathologicalOpenings)
+{
+    // Opening a non existing file
+    ASSERT_EQ(Path::exist("doesnotexist"), false);
+    try
+    {
+        Unzipper unzipper("doesnotexist");
+    }
+    catch (std::runtime_error const& e)
+    {
+        ASSERT_STREQ(e.what(), "Does not exist");
+    }
+
+    // Opening a non zip file
+    ASSERT_EQ(Path::exist("./build/Zipper-UnitTest"), true);
+    ASSERT_EQ(Path::isFile("./build/Zipper-UnitTest"), true);
+    try
+    {
+        Unzipper unzipper("./build/Zipper-UnitTest");
+    }
+    catch (std::runtime_error const& e)
+    {
+        ASSERT_STREQ(e.what(), "Not a zip file");
+    }
+
+    // Opening a non zip file
+    ASSERT_EQ(Path::exist("/usr/bin/make"), true);
+    ASSERT_EQ(Path::isFile("/usr/bin/make"), true);
+    try
+    {
+        Unzipper unzipper("/usr/bin/make");
+    }
+    catch (std::runtime_error const& e)
+    {
+        ASSERT_STREQ(e.what(), "Not a zip file");
+    }
+
+    // Opening a folder
+    ASSERT_EQ(Path::exist("/usr/bin"), true);
+    ASSERT_EQ(Path::isDir("/usr/bin"), true);
+    try
+    {
+        Unzipper unzipper("/usr/bin");
+    }
+    catch (std::runtime_error const& e)
+    {
+        ASSERT_STREQ(e.what(), "Not a zip file");
+    }
+
+    // TODO Real zip + permission denied
+}
+
+// -----------------------------------------------------------------------------
 TEST(FileZipTests, ZipfileFeedWithDifferentInputs1)
 {
     // Clean up
