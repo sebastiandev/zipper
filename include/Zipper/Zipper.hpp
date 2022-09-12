@@ -23,12 +23,10 @@ public:
     // -------------------------------------------------------------------------
     enum openFlags
     {
-        //! \brief Minizip options/params: -o  Overwrite existing file.zip
-        Overwrite = 0x01,
-        //! \brief Minizip options/params: -a  Append to existing file.zip
-        Append = 0x02,
-        //! \brief Minizip options/params: -j  Exclude path. store only the file name.
-        //TODO NoPaths = 0x20,
+        //! \brief Overwrite existing file.zip
+        Overwrite,
+        //! \brief Append to existing file.zip
+        Append
     };
 
     // -------------------------------------------------------------------------

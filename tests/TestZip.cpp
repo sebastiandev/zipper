@@ -47,6 +47,108 @@ static bool zipEntry(Zipper& zipper, const char* filepath, const char* content,
 }
 
 // -----------------------------------------------------------------------------
+TEST(FileZipTests, ZipperNominalOpenings)
+{
+    // Clean up.
+    Path::remove("ziptest.zip");
+    ASSERT_EQ(Path::exist("ziptest.zip"), false);
+
+    // Create a fake file (not zip file, just the extension).
+    std::ofstream outfile("ziptest.zip");
+    outfile.close();
+
+    // Fake file exists ?
+    ASSERT_EQ(Path::exist("ziptest.zip"), true);
+    ASSERT_EQ(Path::isFile("ziptest.zip"), true);
+
+    // Create a zip. The fake file is replaced.
+    Zipper zipper1("ziptest.zip", Zipper::openFlags::Overwrite);
+    ASSERT_EQ(zipEntry(zipper1, "test1.txt", "test1 file compression",
+                       "test1.txt"), true);
+    zipper1.close();
+
+    // Check the fake file has been replaced.
+    zipper::Unzipper unzipper1("ziptest.zip");
+    std::vector<zipper::ZipEntry> entries1 = unzipper1.entries();
+    unzipper1.close();
+    ASSERT_EQ(entries1.size(), 1u);
+    ASSERT_STREQ(entries1[0].name.c_str(), "test1.txt");
+
+    // Replace the zip
+    Zipper zipper2("ziptest.zip", Zipper::openFlags::Overwrite);
+    zipper2.close();
+
+    // Check the fake file has been replaced: "test1.txt" does not exist.
+    ASSERT_EQ(Path::exist("ziptest.zip"), true);
+    ASSERT_EQ(Path::isFile("ziptest.zip"), true);
+    zipper::Unzipper unzipper2("ziptest.zip");
+    std::vector<zipper::ZipEntry> entries2 = unzipper2.entries();
+    unzipper2.close();
+    ASSERT_EQ(entries2.size(), 0u);
+
+    // Create a zip file with "test1.txt" file
+    Zipper zipper3("ziptest.zip", Zipper::openFlags::Overwrite);
+    ASSERT_EQ(zipEntry(zipper3, "test1.txt", "test1 file compression",
+                       "test1.txt"), true);
+    zipper3.close();
+
+    // Replace the zip file with "test2.txt" file
+    Zipper zipper4("ziptest.zip", Zipper::openFlags::Overwrite);
+    ASSERT_EQ(zipEntry(zipper4, "test2.txt", "test2 file compression",
+                       "test2.txt"), true);
+    zipper4.close();
+
+    // Check if test2.txt has replaced test1.txt
+    zipper::Unzipper unzipper4("ziptest.zip");
+    std::vector<zipper::ZipEntry> entries4 = unzipper4.entries();
+    unzipper4.close();
+    ASSERT_EQ(entries4.size(), 1u);
+    ASSERT_STREQ(entries4[0].name.c_str(), "test2.txt");
+
+    // Append zip file
+    Zipper zipper5("ziptest.zip", Zipper::openFlags::Append);
+    ASSERT_EQ(zipEntry(zipper5, "test1.txt", "test1 file compression",
+                       "test1.txt"), true);
+    zipper5.close();
+
+    // Check if test2.txt and test1.txt exist
+    zipper::Unzipper unzipper5("ziptest.zip");
+    std::vector<zipper::ZipEntry> entries5 = unzipper5.entries();
+    unzipper5.close();
+    ASSERT_EQ(entries5.size(), 2u);
+    ASSERT_STREQ(entries5[0].name.c_str(), "test2.txt");
+    ASSERT_STREQ(entries5[1].name.c_str(), "test1.txt");
+
+    // Reopen and append zip entries
+    ASSERT_EQ(zipper5.open(), true); // Default behavior: append
+    ASSERT_EQ(zipEntry(zipper5, "test3.txt", "test3 file compression",
+                       "test3.txt"), true);
+    zipper5.close();
+
+    zipper::Unzipper unzipper5_1("ziptest.zip");
+    std::vector<zipper::ZipEntry> entries5_1 = unzipper5_1.entries();
+    unzipper5_1.close();
+    ASSERT_EQ(entries5_1.size(), 3u);
+    ASSERT_STREQ(entries5_1[0].name.c_str(), "test2.txt");
+    ASSERT_STREQ(entries5_1[1].name.c_str(), "test1.txt");
+    ASSERT_STREQ(entries5_1[2].name.c_str(), "test3.txt");
+
+    // Reopen and erase zip entries
+    ASSERT_EQ(zipper5.open(Zipper::openFlags::Overwrite), true);
+    ASSERT_EQ(zipEntry(zipper5, "test3.txt", "test3 file compression",
+                       "test3.txt"), true);
+    zipper5.close();
+
+    zipper::Unzipper unzipper5_2("ziptest.zip");
+    std::vector<zipper::ZipEntry> entries5_2 = unzipper5_2.entries();
+    unzipper5_2.close();
+    ASSERT_EQ(entries5_2.size(), 1u);
+    ASSERT_STREQ(entries5_2[0].name.c_str(), "test3.txt");
+
+    Path::remove("ziptest.zip");
+}
+
+// -----------------------------------------------------------------------------
 TEST(FileZipTests, ZipfileFeedWithDifferentInputs1)
 {
     // Clean up
@@ -203,7 +305,7 @@ TEST(FileZipTests, ZipfileFeedWithDifferentInputs2)
 
     // Extracting the strdata entry creates a file named 'strdata' with the text
     // 'test string data compression'"
-    unzipper.extractAll();
+    ASSERT_EQ(unzipper.extractAll(), true);
     ASSERT_EQ(Path::exist("strdata"), true);
     ASSERT_EQ(Path::isFile("strdata"), true);
 

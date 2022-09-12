@@ -141,8 +141,21 @@ struct Zipper::Impl
         /* open the zip file for output */
         if (Path::exist(filename))
         {
-            mode = (flags & Zipper::openFlags::Overwrite)
-                   ? APPEND_STATUS_CREATE : APPEND_STATUS_ADDINZIP;
+            if (!Path::isFile(filename))
+            {
+                m_error_code = make_error_code(zipper_error::OPENING_ERROR,
+                                               "Is a directory");
+                return false;
+            }
+            if (flags == Zipper::openFlags::Overwrite)
+            {
+                Path::remove(filename);
+                mode = APPEND_STATUS_CREATE;
+            }
+            else
+            {
+                mode = APPEND_STATUS_ADDINZIP;
+            }
         }
         else
         {
@@ -158,7 +171,8 @@ struct Zipper::Impl
 
         if (m_zf != nullptr)
             return true;
-        m_error_code = make_error_code(zipper_error::INTERNAL_ERROR);
+        m_error_code = make_error_code(zipper_error::OPENING_ERROR,
+                                       strerror(errno));
         return false;
     }
 

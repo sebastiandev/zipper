@@ -108,21 +108,37 @@ For example:
 
 ```c++
 Zipper zipper("ziptest.zip", "mypassword");
+// Equivalent to Zipper zipper("ziptest.zip", "mypassword", Zipper::openFlags::Overwrite);
 ...
 zipper.close();
 ```
 
-Throw `std::run_time` in case of failure.
+Throw `std::run_time` in case of failure. If the ziptest.zip already exists it is replaced.
+If you want to preserve data inside the zip, use this option `Zipper::openFlags::Append`.
+
+```c++
+Zipper zipper("ziptest.zip", "mypassword", Zipper::openFlags::Append);
+...
+zipper.close();
+```
 
 - No password. Do not forget to call close else the zip will not well formed (`Unzipper` will fail opening it for example).
 
 ```c++
 Zipper zipper("ziptest.zip");
+// Equivalent to Zipper zipper("ziptest.zip", Zipper::openFlags::Overwrite);
 ...
 zipper.close();
 ```
 
-Throw `std::run_time` in case of failure.
+Throw `std::run_time` in case of failure. If the ziptest.zip already exists it is replaced.
+If you want to preserve data inside the zip, use this option `Zipper::openFlags::Append`.
+
+```c++
+Zipper zipper("ziptest.zip", Zipper::openFlags::Append);
+...
+zipper.close();
+```
 
 - Appending files inside the archive.
 
