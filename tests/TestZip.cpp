@@ -933,3 +933,32 @@ TEST(MemoryZipTests, Issue83)
     Path::remove("ziptest.zip");
     Path::remove("data");
 }
+
+// -----------------------------------------------------------------------------
+// https://github.com/sebastiandev/zipper/issues/118
+TEST(MemoryZipTests, Issue118)
+{
+    Path::remove("ziptest.zip");
+
+    // Create a dummy zip file
+    Zipper zipper("ziptest.zip", Zipper::openFlags::Overwrite);
+    zipper.close();
+
+    // Check there is no entries
+    zipper::Unzipper unzipper("ziptest.zip");
+    std::vector<zipper::ZipEntry> entries = unzipper.entries();
+    unzipper.close();
+    ASSERT_EQ(entries.size(), 0u);
+
+    // Add file from the dummy zip
+    Zipper zipper2("ziptest.zip", Zipper::openFlags::Append);
+    ASSERT_EQ(zipEntry(zipper2, "test1.txt", "test1 file compression",
+                       "test1.txt"), true);
+    zipper2.close();
+
+    zipper::Unzipper unzipper2("ziptest.zip");
+    std::vector<zipper::ZipEntry> entries2 = unzipper2.entries();
+    unzipper2.close();
+    ASSERT_EQ(entries2.size(), 1u);
+    ASSERT_STREQ(entries2[0].name.c_str(), "test1.txt");
+}

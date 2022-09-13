@@ -327,7 +327,6 @@ public:
     // -------------------------------------------------------------------------
     int extractToFile(std::string const& filename, ZipEntry& info, bool const replace)
     {
-
         /* If zip entry is a directory then create it on disk */
         std::string folder = Path::dirName(filename);
         if (!folder.empty())
@@ -508,6 +507,19 @@ public:
     // -------------------------------------------------------------------------
     bool initFile(std::string const& filename)
     {
+        if (!Path::exist(filename))
+        {
+            m_error_code = make_error_code(unzipper_error::NO_ENTRY,
+                                           "Does not exist");
+            return false;
+        }
+        if (!Path::isFile(filename))
+        {
+            m_error_code = make_error_code(unzipper_error::NO_ENTRY,
+                                           "Not a zip file");
+            return false;
+        }
+
 #if defined(USE_WINDOWS)
         zlib_filefunc64_def ffunc;
         fill_win32_filefunc64A(&ffunc);
@@ -515,7 +527,22 @@ public:
 #else
         m_zf = unzOpen64(filename.c_str());
 #endif
-        return m_zf != nullptr;
+
+        if (m_zf != nullptr)
+            return true;
+
+        if (filename.substr(filename.find_last_of(".") + 1u) != "zip")
+        {
+            m_error_code = make_error_code(unzipper_error::NO_ENTRY,
+                                           "Not a zip file");
+            return false;
+        }
+
+        // https://github.com/sebastiandev/zipper/issues/118
+        // Avoid throwing error if the zip is empty. Having a dummy zip file is
+        // probably weird but we may want get a dummy array when calling
+        // Unzipper::entries(); or add files with Zipper::add().
+        return true;
     }
 
     // -------------------------------------------------------------------------
@@ -694,33 +721,18 @@ Unzipper::Unzipper(std::string const& zipname, std::string const& password)
     , m_usingStream(false)
     , m_impl(new Impl(*this, m_error_code))
 {
-    if (!Path::exist(zipname))
+    if (!m_impl->initFile(zipname))
     {
-        std::runtime_error exception("Does not exist");
-        release();
-        throw exception;
-    }
-    else if (!Path::isFile(zipname))
-    {
-        std::runtime_error exception("Not a zip file");
-        release();
-        throw exception;
-    }
-    else if (m_impl->initFile(zipname))
-    {
-        // success
-        m_open = true;
-    }
-    else if (m_impl->m_error_code)
-    {
-        std::runtime_error exception(m_impl->m_error_code.message());
-        release();
-        throw exception;
-    }
-    else
-    {
-        // Other error (like dummy zip). Let it dummy
-        m_open = true;
+        if (m_impl->m_error_code)
+        {
+            std::runtime_error exception(m_impl->m_error_code.message());
+            release();
+            throw exception;
+        }
+        else
+        {
+            m_open = true;
+        }
     }
 }
 
