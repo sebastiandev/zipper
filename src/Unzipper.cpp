@@ -360,7 +360,7 @@ public:
         {
             std::stringstream str;
             str << "Security Error: '" << filename
-                << "' already exists and will be replaced";
+                << "' already exists and would have been replaced";
 
             m_error_code = make_error_code(unzipper_error::SECURITY_ERROR,
                                            str.str());
