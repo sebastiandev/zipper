@@ -38,7 +38,7 @@ public:
         Store = 0x00,
         //! \brief Minizip options/params: -1  Compress faster
         Faster = 0x01,
-        //! \brief Minizip options/params: -5  Compress faster
+        //! \brief Minizip options/params: -5  Compress medium
         Medium = 0x05,
         //! \brief Minizip options/params: -9  Compress better
         Better = 0x09,
@@ -121,6 +121,12 @@ public:
     bool add(std::istream& source, const std::string& nameInZip,
              Zipper::zipFlags flags = Zipper::zipFlags::Better);
 
+    bool add(std::istream& source,
+             Zipper::zipFlags flags = Zipper::zipFlags::Better)
+    {
+        return add(source, std::string(), flags);
+    }
+
     // -------------------------------------------------------------------------
     //! \brief Compress a folder or a file in the archive.
     //!
@@ -131,6 +137,13 @@ public:
     // -------------------------------------------------------------------------
     bool add(const std::string& fileOrFolderPath,
              Zipper::zipFlags flags = Zipper::zipFlags::Better);
+
+
+    bool add(const char* fileOrFolderPath,
+             Zipper::zipFlags flags = Zipper::zipFlags::Better)
+    {
+        return add(std::string(fileOrFolderPath), flags);
+    }
 
     // -------------------------------------------------------------------------
     //! \brief Depending on your selection of constructor, this method will do

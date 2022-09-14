@@ -1,3 +1,7 @@
+#if 0
+#include <boost/interprocess/streams/vectorstream.hpp>
+#endif
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-copy"
 #  include "gmock/gmock.h"
@@ -677,6 +681,121 @@ TEST(ZipTests, UnzipDummyTarball)
     Path::remove("ziptest.zip");
     Path::remove("data");
 }
+
+// -----------------------------------------------------------------------------
+TEST(ZipTests, ZipStreamNominal)
+{
+    // Clean up
+    Path::remove("Test1");
+    Path::remove("ziptest.zip");
+
+    {
+        std::stringstream ss;
+
+        Zipper zipper(ss); // TODO password
+        ASSERT_EQ(zipEntry(zipper, "somefile", "helloworld", "Test1"), true);
+        zipper.close();
+
+        zipper::Unzipper unzipper(ss);
+        ASSERT_EQ(unzipper.extractEntry("Test1"), true);
+        unzipper.close();
+
+        ASSERT_EQ(Path::exist("Test1"), true);
+        ASSERT_EQ(Path::isFile("Test1"), true);
+        ASSERT_STREQ(readFileContent("Test1").c_str(), "helloworld");
+
+        Path::remove("Test1");
+        Path::remove("ziptest.zip");
+    }
+}
+
+#if 0
+// -----------------------------------------------------------------------------
+TEST(ZipTests, ZipVectorNominal)
+{
+    // Clean up
+    Path::remove("Test1");
+
+    {
+        boost::interprocess::basic_vectorstream<std::vector<char>> zip_in_memory;
+
+        Zipper zipper(zip_in_memory); // TODO password
+        ASSERT_EQ(zipEntry(zipper, "somefile", "helloworld", "Test1"), true);
+        zipper.close();
+
+        zipper::Unzipper unzipper(zip_in_memory);
+        ASSERT_EQ(unzipper.extractEntry("Test1"), true);
+        unzipper.close();
+
+        ASSERT_EQ(Path::exist("Test1"), true);
+        ASSERT_EQ(Path::isFile("Test1"), true);
+        ASSERT_STREQ(readFileContent("Test1").c_str(), "helloworld");
+
+        Path::remove("Test1");
+    }
+
+    Path::remove("Test1");
+}
+
+// -----------------------------------------------------------------------------
+TEST(ZipTests, ZipDifferentCompression)
+{
+    Path::remove("Test1");
+    Path::remove("ziptest.zip");
+
+    {
+        ASSERT_EQ(createFile("Test1", "hello world"), true);
+        std::ifstream ifs("Test1");
+
+        Zipper zipper("ziptest.zip");
+        ASSERT_EQ(zipper.add(ifs, "Test1", Zipper::zipFlags::Store), true);
+
+        std::ifstream ifs1("Test1"); //FIXME
+        ASSERT_EQ(zipper.add(ifs1, "Test1_1", Zipper::zipFlags::Faster), true); // TODO zipper.add("Test1", "Test1_1" ...
+        ASSERT_EQ(zipper.add(ifs, "Test1_2", Zipper::zipFlags::Medium), true);
+        ASSERT_EQ(zipper.add(ifs, "Test1_3", Zipper::zipFlags::Better), true);
+        zipper.close();
+
+        zipper::Unzipper unzipper("ziptest.zip");
+        ASSERT_EQ(unzipper.extractAll(), true);
+        unzipper.close();
+
+        ASSERT_EQ(Path::exist("Test1"), true);
+        ASSERT_EQ(Path::isFile("Test1"), true);
+        ASSERT_STREQ(readFileContent("Test1").c_str(), "hello world");
+        Path::remove("Test1");
+
+        ASSERT_EQ(Path::exist("Test1_1"), true);
+        ASSERT_EQ(Path::isFile("Test1_1"), true);
+        ASSERT_STREQ(readFileContent("Test1_1").c_str(), "hello world");
+        Path::remove("Test1_1");
+
+        ASSERT_EQ(Path::exist("Test1_2"), true);
+        ASSERT_EQ(Path::isFile("Test1_2"), true);
+        ASSERT_STREQ(readFileContent("Test1_2").c_str(), "hello world");
+        Path::remove("Test1_2");
+
+        ASSERT_EQ(Path::exist("Test1_3"), true);
+        ASSERT_EQ(Path::isFile("Test1_3"), true);
+        ASSERT_STREQ(readFileContent("Test1_3").c_str(), "hello world");
+        Path::remove("Test1_2");
+
+        Path::remove("ziptest.zip");
+    }
+
+    // TODO password
+}
+
+// -----------------------------------------------------------------------------
+TEST(ZipTests, ZipUtf8FileName)
+{
+}
+
+// -----------------------------------------------------------------------------
+TEST(ZipTests, ZipVeryLongFileName) // and fuzzing zip name and entries
+{
+}
+#endif
 
 // -----------------------------------------------------------------------------
 // https://github.com/sebastiandev/zipper/issues/21
