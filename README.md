@@ -6,29 +6,24 @@ C++ wrapper around minizip compression library. You are reading the work in prog
 It was born out of the necessity of a compression library that would be reliable, simple and flexible.
 By flexibility I mean supporting all kinds of inputs and outputs, but specifically been able to compress into memory instead of been restricted to file compression only, and using data from memory instead of just files as well.
 
-### Features
+# Features
 
 - [x] Create zip in memory.
 - [x] Allow files, vector and generic streams as input to zip.
 - [x] File mappings for replacing strategies (overwrite if exists or use alternative name from mapping).
 - [x] Password protected zip (EAS).
 - [x] Multi platform.
+- [x] Protection against [Zip Slip](https://github.com/sebastiandev/zipper/issues/33) has been added in this v2.x.y branch.
+- [x] Non-regression tests.
 
-### TODO
-
-- [x] Protection against [Zip Slip](https://github.com/sebastiandev/zipper/issues/33) has been added in this v2.x.y branch but
-not fully tested by unit tests.
-- [x] Write non-regression tests and improve the GitHub workflow (CI).
-
-### :warning: Security Notice
+**:warning: Security Notice**
 
 - Zipper currently follows an outdated (and probably vulnerable) version of the https://github.com/Lecrapouille/minizip library.
-- While some fixes have been added this lib may be still vulnerable to ZipSlip attack and mitigations
-should be put in place by Zipper's users.
+- While some fixes have been added this lib may be still vulnerable to ZipSlip attack and mitigations should be put in place by Zipper's users.
 
-### Getting Started
+# Getting Started
 
-#### Compiling
+## Compiling
 
 Compilation is made with the following steps:
 
@@ -42,11 +37,11 @@ make -j`nproc --all`
 ```
 
 Notes:
-- `make download-external-libs` will git clone zlib and moinizip to the `external` folder. This replaces git submodules.
-- `make compile-external-libs` will compile zlib and moinizip but not install them.
+- `make download-external-libs` will git clone zlib and minizip to the `external` folder. This replaces git submodules.
+- `make compile-external-libs` will compile zlib and minizip but not install them.
 - For developpers: these two commands has to be compiled once.
 
-#### Installing
+## Installing
 
 Following the previous section `Compiling`, type:
 
@@ -64,7 +59,7 @@ You will see a message like:
 *** Installing: Zipper => /usr/include/Zipper-2.0.0
 ```
 
-#### Non regression tests
+## Non regression tests
 
 Depends on:
 - [googletest](https://github.com/google/googletest) framework
@@ -89,11 +84,11 @@ make -j`nproc --all`
 ./build/Zipper-UnitTest
 ```
 
-### Usage
+# API
 
 There are two classes available Zipper and Unzipper. They behave in the same manner regarding constructors and storage parameters. (for a complete example take a look at the [zip file tests](test/file_zip_test.cpp) and [zip memory tests](test/memory_zip_test.cpp) using the awesome BDD's from Catch library )
 
-#### Zipping
+## Zipping
 
 - Header:
 
@@ -166,10 +161,18 @@ zipper.add("myFolder/");
 zipper.close();
 ```
 
+- Options to add() method.
+
+The `Zipper::zipFlags::Better` is set implicitly. Other options are (in last option in arguments):
+- Store only: `Zipper::zipFlags::Store`.
+- Compress faster, less compressed: `Zipper::zipFlags::Faster`.
+- Compress intermediate time/compression: `Zipper::zipFlags::Medium`.
+- Compress faster better: `Zipper::zipFlags::Better`.
+
 - Creating a zip file using the awesome streams from boost that lets us use a vector as a stream:
 
 ```c++
-#include <boost\interprocess\streams\vectorstream.hpp>
+#include <boost/interprocess/streams/vectorstream.hpp>
 ...
 
 boost::interprocess::basic_vectorstream<std::vector<char>> input_data(some_vector);
@@ -179,29 +182,48 @@ zipper.add(input_data, "Test1");
 zipper.close();
 ```
 
-- Creating a zip in memory stream with files:
+- Creating a zip in a vector with files:
 
 ```c++
-#include <boost\interprocess\streams\vectorstream.hpp>
+#include <boost/interprocess/streams/vectorstream.hpp>
 ...
 
 boost::interprocess::basic_vectorstream<std::vector<char>> zip_in_memory;
 std::ifstream input1("some file");
 
-Zipper zipper(zip_in_memory);
+Zipper zipper(zip_in_memory); // You can pass password
+zipper.add(input1, "Test1");
+zipper.close();
+
+zipper::Unzipper unzipper(zip_in_memory);
+unzipper.extractEntry(...
+```
+
+Or:
+
+```c++
+#include <vector>
+
+std::vector<unsigned char> zip_vect;
+std::ifstream input1("some file");
+
+Zipper zipper(zip_vect); // You can pass password
 zipper.add(input1, "Test1");
 zipper.close();
 ```
 
-- Creating a zip in a vector with files:
+- Creating a zip in memory stream with files:
 
 ```c++
-std::vector<unsigned char> zip_vect;
+std::stringstream ss;
 std::ifstream input1("some file");
 
-Zipper zipper(zip_vect);
+Zipper zipper(ss); // You can pass password
 zipper.add(input1, "Test1");
 zipper.close();
+
+zipper::Unzipper unzipper(ss);
+unzipper.extractEntry(...
 ```
 
 - Changing the compression factor: By default the `add` method uses an implicit flag `Zipper::Better`
@@ -211,7 +233,7 @@ which compress the best but can takes some time to perform the compression. You 
 zipper.add(input1, "Test1", Zipper::Medium);
 ```
 
-##### Unzipping
+## Unzipping
 
 - Header:
 
@@ -335,7 +357,7 @@ Unzipper unzipper(zip_vect);
 unzipper.extractEntry("Test1");
 ```
 
-##### Linking Zipper to your project
+# Linking Zipper to your project
 
 - In your project add the needed headers in your c++ files:
 
@@ -360,15 +382,15 @@ include(FindPkgConfig)
 find_package(zipper)
 ```
 
-### For developpers
+# For developpers
 
-##### Unit Tests and code coverage
+## Unit Tests and code coverage
 
 ```shell
 make coverage
 ```
 
-##### Coding style
+## Coding style
 
 Before submitting a pull request, you can indent the code with the following command:
 
@@ -376,3 +398,11 @@ Before submitting a pull request, you can indent the code with the following com
 cd zipper
 clang-format -i *.[ch]pp
 ```
+
+# FAQ
+
+- Q: I used a password when zipping with the Zipper lib, but now when I when I want to extract data with my operating system zip tool, I got error.
+  A: By default Zipper encrypts with EAS algorithm which is not the default encryption algorithm for zip files. Your operating system zip tools seems
+  not understanding EAS. Your can extract with the 7-Zip tool: `7za e your.zip`. If you want the default zip encryption (at your own risk since the
+  password can be cracked) you can remove EAS option in the following files: [Make](Make) and [external/compile-external-libs.sh](external/compile-external-libs.sh)
+  and recompile the Zipper project.
