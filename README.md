@@ -1,4 +1,5 @@
-:warning: **This branch is no longer maintained. The maintained branch is:** https://github.com/sebastiandev/zipper/tree/v2.x.y
+:warning: **This project and particularly this master branch is no longer maintained. The new repo is:**
+https://github.com/Lecrapouille/zipper based on https://github.com/sebastiandev/zipper/tree/v2.x.y
 
 ![Zipper](https://github.com/sebastiandev/zipper/blob/master/logo.png)
 
@@ -103,8 +104,8 @@ There are two classes available Zipper and Unzipper. They behave in the same man
 
 #### Zipping
 
-:warning: **This branch is no longer maintained. The maintained branch is:** https://github.com/sebastiandev/zipper/tree/v2.x.y
-
+:warning: **This project and particularly this master branch is no longer maintained. The new repo is:**
+https://github.com/Lecrapouille/zipper based on https://github.com/sebastiandev/zipper/tree/v2.x.y
 - Header:
 
 ```c++
@@ -192,7 +193,8 @@ change it by `Zipper::Append`. Note: in previous versions of Zipper the `Zipper:
 
 ##### Unzipping
 
-:warning: **This branch is no longer maintained. The maintained branch is:** https://github.com/sebastiandev/zipper/tree/v2.x.y
+:warning: **This project and particularly this master branch is no longer maintained. The new repo is:**
+https://github.com/Lecrapouille/zipper based on https://github.com/sebastiandev/zipper/tree/v2.x.y
 
 - Header:
 
