@@ -1,3 +1,6 @@
+:warning: **This project and particularly this master branch is no longer maintained. The new repo is:**
+https://github.com/Lecrapouille/zipper based on https://github.com/sebastiandev/zipper/tree/v2.x.y branch
+
 ![Zipper](doc/logo.png)
 
 C++ wrapper around minizip compression library. You are reading the work in progress version 2 of this library.
